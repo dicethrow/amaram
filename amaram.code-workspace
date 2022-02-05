@@ -1,0 +1,89 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"launch": {
+		"configurations": [
+			{
+				"name" : "start gui",
+				"type": "python",
+				"request": "launch",
+				"program": "gui_software/source/main.py",
+				"console": "integratedTerminal"
+			},
+
+			// ### fpga #########################			
+			{
+				"name" : "fpga upload-uart-passthrough-binary",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["fpga", "upload-uart-passthrough-binary"],
+				"console": "integratedTerminal"
+			},
+
+			{
+				"name" : "fpga simulate current file",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["fpga", "simulate-current-file", "--file", "${file}"],
+				"console": "integratedTerminal"
+			},
+
+			{
+				"name" : "fpga generate current file",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["fpga", "generate-current-file", "--file", "${file}"],
+				"console": "integratedTerminal"
+			},
+
+			{
+				"name" : "fpga upload current file",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["fpga", "upload-current-file", "--file", "${file}"],
+				"console": "integratedTerminal"
+			},
+			
+			// ### mcu #########################
+			{
+				"name" : "mcu reflash-binary",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["mcu", "reflash-binary"],
+				"console": "integratedTerminal"
+			},
+
+			{
+				"name" : "mcu update-firmware",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["mcu", "update-firmware"],
+				"console": "integratedTerminal"
+			},
+			
+			{
+				"name" : "mcu enter-repl",
+				"type": "python",
+				"request": "launch",
+				"program": "./build.py",
+				"args": ["mcu", "enter-repl"],
+				"console": "integratedTerminal"
+			},
+
+		],
+		"compounds": []
+	},
+	"settings": {
+		"python.pythonPath": "/home/x/Documents/venv_ge/bin/python3.9"
+	},
+}
+

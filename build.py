@@ -68,7 +68,7 @@ class fpga_interface(lxdev.RemoteClient):
 		if task == "upload-uart-passthrough-binary":
 			# self2.run_communication_test()
 			self.rsync_to_container()
-			self.upload_binary("./fpga_gateware/compiled_binaries/ulx3s_85f_passthru.bit")
+			self.upload_binary("./tests/ulx3s_gui_test/fpga_gateware/compiled_binaries/ulx3s_85f_passthru.bit")
 		
 		elif task == "simulate-current-file":
 			sim_manager = fpga_interface.simulate_manager(
@@ -386,8 +386,8 @@ class mcu_interface(lxdev.RemoteClient):
 		elif task == "update-firmware":
 			self.select_serial_port()
 			self.rsync_to_container()
-			self.rsync_micropython_files_between(from_dir = "mcu_firmware/source/", to_dir = "/pyboard/")
-			self.rsync_micropython_files_between(from_dir = "common/saniwa_common/", to_dir = "/pyboard/saniwa_common/") # new!
+			self.rsync_micropython_files_between(from_dir = "tests/ulx3s_gui_test/mcu_firmware/source/", to_dir = "/pyboard/")
+			self.rsync_micropython_files_between(from_dir = "tests/ulx3s_gui_test/common/test_common/", to_dir = "/pyboard/test_common/") # new!
 			self.connect_over_rshell_repl()
 
 		elif task == "enter-repl":

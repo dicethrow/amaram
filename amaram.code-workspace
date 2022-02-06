@@ -10,7 +10,7 @@
 				"name" : "start gui",
 				"type": "python",
 				"request": "launch",
-				"program": "gui_software/source/main.py",
+				"program": "tests/ulx3s_gui_test/gui_software/source/main.py",
 				"console": "integratedTerminal"
 			},
 

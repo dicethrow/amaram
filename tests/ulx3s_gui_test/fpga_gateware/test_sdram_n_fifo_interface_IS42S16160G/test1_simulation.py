@@ -1,6 +1,5 @@
 
 
-
 from amaranth.hdl import (Memory, ClockDomain, ResetSignal,
 	ClockSignal, Elaboratable, Module, Signal, Mux, Cat,
 	Const, C, Shape)
@@ -23,15 +22,13 @@ print(os.getcwd())
 
 # from sdram16_chip_model_IS42S16160G import dram_chip_model_IS42S16160G
 # from sdram16_testdriver import sdram_controller #dram_testdriver
-# sys.path.append(os.path.join(os.getcwd(), "amaram"))
+# sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
 
 import amaram
 # from . import amaram
 print(dir(amaram))
 
 from amaram.sdram_n_fifo_interface_IS42S16160G import sdram_controller
-
-
 
 import sys, os
 from termcolor import cprint
@@ -1018,6 +1015,8 @@ if __name__ == "__main__":
 		# PLL - 143MHz for sdram 
 		sdram_freq = int(143e6)
 
+		# from simulation_test import dram_sim_model_IS42S16160G
+
 		#m.submodules.dram_testdriver = dram_testdriver = dram_testdriver()
 		m.submodules.m_sdram_controller = m_sdram_controller = sdram_controller()
 		m.submodules.m_dram_model = m_dram_model = dram_sim_model_IS42S16160G(m_sdram_controller, sdram_freq)		
@@ -1029,8 +1028,6 @@ if __name__ == "__main__":
 		m_dram_model.add_simulations_to(sim)
 
 		# dram_model = dram_sim_model_IS42S16160G(dram_testdriver, sim)
-
-		
 
 		# def initial_delay():
 		# 	yield Active()
@@ -1050,5 +1047,5 @@ if __name__ == "__main__":
 
 			sim.run()
 
-	else: # upload - is there a test we could upload and do on the ulx3s?
+	else: # upload - is there a test we could upload and do on the ulx3s? 
 		pass

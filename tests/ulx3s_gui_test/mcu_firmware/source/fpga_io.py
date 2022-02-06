@@ -6,11 +6,11 @@ from termcolor import cprint
 
 from test_common import register_addresses, spi_register_interface, get_member
 
-spi = SPI(1, polarity=0, phase=1, bits=1+spi_register_interface.CMD_ADDR_BITS+spi_register_interface.REG_DATA_BITS, firstbit=SPI.MSB, baudrate = int(4e6), sck=Pin(16), mosi=Pin(4), miso=Pin(12))
+spi = SPI(1, polarity=0, phase=1, bits=8, firstbit=SPI.MSB, baudrate = int(4e6), sck=Pin(16), mosi=Pin(4), miso=Pin(12))
 csn = Pin(5, Pin.OUT)
 csn.on()
 
-def reg_io(addr = 0x00, write=False, write_value=0x0000): # initial value
+def reg_io(addr = 0x00, write=False, write_value=0x0000, active_cs_level=0): # initial value
 	# 31jan2022
 	# works!
 	write_mask = (2<<(spi_register_interface.CMD_ADDR_BITS-1))
@@ -21,15 +21,35 @@ def reg_io(addr = 0x00, write=False, write_value=0x0000): # initial value
 	if write: # hence, is a write command
 		addr |= write_mask
 
-	csn.off()
+	csn.value(1-active_cs_level)
+	csn.value(active_cs_level)
+	
 	buf = bytearray(struct.pack(spi_register_interface.BYTE_PACK_FORMAT, addr, write_value))
 	spi.write_readinto(buf, buf)
 	_, result = struct.unpack(spi_register_interface.BYTE_PACK_FORMAT, buf)
-	csn.on()
+	
+	csn.value(1-active_cs_level)
 
 	return result
 	
 # for i in range(255): _ = reg_io(4, True, i)
+
+def alt_fifo_io(read_num=1, active_cs_level=1):
+	csn.value(1-active_cs_level)
+	csn.value(active_cs_level)
+	
+	# numbytes = 4 # for 16bit reads
+	# buf = bytearray(numbytes)
+
+	pack_format = "I" # unsigned int, 4byte=32bit
+	buf = bytearray(struct.pack(pack_format, 0))
+	for i in range(read_num):
+		spi.write_readinto(buf, buf)
+		result = struct.unpack(pack_format, buf)[0]
+		# print(f"fifo read of {[hex(x) for x in buf]}")
+		print(f"fifo read of {bin(result)}")
+
+	csn.value(1-active_cs_level)
 
 def flash_leds():
 	for i in range(255):

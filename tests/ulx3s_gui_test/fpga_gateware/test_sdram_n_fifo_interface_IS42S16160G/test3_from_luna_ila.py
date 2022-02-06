@@ -22,6 +22,23 @@ import test_common
 
 # inspired by the ilaSharedBusExample from luna
 
+
+""" 
+micropython tests:
+
+import test_common, fpga_io
+
+addrs = test_common.register_addresses 
+fpga_io.alt_fifo_io(32) # match the 'sample depth'?
+fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger?
+fpga_io.reg_io(addrs.REG_ILA_TRIG_RW)
+
+fpga_io.reg_io(addrs.REG_LEDS_RW)
+fpga_io.reg_io(addrs.REG_LEDS_RW, True, 0xAB)
+
+
+"""
+
 class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 	def __init__(self, copi, cipo, sclk, csn, i_buttons, leds):
 		# external spi interface
@@ -51,14 +68,14 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 				board_spi.sdi.eq(self.copi),
 				self.cipo.eq(board_spi.sdo),
 				board_spi.sck.eq(self.sclk),
-				board_spi.cs.eq(self.csn)
+				board_spi.cs.eq(self.csn) # note: inverted, to match earlier tests?
 			]
 		else:
 			# board_spi = SPIDeviceBus()
 			m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi)
 			m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo)
 			m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
-			m.submodules += FFSynchronizer(o=board_spi.cs, i=self.csn) # note! cs is inverted?
+			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.csn) # note: inverted, to match earlier tests
 
 		# Create an SPI bus for our ILA.
 		ila_spi = SPIDeviceBus()
@@ -84,7 +101,10 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 
 		# Create a set of registers...
-		spi_registers = SPIRegisterInterface()
+		spi_registers = SPIRegisterInterface(
+			address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+			register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+		)
 		m.submodules.spi_registers = spi_registers
 
 		# ... and an SPI bus for them.
@@ -102,7 +122,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		# spi_registers.add_read_only_register(REGISTER_ID, read=0xDEADBEEF)
 		addrs = test_common.register_addresses
 		spi_registers.add_read_only_register(address=addrs.REG_BUTTONS_R, read=Cat(self.i_buttons["fireA"], self.i_buttons["fireB"])) # buttons
-		# spi_registers.add_register(address=addrs.REG_LEDS_RW, value_signal=self.leds)
+		spi_registers.add_register(address=addrs.REG_LEDS_RW, value_signal=self.leds)
 
 		# Create a simple SFR that will trigger an ILA capture when written,
 		# and which will display our sample status read.
@@ -114,7 +134,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		# Attach the LEDs and User I/O to the MSBs of our counter.
 		# leds    = [platform.request("led", i, dir="o") for i in range(0, 6)]
 		# m.d.comb += Cat(leds).eq(self.counter[-7:-1])
-		m.d.comb += self.leds.eq(self.counter[-8:])
+		# m.d.comb += self.leds.eq(self.counter[-8:])
 
 		# Return our elaborated module.
 		return m
@@ -177,6 +197,11 @@ if __name__ == "__main__":
 		def spi_tests():
 			yield Active()
 			# yield tb_buttons["fireB"].eq(0b1) # lets see if we can read this
+
+			yield Delay(1/1e6)
+			yield from fpga_io_sim.reg_io(dut, addrs.REG_LEDS_RW, True, 0xABCD)
+			yield Delay(1/1e6)
+			yield from fpga_io_sim.reg_io(dut, addrs.REG_LEDS_RW)
 			
 			yield Delay(1/1e6)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)

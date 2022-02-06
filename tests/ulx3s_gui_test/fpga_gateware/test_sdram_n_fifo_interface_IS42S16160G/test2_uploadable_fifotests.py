@@ -65,7 +65,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			m.submodules += FFSynchronizer(o=reg_if.spi.sdi, i=self.copi)
 			m.submodules += FFSynchronizer(o=self.cipo, i=reg_if.spi.sdo)
 			m.submodules += FFSynchronizer(o=reg_if.spi.sck, i=self.sclk)
-			m.submodules += FFSynchronizer(o=reg_if.spi.cs, i=self.csn) # note! cs is inverted?
+			m.submodules += FFSynchronizer(o=reg_if.spi.cs, i= self.csn) # note: inverted, to match earlier tests
 
 		addrs = test_common.register_addresses
 		reg_if.add_read_only_register(address=addrs.REG_BUTTONS_R, read=Cat(self.i_buttons["fireA"], self.i_buttons["fireB"])) # buttons

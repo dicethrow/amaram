@@ -1,7 +1,7 @@
 import sys, os
 from termcolor import cprint
 
-from amaranth import Elaboratable, Module, Signal, Mux, ClockSignal, ResetSignal, Cat, Const
+from amaranth import Elaboratable, Module, Signal, Mux, ClockSignal, ClockDomain, ResetSignal, Cat, Const
 from amaranth.hdl.ast import Rose, Stable, Fell, Past
 from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active
@@ -30,52 +30,87 @@ import test_common, fpga_io
 
 addrs = test_common.register_addresses 
 fpga_io.alt_fifo_io(32) # match the 'sample depth'?
-fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger?
+fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger? 
 fpga_io.reg_io(addrs.REG_ILA_TRIG_RW)
 
 fpga_io.reg_io(addrs.REG_LEDS_RW)
 fpga_io.reg_io(addrs.REG_LEDS_RW, True, 0xAB)
 
+def run_ila():
+	fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger? 
+
+	while fpga_io.reg_io(addrs.REG_ILA_TRIG_RW) == 0:
+		pass
+
+	fpga_io.alt_fifo_io(32) # match the 'sample depth'?
+run_ila()
 
 """
 
 class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
-	def __init__(self, copi, cipo, sclk, csn, i_buttons, leds):
+	def __init__(self, copi, cipo, sclk, i_buttons, leds,  csn=None, cs=None):
 		# external spi interface
 		self.copi = copi 
 		self.cipo = cipo
 		self.sclk = sclk
+
+		if type(cs) == type(None):
+			self.invert_csn = True
+			self.cs = Signal()
+		else:
+			self.invert_csn = False
+			self.cs = cs
+		if False: # clock stuff - this doesn't seem to help, I tried to clock the counter from this
+			# and for negedge - because clk_edge=neg doesn't work? according to something I read? 
+			# I lost the link, but this workaround was recommended
+			sync_n = ClockDomain("sync_n", clk_edge="pos")#, local=True)
+			# clki_n = ClockDomain("clki_n", clk_edge="neg")
+			m.domains += sync_n
+			m.d.comb += sync_n.clk.eq(~ClockSignal("sync")) # 
 		self.csn = csn
 
 		self.i_buttons = i_buttons
 		self.leds = leds
 
 		# self.ila_input = Signal(16)
-		self.counter = Signal(28)
+		self.counter = Signal(32)#(31) # so with toggle, 32bit width, instead of 28
 		self.toggle  = Signal()
-		self.ila = SyncSerialILA(signals=[self.counter, self.toggle], sample_depth=32)
-
+		self.ila = SyncSerialILA(
+			signals=[self.counter],#[self.toggle, self.counter], 
+			sample_depth=32,
+			clock_polarity=0, clock_phase=1
+			# pol, phase
+			#  	0, 	1		mostly works, either one or two off or the whole thing shifted
+			# 	0,	0		not right
+			# 	1, 	1		still a bit off
+			# 	1,	0		nah not right
+		)
+		
 
 	def elaborate(self, platform = None):
 		m = Module()
 
 		m.submodules += self.ila
 
+		# to deal with the inverted cs pin on the ulx3s, but not in simulation
+		if self.invert_csn:
+			m.d.comb += self.cs.eq(~self.csn)
+
 		board_spi = SPIDeviceBus()
-		if True:
+		if False:
 			m.d.comb += [ 
 				# wires
 				board_spi.sdi.eq(self.copi),
 				self.cipo.eq(board_spi.sdo),
 				board_spi.sck.eq(self.sclk),
-				board_spi.cs.eq(self.csn) # note: inverted, to match earlier tests?
+				board_spi.cs.eq(self.cs)
 			]
 		else:
 			# board_spi = SPIDeviceBus()
 			m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi)
 			m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo)
 			m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
-			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.csn) # note: inverted, to match earlier tests
+			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs)
 
 		# Create an SPI bus for our ILA.
 		ila_spi = SPIDeviceBus()
@@ -90,11 +125,15 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		]
 
 
-		# Clock divider / counter.
-		with m.If(self.ila.complete):
-			m.d.sync += self.counter.eq(0)
-		# with m.Else():
-		m.d.sync += self.counter.eq(self.counter + 1)
+		if True:
+			# Clock divider / counter.
+			with m.If(self.ila.complete):
+				m.d.sync += self.counter.eq(0)
+			# with m.Else():
+			m.d.sync += self.counter.eq(self.counter + 1)
+		else:
+			# test with a constant, known value
+			m.d.sync += self.counter.eq(0xF0FF0FFF) 
 
 		# Another example signal, for variety.
 		m.d.sync += self.toggle.eq(~self.toggle)
@@ -122,7 +161,13 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		# spi_registers.add_read_only_register(REGISTER_ID, read=0xDEADBEEF)
 		addrs = test_common.register_addresses
 		spi_registers.add_read_only_register(address=addrs.REG_BUTTONS_R, read=Cat(self.i_buttons["fireA"], self.i_buttons["fireB"])) # buttons
-		spi_registers.add_register(address=addrs.REG_LEDS_RW, value_signal=self.leds)
+		
+		if False: # leds to test/show register io
+			spi_registers.add_register(address=addrs.REG_LEDS_RW, value_signal=self.leds)
+		else: # leds to count complete flag raises
+			with m.If(Rose(self.ila.complete)):
+				m.d.sync += self.leds.eq(self.leds + 1)
+
 
 		# Create a simple SFR that will trigger an ILA capture when written,
 		# and which will display our sample status read.
@@ -175,6 +220,7 @@ if __name__ == "__main__":
 		tb_cipo = Signal()
 		tb_sclk = Signal()
 		tb_csn = Signal()
+
 		tb_buttons = {
 			"fireA" : Signal(),
 			"fireB" : Signal()
@@ -203,13 +249,34 @@ if __name__ == "__main__":
 			yield Delay(1/1e6)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_LEDS_RW)
 			
+
 			yield Delay(1/1e6)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)
 			yield Delay(1/1e6)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW, True, 0xABCD)
+			yield Delay(1/1e6)
+			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)
 
 			yield Delay(1/1e6)
-			yield from fpga_io_sim.alt_fifo_io(dut, read_num=10)
+			yield from fpga_io_sim.alt_fifo_io(dut, read_num=32)
+
+
+
+			# yield Delay(1/1e6)
+			# yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)
+			# yield Delay(1/1e6)
+			# yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW, True, 0xABCD)
+			# yield Delay(1/1e6)
+			# yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)
+
+			# yield Delay(1/1e6)
+			# yield from fpga_io_sim.alt_fifo_io(dut, read_num=32)
+
+			# yield Delay(1/1e6)
+			# yield from fpga_io_sim.alt_fifo_io(dut, read_num=100)
+
+
+
 			
 			# yield Delay(1/1e6)
 			# yield from fpga_io_sim.reg_io(dut, addrs.REG_BUTTONS_R)
@@ -282,7 +349,7 @@ if __name__ == "__main__":
 				# 	support_size_autonegotiation=True # see the source docs of this class
 				# )
 				m.submodules.dut = dut = dram_ulx3s_upload_test_IS42S16160G(
-					copi = esp32.gpio4_copi, cipo = esp32.gpio12_cipo, sclk = esp32.gpio16_sclk, csn = esp32.gpio5_csn,
+					copi = esp32.gpio4_copi, cipo = esp32.gpio12_cipo, sclk = esp32.gpio16_sclk, cs = esp32.gpio5_cs,
 					i_buttons = i_buttons, leds = leds
 				)
 				# m.d.comb += [ 
@@ -327,7 +394,7 @@ if __name__ == "__main__":
 				Subsignal("rx",     Pins("K4", dir="i"), Attrs(PULLMODE="UP")),
 				Subsignal("gpio0",  Pins("L2"),          Attrs(PULLMODE="UP")),
 				Subsignal("gpio4_copi", Pins("H1", dir="i"),  Attrs(PULLMODE="UP")), # SDD1? GPIO4? 
-				Subsignal("gpio5_csn",  PinsN("N4", dir="i"),  Attrs(PULLMODE="UP")),
+				Subsignal("gpio5_cs",  PinsN("N4", dir="i"),  Attrs(PULLMODE="UP")),
 				Subsignal("gpio12_cipo", Pins("K1", dir="o"),  Attrs(PULLMODE="UP")), # SDD2? GPIO12?
 				Subsignal("gpio16_sclk", Pins("L1", dir="i"),  Attrs(PULLMODE="UP")),
 				Attrs(IO_TYPE="LVCMOS33", DRIVE="4")

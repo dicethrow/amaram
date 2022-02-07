@@ -50,7 +50,7 @@ def spi_write_readinto(dut, srcbuf, dstbuf):
 
 
 
-def reg_io(dut, addr, write=False, write_value=0x0000, active_cs_level=1): # to be similar to the fpga_io.py micropython file
+def reg_io(dut, addr, write=False, write_value=0x0000, active_cs_level=0): # to be similar to the fpga_io.py micropython file
 	write_mask = (2<<(spi_register_interface.CMD_ADDR_BITS-1))
 	if addr >= write_mask: # then only 7 bits available for address, the other bit is read/write flag
 		print("addr too large!")
@@ -60,7 +60,7 @@ def reg_io(dut, addr, write=False, write_value=0x0000, active_cs_level=1): # to 
 	if write: # hence, is a write command
 		addr |= write_mask
 
-	yield dut.csn.eq(~active_cs_level)
+	# yield dut.csn.eq(~active_cs_level)
 	yield Tick()
 	yield dut.csn.eq(active_cs_level)
 
@@ -77,18 +77,28 @@ def reg_io(dut, addr, write=False, write_value=0x0000, active_cs_level=1): # to 
 	print(f'reg io of {hex(initial_addr)} {"write" if write else "read"} result is {hex(result)}')
 	return result
 
-def alt_fifo_io(dut, read_num=1, active_cs_level = 0):
+def alt_fifo_io(dut, read_num=1, active_cs_level = 1):
 	# cs toggle to reset - needed?
-	yield dut.csn.eq(~active_cs_level)
+	# yield dut.csn.eq(~active_cs_level)
 	yield Tick()
 	yield dut.csn.eq(active_cs_level)
 
 	# for 16bit reads
-	numbytes = 2
-	buf = bytearray(numbytes)
+	# numbytes = 2
+	# buf = bytearray(numbytes)
+	# for i in range(read_num):
+	# 	yield from spi_write_readinto(dut, buf, buf)
+	# 	print(f"fifo read of {[hex(x) for x in buf]}")
+
+	pack_format = ">I" # unsigned int, 4byte=32bit
+	buf = bytearray(struct.pack(pack_format, 0))
 	for i in range(read_num):
+		buf = bytearray(struct.pack(pack_format, 0))
 		yield from spi_write_readinto(dut, buf, buf)
-		print(f"fifo read of {[hex(x) for x in buf]}")
+		result = struct.unpack(pack_format, buf)[0]
+		# print(f"fifo read of {[hex(x) for x in buf]}")
+		print(f"fifo read of {bin(result)}")
+	
 
 	yield dut.csn.eq(~active_cs_level)
 

@@ -21,7 +21,7 @@ def reg_io(addr = 0x00, write=False, write_value=0x0000, active_cs_level=0): # i
 	if write: # hence, is a write command
 		addr |= write_mask
 
-	csn.value(1-active_cs_level)
+	# csn.value(1-active_cs_level)
 	csn.value(active_cs_level)
 	
 	buf = bytearray(struct.pack(spi_register_interface.BYTE_PACK_FORMAT, addr, write_value))
@@ -35,15 +35,16 @@ def reg_io(addr = 0x00, write=False, write_value=0x0000, active_cs_level=0): # i
 # for i in range(255): _ = reg_io(4, True, i)
 
 def alt_fifo_io(read_num=1, active_cs_level=1):
-	csn.value(1-active_cs_level)
+	# csn.value(1-active_cs_level)
 	csn.value(active_cs_level)
 	
 	# numbytes = 4 # for 16bit reads
 	# buf = bytearray(numbytes)
 
-	pack_format = "I" # unsigned int, 4byte=32bit
-	buf = bytearray(struct.pack(pack_format, 0))
+	pack_format = ">I" # unsigned int, 4byte=32bit
+	
 	for i in range(read_num):
+		buf = bytearray(struct.pack(pack_format, 0))
 		spi.write_readinto(buf, buf)
 		result = struct.unpack(pack_format, buf)[0]
 		# print(f"fifo read of {[hex(x) for x in buf]}")

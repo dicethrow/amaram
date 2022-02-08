@@ -26,7 +26,9 @@ led = None
 from iot.primitives import queue
 
 from test_common.mcu_gui_interface import MY_ID, SERVER, PORT, SSID, PW, TIMEOUT
+import test_common
 import fpga_io
+addrs = test_common.register_addresses 
 
 from termcolor import cprint
 
@@ -71,10 +73,31 @@ class spi_interface():
 				
 			elif data["request"] == "test_fifo":
 				cprint("Testing FIFO", "green")
-				result = fpga_io.test_fifo(data["fifo_id"], data["test_size"])
-				data["response"] = {
-					"fifo_test" : result
-				}
+
+				if data["fifo_id"] != 0:
+					print("Only fifo 0 set up, skipping")
+					continue
+
+				fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger? 
+
+				while fpga_io.reg_io(addrs.REG_ILA_TRIG_RW) == 0:
+					print(".", end="") # for progress feedback
+					pass
+				print()
+
+				data["response"] = "bulk data arriving"
+				await cipo_queue.put(data)
+
+				for i, next_word_group in enumerate(fpga_io.read_fifo(
+					total_num_words_to_read = data["test_size"], num_words_per_group = 20)):
+
+					await cipo_queue.put({ "bulk_data" : {i : next_word_group}})
+
+					# and wait a bit? perhaps wait until gc.free() is below a threshold?
+					# actually - make sure the queue only has one spot, that sounds simpler for now
+
+
+				data["response"] = "bulk data finished"
 				await cipo_queue.put(data)
 
 			else:
@@ -91,7 +114,8 @@ class App(client.Client):
 		print("Starting new mcu app")
 		self.verbose and cprint('App awaiting connection.', "green")
 		await self.cl
-		cipo_queue = queue.Queue(maxsize=10) # arbitrary value?
+		cipo_queue = queue.Queue(maxsize=1) # arbitrary value? although being smaller may reduce memory usage without cost,
+		# as async stuff will just wait until there's a spot rather than filling it up 
 		copi_queue = queue.Queue(maxsize=10) # arbitrary value?
 		# spi_lock = asyncio.Lock() # so only one access to the fpga spi bus at a time
 

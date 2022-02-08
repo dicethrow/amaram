@@ -54,7 +54,6 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		self.cipo = cipo
 		self.sclk = sclk
 
-		# if cs == None: # fails for some reason
 		if type(cs) == type(None):
 			self.invert_csn = True
 			self.cs = Signal()
@@ -154,6 +153,16 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			read=self.ila.complete,
 			write_strobe=self.ila.trigger
 		)
+
+		# add fifo to test, see if the difficulties from earlier were due to not being synchronised
+		spi_registers.m.submodules.test_fifo0 = test_fifo0 = AsyncFIFOBuffered(width=16, depth=20, r_domain="sync", w_domain="sync")
+		spi_registers.add_register(address=addrs.REG_FIFO0_READ_R,		value_signal=test_fifo0.r_data,	read_strobe=test_fifo0.r_en)
+		spi_registers.add_register(address=addrs.REG_FIFO0_READRDY_R,	value_signal=test_fifo0.r_rdy)
+		spi_registers.add_register(address=addrs.REG_FIFO0_READLVL_R,	value_signal=test_fifo0.r_level)
+		spi_registers.add_register(address=addrs.REG_FIFO0_WRITE_W,		value_signal=test_fifo0.w_data,	write_strobe=test_fifo0.w_en)
+		spi_registers.add_register(address=addrs.REG_FIFO0_WRITERDY_R,	value_signal=test_fifo0.w_rdy)
+		spi_registers.add_register(address=addrs.REG_FIFO0_WRITELVL_R,	value_signal=test_fifo0.w_level)
+
 
 		# Attach the LEDs and User I/O to the MSBs of our counter.
 		# leds    = [platform.request("led", i, dir="o") for i in range(0, 6)]

@@ -5,6 +5,8 @@ from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay
 from amaranth.asserts import Assert, Assume, Cover, Past
 from amaranth.lib.fifo import AsyncFIFOBuffered
+from amaranth.lib.cdc import FFSynchronizer
+
 
 from amlib.io import SPIRegisterInterface
 
@@ -45,21 +47,25 @@ class Top(Elaboratable):
 
 		
 		m.submodules.test_fifo = test_fifo = AsyncFIFOBuffered(width=16, depth=5, r_domain="sync", w_domain="sync")
-		reg_if.add_register(address=addrs.REG_FIFO_READ_R,		value_signal=test_fifo.r_data,	read_strobe=test_fifo.r_en)
-		reg_if.add_register(address=addrs.REG_FIFO_READRDY_R,	value_signal=test_fifo.r_rdy)
-		reg_if.add_register(address=addrs.REG_FIFO_READLVL_R,	value_signal=test_fifo.r_level)
-		reg_if.add_register(address=addrs.REG_FIFO_WRITE_W,		value_signal=test_fifo.w_data,	write_strobe=test_fifo.w_en)
-		reg_if.add_register(address=addrs.REG_FIFO_WRITERDY_R,	value_signal=test_fifo.w_rdy)
-		reg_if.add_register(address=addrs.REG_FIFO_WRITELVL_R,	value_signal=test_fifo.w_level)
+		reg_if.add_register(address=addrs.REG_FIFO0_READ_R,		value_signal=test_fifo.r_data,	read_strobe=test_fifo.r_en)
+		reg_if.add_register(address=addrs.REG_FIFO0_READRDY_R,	value_signal=test_fifo.r_rdy)
+		reg_if.add_register(address=addrs.REG_FIFO0_READLVL_R,	value_signal=test_fifo.r_level)
+		reg_if.add_register(address=addrs.REG_FIFO0_WRITE_W,		value_signal=test_fifo.w_data,	write_strobe=test_fifo.w_en)
+		reg_if.add_register(address=addrs.REG_FIFO0_WRITERDY_R,	value_signal=test_fifo.w_rdy)
+		reg_if.add_register(address=addrs.REG_FIFO0_WRITELVL_R,	value_signal=test_fifo.w_level)
 
 		
-		m.d.comb += [ 
-			# wires
-			reg_if.spi.sdi.eq(esp32.gpio4_copi),
-			esp32.gpio12_cipo.eq(reg_if.spi.sdo),
-			reg_if.spi.sck.eq(esp32.gpio16_sclk),
-			reg_if.spi.cs.eq(esp32.gpio5_csn)
-		]
+		# m.d.comb += [ 
+		# 	# wires
+		# 	reg_if.spi.sdi.eq(esp32.gpio4_copi),
+		# 	esp32.gpio12_cipo.eq(reg_if.spi.sdo),
+		# 	reg_if.spi.sck.eq(esp32.gpio16_sclk),
+		# 	reg_if.spi.cs.eq(esp32.gpio5_csn)
+		# ]
+		m.submodules += FFSynchronizer(o=reg_if.spi.sdi, i=esp32.gpio4_copi)
+		m.submodules += FFSynchronizer(o=esp32.gpio12_cipo, i=reg_if.spi.sdo)
+		m.submodules += FFSynchronizer(o=reg_if.spi.sck, i=esp32.gpio16_sclk)
+		m.submodules += FFSynchronizer(o=reg_if.spi.cs, i= esp32.gpio5_csn)
 
 		######## setup esp32 interaction ######
 

@@ -29,6 +29,7 @@ class labelled_number_entry(QWidget):
 		self.setLayout(H_layout)
 
 class fifo_test_interface(QWidget):
+	response_signal = pyqtSignal(dict)
 	def __init__(self):
 		super().__init__()
 		self.fifo_id = QLineEdit(str(0))
@@ -45,11 +46,32 @@ class fifo_test_interface(QWidget):
 		
 		self.setLayout(layout)
 
+		self.response_signal.connect(self.recieve_result)
+
+		self.trigger.clicked.connect(self.send_request)
+
+				# self.control_D.trigger.clicked.connect(lambda : 
+
+	def connect_to_connmanager(self, connmanager):
+		self.connmanager = connmanager
+
 	def get_test_size(self):
 		return int(self.test_size.text())
 
 	def get_fifo_id(self):
 		return int(self.fifo_id.text())
+	
+	def send_request(self):
+		self.connmanager.send_cmd({
+			"request": "test_fifo",
+			"fifo_id" : self.get_fifo_id(),
+			"test_size" : self.get_test_size(),
+		})
+
+	def recieve_result(self, cipo_data):
+		print("Got this data in fifo_test_interface:")
+		print(cipo_data)
+
 
 
 class function_tab(QWidget):
@@ -95,11 +117,4 @@ class function_tab(QWidget):
 			}
 		))
 
-		self.control_D.trigger.clicked.connect(lambda : connmanager.send_cmd(
-			{
-				"request": "test_fifo",
-				"fifo_id" : self.control_D.get_fifo_id(),
-				"test_size" : self.control_D.get_test_size(),
-			}
-		))
-
+		self.control_D.connect_to_connmanager(connmanager)

@@ -75,8 +75,13 @@ class connectionManager(QWidget):
 	  			return dict(big, **small) == big
 
 			cprint("Started response handler", "yellow")
+			bulk_data_expected = False
+			bulk_data_cipo_storage = []
+			unhandled_cipo_data = []
 			while True:
-				print()
+				print(".", end="")
+				# await asyncio.sleep(0.1) # to slow things down?
+
 				cipo_data = await self.cipo_queue.get()
 
 				text = f"Got {cipo_data} from remote {self.client_id}"
@@ -85,24 +90,71 @@ class connectionManager(QWidget):
 
 				cprint(cipo_data, "magenta")
 
-				found = False
-				# for i in range(self.unresponded_queue.qsize()):
-				while True: # is this while-true bad? I think it just makes clear it could get stuck
-					sent_record = await self.unresponded_queue.get()
-					cprint(sent_record["copi_data"], "yellow")
-					if is_subdict(sent_record["copi_data"], cipo_data):
-						found = True
-						break
+				def send_response_to_caller(sent_record, cipo_data):
+					if hasattr(sent_record["sender"], "response_signal"):
+						sent_record["sender"].response_signal.emit(cipo_data)
 					else:
-						await self.unresponded_queue.put(sent_record) # put back to check next time
+						print("warning: no destination provided for this data")
+
+				found = False
+				ignore = False
+
+				if bulk_data_expected and "bulk_data" in cipo_data:
+					bulk_data_cipo_storage.append(cipo_data["bulk_data"])
+					continue
+
+				unhandled_cipo_data.append(cipo_data)
+				
+				inspected_queue_item_count = 0
+				while inspected_queue_item_count < self.unresponded_queue.qsize(): # is this while-true bad? I think it just makes clear it could get stuck
+					sent_record = await self.unresponded_queue.get()
+					inspected_queue_item_count += 1
+					
+					new_unhandled_cipo_data = []
+					for cipo_data in unhandled_cipo_data:
+						cprint(sent_record["copi_data"], "yellow")
+
+						if is_subdict(sent_record["copi_data"], cipo_data):
+							
+							# now handle the case where we're recieving data back in chunks
+							# small enough to fit on the microcontroller
+							if cipo_data["response"] == "bulk data arriving":
+								bulk_data_expected = True
+								ignore = True
+
+							elif cipo_data["response"] == "bulk data finished":
+								bulk_data_expected = False
+								cipo_data["response"] = bulk_data_cipo_storage
+								bulk_data_cipo_storage = [] # assuming there's only one bulk-data connection thing happening at a time
+
+							found = True
+
+						else:
+							if not ignore:
+								await self.unresponded_queue.put(sent_record) # put back to check next time
+
+					# if bulk_data_expected and "bulk_data" in cipo_data:
+						if found or ignore:
+							# then we've decided what to do with this data
+							break
+						else:
+							new_unhandled_cipo_data.append(cipo_data)
+				
+				unhandled_cipo_data = new_unhandled_cipo_data
 
 				if found:
-					if hasattr(sent_record["sender"], "recieve_result"):
-						# sent_record["sender"].recieve_result(cipo_data)
-						sent_record["sender"].response_signal.emit(cipo_data)
-						# print(f"Would send result of {cipo_data}")
+					send_response_to_caller(sent_record, cipo_data)
+					# todo - this still doesn't send the result back to
+					# the caller / the 'interface D' thing
+				
+				elif "bulk_data" in cipo_data:
+					assert bulk_data_expected
+				
+				elif ignore:
+					pass
+					
 				else:
-					cprint("Unable to find match for copi_data:", "red")
+					cprint("Unable to find match for cipo_data:", "red")
 					cprint(cipo_data, "red")
 
 	

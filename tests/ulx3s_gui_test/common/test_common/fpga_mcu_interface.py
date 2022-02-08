@@ -39,9 +39,9 @@ class register_base():
 
 class register_addresses(register_base):
 	REG_AUTONEG_R			= register_base.auto()
-	# REG_CONST_0xAF_R		= register_base.auto()
+	REG_CONST_0xAF_R		= register_base.auto()
 	REG_BUTTONS_R			= register_base.auto()
-	# REG_GENPURP_0_RW		= register_base.auto()
+	REG_GENPURP_0_RW		= register_base.auto()
 	REG_LEDS_RW				= register_base.auto()
 
 	REG_ILA_TRIG_RW			= register_base.auto()

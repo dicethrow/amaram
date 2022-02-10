@@ -66,11 +66,11 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		self.leds = leds
 
 		# self.ila_input = Signal(16)
-		self.counter = Signal(32)#(31) # so with toggle, 32bit width, instead of 28
-		self.toggle  = Signal()
+		# self.counter = Signal(32)#(31) # so with toggle, 32bit width, instead of 28
+		# self.toggle  = Signal()
+		self.ila_signals = test_common.get_ila_signals_dict()
 		self.ila = SyncSerialILA(
-			signals=[self.counter],#[self.toggle, self.counter], 
-			sample_depth=32,
+			**test_common.get_ila_constructor_kwargs(),
 			clock_polarity=0, clock_phase=1 # is this right? it works though
 		)
 		
@@ -90,6 +90,15 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
 		m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs)
 
+		# watch spi signals?
+		m.d.comb += [
+			self.ila_signals["spi_monitor"].sdi.eq(board_spi.sdi),
+			self.ila_signals["spi_monitor"].sdo.eq(board_spi.sdo),
+			self.ila_signals["spi_monitor"].sck.eq(board_spi.sck),
+			self.ila_signals["spi_monitor"].cs.eq(board_spi.cs),
+		]
+
+
 		# Create an SPI bus for our ILA.
 		ila_spi = SPIDeviceBus()
 		m.d.comb += [
@@ -106,15 +115,20 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		if True:
 			# Clock divider / counter.
 			with m.If(self.ila.complete):
-				m.d.sync += self.counter.eq(0)
+				# m.d.sync += self.counter.eq(0)
+				m.d.sync += self.ila_signals["counter"].eq(0)
 			# with m.Else():
-			m.d.sync += self.counter.eq(self.counter + 1)
+			# m.d.sync += self.counter.eq(self.counter + 1)
+			m.d.sync += self.ila_signals["counter"].eq(self.ila_signals["counter"] + 1)
 		else:
 			# test with a constant, known value
-			m.d.sync += self.counter.eq(0xF0FF0FFF) 
+			# m.d.sync += self.counter.eq(0xF0FF0FFF) 
+			m.d.sync += self.ila_signals["counter"].eq(0xF0FF0FFF)
 
 		# Another example signal, for variety.
-		m.d.sync += self.toggle.eq(~self.toggle)
+		# m.d.sync += self.toggle.eq(~self.toggle)
+		if False: #not in use presently
+			m.d.sync += self.ila_signals["toggle"].eq(~self.ila_signals["toggle"])
 
 
 		# Create a set of registers...

@@ -6,7 +6,13 @@ Currently, only a n-async-FIFO interface for SDRAM is implemented.
 
 ## status
 
-As of Feb 2022, the ram-fifo interface passes simulation tests, but hardware tests are not yet implemented/working. 
+- As of Feb 2022, the ram-fifo interface passes simulation tests, but hardware tests are not yet implemented/working. 
+
+- As of 10 Feb 2022, we can now debug using the LUNA ILA (integrated logic analyser) library, via the amlib library! This records and displays on-FPGA signals.
+
+	To use, in the gui go to the `function interface` tab, then press `start` on the fifo test. That will trigger a logic analyser recording, which once it is sent back over wifi, will open a gtkwave viewer with the data. here's an early result! More usage details will be detailed later.
+	![demonstration of logic analyser recording in gtkwave viewer](tests/ulx3s_gui_test/other_files/gtkwave_viewer_works_as_an_on-fpga_logic_analyser!.png)
+
 
 Test performance:
 

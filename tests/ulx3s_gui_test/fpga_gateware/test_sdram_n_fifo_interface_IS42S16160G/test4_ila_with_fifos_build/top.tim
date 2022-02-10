@@ -1,0 +1,339 @@
+Info: constraining clock net 'clk25_0__io' to 25.00 MHz
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:       573/83640     0%
+Info:         logic LUTs:    339/83640     0%
+Info:         carry LUTs:     90/83640     0%
+Info:           RAM LUTs:     96/41820     0%
+Info:          RAMW LUTs:     48/20910     0%
+
+Info:      Total DFFs:       666/83640     0%
+
+Info: Packing IOs..
+Info: esp32_spi_0__gpio0__io feeds TRELLIS_IO pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0_0, removing $nextpnr_iobuf esp32_spi_0__gpio0__io.
+Info: pin 'pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0_0' constrained to Bel 'X0/Y86/PIOD'.
+Info: uart_0__tx__io feeds TRELLIS_IO pin_uart_0__tx.uart_0__tx_0, removing $nextpnr_obuf uart_0__tx__io.
+Info: pin 'pin_uart_0__tx.uart_0__tx_0' constrained to Bel 'X0/Y56/PIOC'.
+Info: uart_0__rx__io feeds TRELLIS_IO pin_uart_0__rx.uart_0__rx_0, removing $nextpnr_ibuf uart_0__rx__io.
+Info: pin 'pin_uart_0__rx.uart_0__rx_0' constrained to Bel 'X0/Y89/PIOB'.
+Info: uart_0__rts__io feeds TRELLIS_IO pin_uart_0__rts.uart_0__rts_0, removing $nextpnr_ibuf uart_0__rts__io.
+Info: pin 'pin_uart_0__rts.uart_0__rts_0' constrained to Bel 'X0/Y86/PIOB'.
+Info: uart_0__dtr__io feeds TRELLIS_IO pin_uart_0__dtr.uart_0__dtr_0, removing $nextpnr_ibuf uart_0__dtr__io.
+Info: pin 'pin_uart_0__dtr.uart_0__dtr_0' constrained to Bel 'X0/Y89/PIOD'.
+Info: led_7__io feeds TRELLIS_IO pin_led_7.led_7_0, removing $nextpnr_obuf led_7__io.
+Info: pin 'pin_led_7.led_7_0' constrained to Bel 'X0/Y41/PIOD'.
+Info: led_6__io feeds TRELLIS_IO pin_led_6.led_6_0, removing $nextpnr_obuf led_6__io.
+Info: pin 'pin_led_6.led_6_0' constrained to Bel 'X0/Y38/PIOD'.
+Info: led_5__io feeds TRELLIS_IO pin_led_5.led_5_0, removing $nextpnr_obuf led_5__io.
+Info: pin 'pin_led_5.led_5_0' constrained to Bel 'X0/Y44/PIOD'.
+Info: led_4__io feeds TRELLIS_IO pin_led_4.led_4_0, removing $nextpnr_obuf led_4__io.
+Info: pin 'pin_led_4.led_4_0' constrained to Bel 'X0/Y38/PIOB'.
+Info: led_3__io feeds TRELLIS_IO pin_led_3.led_3_0, removing $nextpnr_obuf led_3__io.
+Info: pin 'pin_led_3.led_3_0' constrained to Bel 'X0/Y38/PIOC'.
+Info: led_2__io feeds TRELLIS_IO pin_led_2.led_2_0, removing $nextpnr_obuf led_2__io.
+Info: pin 'pin_led_2.led_2_0' constrained to Bel 'X0/Y38/PIOA'.
+Info: led_1__io feeds TRELLIS_IO pin_led_1.led_1_0, removing $nextpnr_obuf led_1__io.
+Info: pin 'pin_led_1.led_1_0' constrained to Bel 'X0/Y35/PIOD'.
+Info: led_0__io feeds TRELLIS_IO pin_led_0.led_0_0, removing $nextpnr_obuf led_0__io.
+Info: pin 'pin_led_0.led_0_0' constrained to Bel 'X0/Y35/PIOC'.
+Info: esp32_spi_0__tx__io feeds TRELLIS_IO pin_esp32_spi_0__tx.esp32_spi_0__tx_0, removing $nextpnr_obuf esp32_spi_0__tx__io.
+Info: pin 'pin_esp32_spi_0__tx.esp32_spi_0__tx_0' constrained to Bel 'X0/Y50/PIOD'.
+Info: esp32_spi_0__rx__io feeds TRELLIS_IO pin_esp32_spi_0__rx.esp32_spi_0__rx_0, removing $nextpnr_ibuf esp32_spi_0__rx__io.
+Info: pin 'pin_esp32_spi_0__rx.esp32_spi_0__rx_0' constrained to Bel 'X0/Y56/PIOA'.
+Info: esp32_spi_0__gpio5_cs__io feeds TRELLIS_IO pin_esp32_spi_0__gpio5_cs.esp32_spi_0__gpio5_cs_0, removing $nextpnr_ibuf esp32_spi_0__gpio5_cs__io.
+Info: pin 'pin_esp32_spi_0__gpio5_cs.esp32_spi_0__gpio5_cs_0' constrained to Bel 'X0/Y83/PIOC'.
+Info: esp32_spi_0__gpio4_copi__io feeds TRELLIS_IO pin_esp32_spi_0__gpio4_copi.esp32_spi_0__gpio4_copi_0, removing $nextpnr_ibuf esp32_spi_0__gpio4_copi__io.
+Info: pin 'pin_esp32_spi_0__gpio4_copi.esp32_spi_0__gpio4_copi_0' constrained to Bel 'X0/Y53/PIOC'.
+Info: esp32_spi_0__gpio16_sclk__io feeds TRELLIS_IO pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0, removing $nextpnr_ibuf esp32_spi_0__gpio16_sclk__io.
+Info: pin 'pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0' constrained to Bel 'X0/Y89/PIOC'.
+Info: esp32_spi_0__gpio12_cipo__io feeds TRELLIS_IO pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0, removing $nextpnr_obuf esp32_spi_0__gpio12_cipo__io.
+Info: pin 'pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0' constrained to Bel 'X0/Y53/PIOD'.
+Info: esp32_spi_0__en__io feeds TRELLIS_IO pin_esp32_spi_0__en.esp32_spi_0__en_0, removing $nextpnr_obuf esp32_spi_0__en__io.
+Info: pin 'pin_esp32_spi_0__en.esp32_spi_0__en_0' constrained to Bel 'X0/Y47/PIOB'.
+Info: clk25_0__io feeds TRELLIS_IO pin_clk25_0.clk25_0_0, removing $nextpnr_ibuf clk25_0__io.
+Info: pin 'pin_clk25_0.clk25_0_0' constrained to Bel 'X0/Y47/PIOA'.
+Info: pin 'button_up_0__io$tr_io' constrained to Bel 'X126/Y89/PIOB'.
+Info: pin 'button_right_0__io$tr_io' constrained to Bel 'X126/Y17/PIOD'.
+Info: button_pwr_0__io feeds TRELLIS_IO pin_button_pwr_0.button_pwr_0_0, removing $nextpnr_ibuf button_pwr_0__io.
+Info: pin 'pin_button_pwr_0.button_pwr_0_0' constrained to Bel 'X6/Y0/PIOB'.
+Info: pin 'button_left_0__io$tr_io' constrained to Bel 'X6/Y95/PIOA'.
+Info: button_fire_1__io feeds TRELLIS_IO pin_button_fire_1.button_fire_1_0, removing $nextpnr_ibuf button_fire_1__io.
+Info: pin 'pin_button_fire_1.button_fire_1_0' constrained to Bel 'X4/Y95/PIOB'.
+Info: button_fire_0__io feeds TRELLIS_IO pin_button_fire_0.button_fire_0_0, removing $nextpnr_ibuf button_fire_0__io.
+Info: pin 'pin_button_fire_0.button_fire_0_0' constrained to Bel 'X4/Y95/PIOA'.
+Info: pin 'button_down_0__io$tr_io' constrained to Bel 'X6/Y95/PIOB'.
+Info: Packing constants..
+Info: Packing carries...
+Info: Finding LUTFF pairs...
+Info: Packing LUT5-7s...
+Info: Finding LUT-LUT pairs...
+Info: Packing paired LUTs into a SLICE...
+Info: Packing unpaired LUTs into a SLICE...
+Info: Packing unpaired FFs into a SLICE...
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net cd_sync_clk25_0__i to global network
+Info: Checksum: 0xcf32dade
+
+Info: Annotating ports with timing budgets for target frequency 12.00 MHz
+Info: Checksum: 0xfd60ffe8
+
+Info: Device utilisation:
+Info: 	       TRELLIS_SLICE:   490/41820     1%
+Info: 	          TRELLIS_IO:    28/  365     7%
+Info: 	                DCCA:     1/   56     1%
+Info: 	              DP16KD:     0/  208     0%
+Info: 	          MULT18X18D:     0/  156     0%
+Info: 	              ALU54B:     0/   78     0%
+Info: 	             EHXPLLL:     0/    4     0%
+Info: 	             EXTREFB:     0/    2     0%
+Info: 	                DCUA:     0/    2     0%
+Info: 	           PCSCLKDIV:     0/    2     0%
+Info: 	             IOLOGIC:     0/  224     0%
+Info: 	            SIOLOGIC:     0/  141     0%
+Info: 	                 GSR:     1/    1   100%
+Info: 	               JTAGG:     0/    1     0%
+Info: 	                OSCG:     0/    1     0%
+Info: 	               SEDGA:     0/    1     0%
+Info: 	                 DTR:     0/    1     0%
+Info: 	             USRMCLK:     0/    1     0%
+Info: 	             CLKDIVF:     0/    4     0%
+Info: 	           ECLKSYNCB:     0/   10     0%
+Info: 	             DLLDELD:     0/    8     0%
+Info: 	              DDRDLL:     0/    4     0%
+Info: 	             DQSBUFM:     0/   14     0%
+Info: 	     TRELLIS_ECLKBUF:     0/    8     0%
+Info: 	        ECLKBRIDGECS:     0/    2     0%
+Info: 	                DCSC:     0/    2     0%
+
+Info: Placed 29 cells based on constraints.
+Info: Creating initial analytic placement for 372 cells, random placement wirelen = 55081.
+Info:     at initial placer iter 0, wirelen = 485
+Info:     at initial placer iter 1, wirelen = 470
+Info:     at initial placer iter 2, wirelen = 466
+Info:     at initial placer iter 3, wirelen = 455
+Info: Running main analytical placer.
+Info:     at iteration #1, type TRELLIS_SLICE: wirelen solved = 467, spread = 3362, legal = 3517; time = 0.03s
+Info:     at iteration #2, type TRELLIS_SLICE: wirelen solved = 608, spread = 3050, legal = 3128; time = 0.04s
+Info:     at iteration #3, type TRELLIS_SLICE: wirelen solved = 654, spread = 2559, legal = 2663; time = 0.03s
+Info:     at iteration #4, type TRELLIS_SLICE: wirelen solved = 704, spread = 2613, legal = 2685; time = 0.03s
+Info:     at iteration #5, type TRELLIS_SLICE: wirelen solved = 832, spread = 2316, legal = 2483; time = 0.03s
+Info:     at iteration #6, type TRELLIS_SLICE: wirelen solved = 925, spread = 2388, legal = 2565; time = 0.03s
+Info:     at iteration #7, type TRELLIS_SLICE: wirelen solved = 1005, spread = 2235, legal = 2422; time = 0.03s
+Info:     at iteration #8, type TRELLIS_SLICE: wirelen solved = 1074, spread = 2287, legal = 2375; time = 0.03s
+Info:     at iteration #9, type TRELLIS_SLICE: wirelen solved = 1273, spread = 2191, legal = 2384; time = 0.03s
+Info:     at iteration #10, type TRELLIS_SLICE: wirelen solved = 1232, spread = 2207, legal = 2370; time = 0.03s
+Info:     at iteration #11, type TRELLIS_SLICE: wirelen solved = 1289, spread = 2175, legal = 2364; time = 0.03s
+Info:     at iteration #12, type TRELLIS_SLICE: wirelen solved = 1308, spread = 2315, legal = 2447; time = 0.03s
+Info:     at iteration #13, type TRELLIS_SLICE: wirelen solved = 1385, spread = 2297, legal = 2464; time = 0.03s
+Info:     at iteration #14, type TRELLIS_SLICE: wirelen solved = 1499, spread = 2158, legal = 2416; time = 0.03s
+Info:     at iteration #15, type TRELLIS_SLICE: wirelen solved = 1450, spread = 2209, legal = 2456; time = 0.03s
+Info:     at iteration #16, type TRELLIS_SLICE: wirelen solved = 1485, spread = 2289, legal = 2468; time = 0.03s
+Info: HeAP Placer Time: 0.67s
+Info:   of which solving equations: 0.41s
+Info:   of which spreading cells: 0.07s
+Info:   of which strict legalisation: 0.01s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 269, wirelen = 2364
+Info:   at iteration #5: temp = 0.000000, timing cost = 182, wirelen = 2073
+Info:   at iteration #10: temp = 0.000000, timing cost = 204, wirelen = 1997
+Info:   at iteration #13: temp = 0.000000, timing cost = 200, wirelen = 1978 
+Info: SA placement time 0.63s
+
+Info: Max frequency for clock '$glbnet$cd_sync_clk25_0__i': 89.33 MHz (PASS at 25.00 MHz)
+
+Info: Max delay <async>                            -> <async>                           : 13.08 ns
+Info: Max delay <async>                            -> posedge $glbnet$cd_sync_clk25_0__i: 9.80 ns
+Info: Max delay posedge $glbnet$cd_sync_clk25_0__i -> <async>                           : 5.73 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 3 endpoint(s)
+Info:          + represents [1,3) endpoint(s)
+Info: [ 28805,  31496) |****************+
+Info: [ 31496,  34187) |************************************************************ 
+Info: [ 34187,  36878) |******************************************+
+Info: [ 36878,  39569) |**********************************************************+
+Info: [ 39569,  42260) | 
+Info: [ 42260,  44951) | 
+Info: [ 44951,  47642) | 
+Info: [ 47642,  50333) | 
+Info: [ 50333,  53024) | 
+Info: [ 53024,  55715) | 
+Info: [ 55715,  58406) | 
+Info: [ 58406,  61097) | 
+Info: [ 61097,  63788) | 
+Info: [ 63788,  66479) | 
+Info: [ 66479,  69170) | 
+Info: [ 69170,  71861) |+
+Info: [ 71861,  74552) |+
+Info: [ 74552,  77243) | 
+Info: [ 77243,  79934) |**+
+Info: [ 79934,  82625) |***************+
+Info: Checksum: 0xb780bfff
+Info: Routing globals...
+Info:     routing clock net $glbnet$cd_sync_clk25_0__i using global 0
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 2484 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |      280        719 |  280   719 |      1787|       0.23       0.23|
+Info:       2000 |      545       1454 |  265   735 |      1101|       0.21       0.44|
+Info:       3000 |      638       2361 |   93   907 |       207|       0.18       0.62|
+Info:       3223 |      652       2571 |   14   210 |         0|       0.05       0.67|
+Info: Routing complete.
+Info: Router1 time 0.67s
+Info: Checksum: 0xd5d0ea93
+
+Info: Critical path report for clock '$glbnet$cd_sync_clk25_0__i' (posedge -> posedge):
+Info: curr total
+Info:  0.5  0.5  Source dut.spi_registers.interface.command_TRELLIS_FF_Q_6_SLICE.Q0
+Info:  1.0  1.5    Net dut.spi_registers._address[0] budget 3.075000 ns (6,60) -> (7,60)
+Info:                Sink dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.B0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  1.9  Source dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX0
+Info:  0.0  1.9    Net dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D1 budget 0.000000 ns (7,60) -> (7,60)
+Info:                Sink dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:157.62-157.64
+Info:  0.2  2.1  Source dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX1
+Info:  0.0  2.1    Net dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1 budget 0.000000 ns (7,60) -> (7,60)
+Info:                Sink dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:157.70-157.72
+Info:  0.2  2.4  Source dut.spi_registers.r_rdy_LUT4_D_C_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.OFX1
+Info:  1.0  3.4    Net dut.spi_registers.r_rdy_LUT4_D_C[1] budget 3.074000 ns (7,60) -> (8,56)
+Info:                Sink dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2_A0_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  3.6  Source dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2_A0_LUT4_Z_SLICE.F1
+Info:  0.5  4.1    Net dut.spi_registers._is_write_LUT4_C_Z[4] budget 3.074000 ns (8,56) -> (8,56)
+Info:                Sink dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2_A0_LUT4_Z_SLICE.D0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  4.4  Source dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2_A0_LUT4_Z_SLICE.F0
+Info:  1.4  5.8    Net dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2_A0 budget 3.074000 ns (8,56) -> (9,52)
+Info:                Sink dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2$CCU2_SLICE.A0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:341
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:30.22-30.23
+Info:  0.4  6.3  Source dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2$CCU2_SLICE.FCO
+Info:  0.0  6.3    Net dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_2_COUT[2] budget 0.000000 ns (9,52) -> (9,52)
+Info:                Sink dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_1$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:341
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:38.23-38.25
+Info:  0.4  6.7  Source dut.spi_registers.unbuffered.consume_enc.i_CCU2C_S0_1$CCU2_SLICE.F0
+Info:  1.2  7.9    Net dut.spi_registers.unbuffered.consume_enc_i[2] budget 13.116000 ns (9,52) -> (8,53)
+Info:                Sink dut.spi_registers.unbuffered.storage.0.1.0$DPRAM1_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:388
+Info:  0.2  8.1  Source dut.spi_registers.unbuffered.storage.0.1.0$DPRAM1_SLICE.F1
+Info:  0.9  9.0    Net dut.spi_registers.unbuffered.storage.0.0.0_DO[0] budget 5.246000 ns (8,53) -> (8,54)
+Info:                Sink dut.spi_registers.unbuffered.storage.0.0.0_DO_LUT4_B_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  9.2  Source dut.spi_registers.unbuffered.storage.0.0.0_DO_LUT4_B_SLICE.F1
+Info:  0.0  9.3    Net dut.spi_registers.unbuffered.storage.0.0.0_DO_LUT4_B_Z[3] budget 5.246000 ns (8,54) -> (8,54)
+Info:                Sink dut.spi_registers.unbuffered.storage.0.0.0_DO_LUT4_B_SLICE.DI1
+Info:  0.0  9.3  Setup dut.spi_registers.unbuffered.storage.0.0.0_DO_LUT4_B_SLICE.DI1
+Info: 3.2 ns logic, 6.0 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> '<async>':
+Info: curr total
+Info:  0.0  0.0  Source pin_button_pwr_0.button_pwr_0_0.O
+Info:  4.6  4.6    Net pin_button_pwr_0.button_pwr_0__i_n budget 41.549000 ns (6,0) -> (2,60)
+Info:                Sink pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0__o_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/vendor/lattice_ecp5.py:464
+Info:  0.2  4.8  Source pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0__o_LUT4_Z_SLICE.F1
+Info:  1.7  6.5    Net pin_esp32_spi_0__en_esp32_spi_0__en__o budget 41.548000 ns (2,60) -> (0,47)
+Info:                Sink pin_esp32_spi_0__en.esp32_spi_0__en_0.I
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info: 0.2 ns logic, 6.2 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$cd_sync_clk25_0__i':
+Info: curr total
+Info:  0.0  0.0  Source pin_button_fire_0.button_fire_0_0.O
+Info:  3.2  3.2    Net dut_button_fire_0__i budget 0.000000 ns (4,95) -> (6,57)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_D_Z_PFUMX_BLUT_SLICE.C0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info:  0.4  3.6  Source pin_button_fire_0.button_fire_0__i_LUT4_D_Z_PFUMX_BLUT_SLICE.OFX0
+Info:  0.0  3.6    Net dut.U$$1.stage1_LUT4_D_Z_L6MUX21_Z_D1 budget 0.000000 ns (6,57) -> (6,57)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_D_Z_PFUMX_BLUT_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:141.38-141.40
+Info:  0.2  3.9  Source pin_button_fire_0.button_fire_0__i_LUT4_D_Z_PFUMX_BLUT_SLICE.OFX1
+Info:  0.9  4.8    Net dut.U$$1.stage1_LUT4_D_Z[3] budget 0.000000 ns (6,57) -> (6,54)
+Info:                Sink dut.spi_registers.interface.current_word$next_L6MUX21_Z_D0_PFUMX_Z_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  5.2  Source dut.spi_registers.interface.current_word$next_L6MUX21_Z_D0_PFUMX_Z_SLICE.OFX0
+Info:  0.0  5.2    Net dut.spi_registers.interface.current_word$next_L6MUX21_Z_D0 budget 0.000000 ns (6,54) -> (6,54)
+Info:                Sink dut.spi_registers.interface.current_word$next_L6MUX21_Z_D1_PFUMX_Z_SLICE.FXA
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:141.34-141.36
+Info:  0.2  5.5  Source dut.spi_registers.interface.current_word$next_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX1
+Info:  0.1  5.6    Net dut.spi_registers.interface.current_word$next[0] budget 9.428000 ns (6,54) -> (6,54)
+Info:                Sink dut.spi_registers.interface.current_word$next_L6MUX21_Z_D1_PFUMX_Z_SLICE.DI1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/io/spi.py:507
+Info:  0.0  5.6  Setup dut.spi_registers.interface.current_word$next_L6MUX21_Z_D1_PFUMX_Z_SLICE.DI1
+Info: 1.3 ns logic, 4.3 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$cd_sync_clk25_0__i' -> '<async>':
+Info: curr total
+Info:  0.5  0.5  Source dut.spi_registers.interface.command_TRELLIS_FF_Q_SLICE.Q0
+Info:  1.2  1.7    Net dut.spi_registers._address[6] budget 9.545000 ns (8,60) -> (7,59)
+Info:                Sink dut.spi_registers._is_write_LUT4_C_Z_PFUMX_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/io/spi.py:474
+Info:  0.4  2.1  Source dut.spi_registers._is_write_LUT4_C_Z_PFUMX_Z_SLICE.OFX0
+Info:  1.2  3.3    Net dut.spi_registers._is_write_LUT4_C_Z[0] budget 12.891000 ns (7,59) -> (6,55)
+Info:                Sink dut.U$$1.stage1_LUT4_D_Z_PFUMX_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  3.7  Source dut.U$$1.stage1_LUT4_D_Z_PFUMX_Z_SLICE.OFX0
+Info:  0.7  4.4    Net dut.U$$1.stage1_LUT4_D_Z[4] budget 27.334999 ns (6,55) -> (6,54)
+Info:                Sink dut.spi_registers.interface.current_word$next_L6MUX21_Z_D0_PFUMX_Z_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.0  4.4  Setup dut.spi_registers.interface.current_word$next_L6MUX21_Z_D0_PFUMX_Z_SLICE.M0
+Info: 1.3 ns logic, 3.1 ns routing
+
+Info: Max frequency for clock '$glbnet$cd_sync_clk25_0__i': 108.08 MHz (PASS at 25.00 MHz)
+
+Info: Max delay <async>                            -> <async>                           : 6.46 ns
+Info: Max delay <async>                            -> posedge $glbnet$cd_sync_clk25_0__i: 5.56 ns
+Info: Max delay posedge $glbnet$cd_sync_clk25_0__i -> <async>                           : 4.39 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 3 endpoint(s)
+Info:          + represents [1,3) endpoint(s)
+Info: [ 30748,  33365) |************+
+Info: [ 33365,  35982) |*******************************************************+
+Info: [ 35982,  38599) |************************************************************ 
+Info: [ 38599,  41216) |***************************+
+Info: [ 41216,  43833) | 
+Info: [ 43833,  46450) | 
+Info: [ 46450,  49067) | 
+Info: [ 49067,  51684) | 
+Info: [ 51684,  54301) | 
+Info: [ 54301,  56918) | 
+Info: [ 56918,  59535) | 
+Info: [ 59535,  62152) | 
+Info: [ 62152,  64769) | 
+Info: [ 64769,  67386) | 
+Info: [ 67386,  70003) | 
+Info: [ 70003,  72620) | 
+Info: [ 72620,  75237) | 
+Info: [ 75237,  77854) |+
+Info: [ 77854,  80471) |**+
+Info: [ 80471,  83088) |*************+
+
+Info: Program finished normally.

@@ -43,7 +43,7 @@ from amlib.io import SPIRegisterInterface
 
 import sys, os
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common 
+from test_common import fpga_mcu_interface 
 
 class Top(Elaboratable):
 	def elaborate(self, platform):

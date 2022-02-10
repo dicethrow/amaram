@@ -18,7 +18,7 @@ import amaram
 from amaram.sdram_n_fifo_interface_IS42S16160G import sdram_controller
 
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common
+from test_common import fpga_mcu_interface
 
 # inspired by the ilaSharedBusExample from luna
 
@@ -26,9 +26,9 @@ import test_common
 """ 
 micropython tests:
 
-import test_common, fpga_io
+from test_common import fpga_mcu_interface, fpga_io
 
-addrs = test_common.register_addresses 
+addrs = test_common.fpga_mcu_interface.register_addresses 
 fpga_io.alt_fifo_io(32) # match the 'sample depth'?
 fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger? 
 fpga_io.reg_io(addrs.REG_ILA_TRIG_RW)
@@ -120,8 +120,8 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 		# Create a set of registers...
 		spi_registers = SPIRegisterInterface(
-			address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
-			register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+			address_size=fpga_mcu_interface.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+			register_size=fpga_mcu_interface.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
 		)
 		m.submodules.spi_registers = spi_registers
 
@@ -138,7 +138,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 		# Add a simple ID register to demonstrate our registers.
 		# spi_registers.add_read_only_register(REGISTER_ID, read=0xDEADBEEF)
-		addrs = test_common.register_addresses
+		addrs = fpga_mcu_interface.register_addresses
 		spi_registers.add_read_only_register(address=addrs.REG_BUTTONS_R, read=Cat(self.i_buttons["fireA"], self.i_buttons["fireB"])) # buttons
 		
 		if False: # leds to test/show register io
@@ -217,7 +217,7 @@ if __name__ == "__main__":
 			i_buttons = tb_buttons, leds = tb_leds
 		)
 
-		addrs = test_common.register_addresses
+		addrs = fpga_mcu_interface.register_addresses
 
 		def spi_tests():
 			yield Active()
@@ -323,8 +323,8 @@ if __name__ == "__main__":
 
 				# ### set up the SPI register test interface
 				# m.submodules.reg_if = reg_if = SPIRegisterInterface(
-				# 	address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
-				# 	register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+				# 	address_size=fpga_mcu_interface.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+				# 	register_size=fpga_mcu_interface.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
 				# 	support_size_autonegotiation=True # see the source docs of this class
 				# )
 				m.submodules.dut = dut = dram_ulx3s_upload_test_IS42S16160G(

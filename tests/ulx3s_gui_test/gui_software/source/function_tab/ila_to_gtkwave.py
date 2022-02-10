@@ -12,8 +12,7 @@ from amlib.utils.bits import bits
 
 import sys, os, json
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common
-
+from test_common import fpga_gui_interface
 
 class myILAFrontend(ILAFrontend):
 	""" 
@@ -43,7 +42,7 @@ class myILAFrontend(ILAFrontend):
 				self.bytes_per_sample = self.bits_per_sample // 8
 
 		self.src_data = data
-		super().__init__(placeholder_ila_class(**test_common.get_ila_constructor_kwargs()))
+		super().__init__(placeholder_ila_class(**fpga_gui_interface.get_ila_constructor_kwargs()))
 
 	# def _split_samples(self, all_samples):
 	# 	""" Returns an iterator that iterates over each sample in the raw binary of samples. """

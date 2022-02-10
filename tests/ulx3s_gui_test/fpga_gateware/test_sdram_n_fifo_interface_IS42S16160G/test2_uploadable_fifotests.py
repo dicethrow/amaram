@@ -28,7 +28,7 @@ import sys, os
 from termcolor import cprint
 
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common
+from test_common import fpga_mcu_interface
 
 class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 	def __init__(self, copi, cipo, sclk, csn, i_buttons, leds):
@@ -46,8 +46,8 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 		### set up the SPI register test interface
 		m.submodules.reg_if = reg_if = SPIRegisterInterface(
-			address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
-			register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+			address_size=fpga_mcu_interface.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+			register_size=fpga_mcu_interface.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
 			support_size_autonegotiation=True # see the source docs of this class
 		)
 		#reg_if.m = m
@@ -67,7 +67,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			m.submodules += FFSynchronizer(o=reg_if.spi.sck, i=self.sclk)
 			m.submodules += FFSynchronizer(o=reg_if.spi.cs, i= self.csn) # note: inverted, to match earlier tests
 
-		addrs = test_common.register_addresses
+		addrs = fpga_mcu_interface.register_addresses
 		reg_if.add_read_only_register(address=addrs.REG_BUTTONS_R, read=Cat(self.i_buttons["fireA"], self.i_buttons["fireB"])) # buttons
 		reg_if.add_register(address=addrs.REG_LEDS_RW, value_signal=self.leds)
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
 
 
-		addrs = test_common.register_addresses
+		addrs = fpga_mcu_interface.register_addresses
 
 		def spi_tests():
 			yield Active()
@@ -264,8 +264,8 @@ if __name__ == "__main__":
 
 				# ### set up the SPI register test interface
 				# m.submodules.reg_if = reg_if = SPIRegisterInterface(
-				# 	address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
-				# 	register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+				# 	address_size=fpga_mcu_interface.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+				# 	register_size=fpga_mcu_interface.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
 				# 	support_size_autonegotiation=True # see the source docs of this class
 				# )
 				m.submodules.dut = dut = dram_ulx3s_upload_test_IS42S16160G(

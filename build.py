@@ -180,6 +180,7 @@ class fpga_interface(lxdev.RemoteClient):
 		def simulate_file(self):			
 			cprint(f"simulate of {self.rel_remote_filename}...", "yellow")
 			result, error = self.fpga_interface.execute_commands(f"python3 {self.rel_remote_filename} simulate -c 10", get_stderr=True, within_remote_working_dir=True)
+			
 			assert not any("Traceback" in line for line in result+error), f"Failed fpga simulate with error of {result},{error}"
 			assert not any("[Errno" in line for line in result+error), f"Failed fpga simulate with error of {result},{error}"
 			cprint(" OK", "green", flush=True)

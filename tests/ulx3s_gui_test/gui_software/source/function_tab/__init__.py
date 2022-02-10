@@ -14,11 +14,12 @@ from PyQt5.QtWidgets import (
 	QApplication, QMainWindow)
 
 import sys, os, json
-sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common
 
 from amlib.debug.ila import ILAFrontend
 from . import ila_to_gtkwave 
+
+from test_common import fpga_gui_interface
+
 
 class labelled_number_entry(QWidget):
 	def __init__(self, label, default_content = None):
@@ -39,7 +40,7 @@ class fifo_test_interface(QWidget):
 		self.fifo_id = QLineEdit(str(0))
 		self.fifo_id.setValidator(QtGui.QIntValidator())
 
-		self.test_size = QLineEdit(str(10))
+		self.test_size = QLineEdit(str(fpga_gui_interface.get_ila_constructor_kwargs()["sample_depth"]))
 		self.test_size.setValidator(QtGui.QIntValidator())
 
 		self.trigger = QPushButton("Start")

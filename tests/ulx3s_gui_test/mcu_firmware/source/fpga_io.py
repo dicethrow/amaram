@@ -4,9 +4,20 @@ from machine import Pin, SoftSPI, SPI
 import struct, time
 from termcolor import cprint
 
-from test_common import register_addresses, spi_register_interface, get_member
+from test_common.fpga_mcu_interface import register_addresses, spi_register_interface, get_member
 
-spi = SPI(1, polarity=0, phase=1, bits=8, firstbit=SPI.MSB, baudrate = int(4e6), sck=Pin(16), mosi=Pin(4), miso=Pin(12))
+
+# tried: spi, fifo
+# 1,1 -> unreliabe although value seems right? , first word off by a bit
+# 1, 0 -> wrong values,	the whole thing seems wrong, first word also off
+# 0, 0 -> the autoneg = 0x3FFF, not 0xFFF; so not an option
+# 1,1 again, also with the ila at 1,1 -> reads right reg values,
+#	- however sometimes 0x0001 is read as 0x8000 , as in sometimes spi is off by a bit.
+#	this also happens to the first fifo thing. Reduce clock speed? try 4e6 -> 1e6
+#		- ugh but at that point, 0xFFFF is read as 0xFFFE -> ie its missing the rightmost bit
+#		- but the fifo interface works perfectly! woo! 
+# note the SPIRegisterInterface() will always sample on the falling edge of sck -> so polarity=phase
+spi = SPI(1, polarity=1, phase=1, bits=8, firstbit=SPI.MSB, baudrate = int(1e6), sck=Pin(16), mosi=Pin(4), miso=Pin(12))
 csn = Pin(5, Pin.OUT)
 csn.on()
 

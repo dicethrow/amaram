@@ -21,7 +21,7 @@ from threading import Thread
 from termcolor import cprint
 
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-from test_common import register_addresses
+from test_common.fpga_mcu_interface import register_addresses
 from test_common.mcu_gui_interface import PORT, TIMEOUT
 
 # from iot import server
@@ -113,27 +113,30 @@ class connectionManager(QWidget):
 						unhandled_cipo_data.append(cipo_data)
 
 					inspected_queue_item_count = 0
-					new_unhandled_cipo_data = []
-					while inspected_queue_item_count < self.unresponded_queue.qsize(): # is this while-true bad? I think it just makes clear it could get stuck
+					
+					while inspected_queue_item_count <= self.unresponded_queue.qsize(): # is this while-true bad? I think it just makes clear it could get stuck
 						sent_record = await self.unresponded_queue.get()
+						cprint(sent_record["copi_data"], "yellow")
 						inspected_queue_item_count += 1
 						
 						sent_record_matched = False
+						new_unhandled_cipo_data = []
 						for cipo_data in unhandled_cipo_data:
-							cprint(sent_record["copi_data"], "yellow")
+							cprint(cipo_data, "yellow")
 
 							if is_subdict(sent_record["copi_data"], cipo_data):
 								send_response_to_caller(sent_record, cipo_data)
 								sent_record_matched = True
+								cprint("match", "yellow")
+								break
 
 							else:
 								new_unhandled_cipo_data.append(cipo_data)
+
+						unhandled_cipo_data = new_unhandled_cipo_data
 						
 						if not sent_record_matched:
 							await self.unresponded_queue.put(sent_record) # put back to check next time
-					
-					unhandled_cipo_data = new_unhandled_cipo_data
-
 
 				elif "bulk_data" in cipo_data:
 					assert bulk_data_expected

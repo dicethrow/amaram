@@ -25,10 +25,13 @@ led = None
 # End of optional LED
 from iot.primitives import queue
 
-from test_common.mcu_gui_interface import MY_ID, SERVER, PORT, SSID, PW, TIMEOUT
-import test_common
+from test_common import mcu_gui_interface, fpga_mcu_interface
+from test_common.fpga_mcu_interface import register_addresses as addrs
+# addrs = fpga_mcu_interface.register_addresses
+
 import fpga_io
-addrs = test_common.register_addresses 
+
+
 
 from termcolor import cprint
 
@@ -106,7 +109,13 @@ class spi_interface():
 class App(client.Client):
 	def __init__(self, verbose):
 		self.verbose = verbose # what is 'verbose' and how does it work?
-		self.cl = client.Client(MY_ID, SERVER, PORT, SSID, PW, TIMEOUT, 
+		self.cl = client.Client(
+			mcu_gui_interface.MY_ID, 
+			mcu_gui_interface.SERVER, 
+			mcu_gui_interface.PORT, 
+			mcu_gui_interface.SSID, 
+			mcu_gui_interface.PW, 
+			mcu_gui_interface.TIMEOUT, 
 			conn_cb=self.constate, verbose=verbose, led=led, wdog=False)
 								
 	

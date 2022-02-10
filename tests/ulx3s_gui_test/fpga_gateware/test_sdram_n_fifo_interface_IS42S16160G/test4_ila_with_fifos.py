@@ -18,7 +18,7 @@ import amaram
 from amaram.sdram_n_fifo_interface_IS42S16160G import sdram_controller
 
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common
+from test_common import fpga_gui_interface, fpga_mcu_interface
 
 # inspired by the ilaSharedBusExample from luna
 
@@ -26,9 +26,9 @@ import test_common
 """ 
 micropython tests:
 
-import test_common, fpga_io
+from test_common import fpga_mcu_interface, fpga_io
 
-addrs = test_common.register_addresses 
+addrs = test_common.fpga_mcu_interface.register_addresses 
 fpga_io.alt_fifo_io(32) # match the 'sample depth'?
 fpga_io.reg_io(addrs.REG_ILA_TRIG_RW, True) # trigger? 
 fpga_io.reg_io(addrs.REG_ILA_TRIG_RW)
@@ -48,30 +48,32 @@ run_ila()
 """
 
 class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
-	def __init__(self, copi, cipo, sclk, i_buttons, leds,  csn=None, cs=None):
+	def __init__(self, copi, cipo, sclk, i_buttons, leds,  csn=None, cs=None, o_digital_discovery=None):
 		# external spi interface
 		self.copi = copi 
 		self.cipo = cipo
 		self.sclk = sclk
 
-		if type(cs) == type(None):
-			self.invert_csn = True
-			self.cs = Signal()
-		else:
+		if type(cs) != type(None):
 			self.invert_csn = False
 			self.cs = cs
+		else:
+			self.invert_csn = True
+			self.cs = Signal()			
 		self.csn = csn
 
+		self.o_digital_discovery = o_digital_discovery
+		
 		self.i_buttons = i_buttons
 		self.leds = leds
 
 		# self.ila_input = Signal(16)
 		# self.counter = Signal(32)#(31) # so with toggle, 32bit width, instead of 28
 		# self.toggle  = Signal()
-		self.ila_signals = test_common.get_ila_signals_dict()
+		self.ila_signals = fpga_gui_interface.get_ila_signals_dict()
 		self.ila = SyncSerialILA(
-			**test_common.get_ila_constructor_kwargs(),
-			clock_polarity=0, clock_phase=1 # is this right? it works though
+			**fpga_gui_interface.get_ila_constructor_kwargs(),
+			clock_polarity=1, clock_phase=1 
 		)
 		
 
@@ -84,20 +86,46 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		if self.invert_csn:
 			m.d.comb += self.cs.eq(~self.csn)
 
-		board_spi = SPIDeviceBus()
-		m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi)
-		m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo)
-		m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
-		m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs)
+
+
+		try_to_use_spi_clk = False
+		if try_to_use_spi_clk:
+			board_spi = SPIDeviceBus()
+			m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk, o_domain="sync")
+
+			# try to use a spi clock?
+			spi_clk = ClockDomain("spi_clk")
+			m.domains += spi_clk
+			m.d.comb += spi_clk.clk.eq(board_spi.sck)
+
+			m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi, o_domain="spi_clk")
+			m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo, o_domain="spi_clk")
+			# m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
+			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs, o_domain="spi_clk")
+		else:
+			board_spi = SPIDeviceBus()
+			m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi)
+			# m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo)
+			# # note that it seems we need to delay the sdo by one sclk cycle...
+			# last_sdo = Signal()
+			# with m.If(Rose(board_spi.sck)): # then the value we read now, we set on the next falling edge
+			# 	m.d.sync += last_sdo.eq(board_spi.sdo)
+			# with m.Elif(Fell(board_spi.sck)): # set it on the falling edge
+			# 	m.d.sync += self.cipo.eq(last_sdo)
+			m.d.comb += self.cipo.eq(board_spi.sdo) # ah! no need for synchronisation?
+			m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
+			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs)
+		
 
 		# watch spi signals?
-		m.d.comb += [
-			self.ila_signals["spi_monitor"].sdi.eq(board_spi.sdi),
-			self.ila_signals["spi_monitor"].sdo.eq(board_spi.sdo),
-			self.ila_signals["spi_monitor"].sck.eq(board_spi.sck),
-			self.ila_signals["spi_monitor"].cs.eq(board_spi.cs),
+		m.d.sync += [
+			self.ila_signals["spi_monitor0"].sdi.eq(board_spi.sdi),
+			self.ila_signals["spi_monitor0"].sdo.eq(board_spi.sdo),
+			self.ila_signals["spi_monitor0"].sck.eq(board_spi.sck),
+			self.ila_signals["spi_monitor0"].cs.eq(board_spi.cs),
 		]
 
+		# m.d.comb += self.ila.trigger.eq(Fell(board_spi.cs)) # try trigger this way
 
 		# Create an SPI bus for our ILA.
 		ila_spi = SPIDeviceBus()
@@ -133,17 +161,28 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 		# Create a set of registers...
 		spi_registers = SPIRegisterInterface(
-			address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
-			register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+			address_size=fpga_mcu_interface.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+			register_size=fpga_mcu_interface.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
 		)
 		m.submodules.spi_registers = spi_registers
 
 		# ... and an SPI bus for them.
 		reg_spi = SPIDeviceBus()
 		m.d.comb += [
-			spi_registers.spi .connect(reg_spi),
+			# spi_registers.spi .connect(reg_spi),
+			spi_registers.spi.sck.eq(reg_spi.sck),
+			spi_registers.spi.cs.eq(reg_spi.cs),
+			spi_registers.spi.sdi.eq(reg_spi.sdi),
+
+			# use straight cs here
 			reg_spi.cs        .eq(board_spi.cs)
 		]
+		# note that it seems we need to delay the sdo by one sclk cycle...
+		last_sdo = Signal()
+		with m.If(Rose(reg_spi.sck)): # then the value we read now, we set on the next falling edge
+			m.d.sync += last_sdo.eq(spi_registers.spi.sdo)
+		with m.Elif(Fell(reg_spi.sck)): # set it on the falling edge
+			m.d.sync += reg_spi.sdo.eq(last_sdo)
 
 		# Multiplex our ILA and register SPI busses.
 		m.submodules.mux = SPIMultiplexer([ila_spi, reg_spi])
@@ -151,7 +190,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 		# Add a simple ID register to demonstrate our registers.
 		# spi_registers.add_read_only_register(REGISTER_ID, read=0xDEADBEEF)
-		addrs = test_common.register_addresses
+		addrs = fpga_mcu_interface.register_addresses
 		spi_registers.add_read_only_register(address=addrs.REG_BUTTONS_R, read=Cat(self.i_buttons["fireA"], self.i_buttons["fireB"])) # buttons
 		
 		if False: # leds to test/show register io
@@ -176,6 +215,15 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		spi_registers.add_register(address=addrs.REG_FIFO0_WRITE_W,		value_signal=test_fifo0.w_data,	write_strobe=test_fifo0.w_en)
 		spi_registers.add_register(address=addrs.REG_FIFO0_WRITERDY_R,	value_signal=test_fifo0.w_rdy)
 		spi_registers.add_register(address=addrs.REG_FIFO0_WRITELVL_R,	value_signal=test_fifo0.w_level)
+
+		# route the digital discovery to monitor spi pins?
+		if type(self.o_digital_discovery) != type(None):
+			m.d.comb += [
+				self.o_digital_discovery.bus[0].eq(self.cs), 	# cs
+				self.o_digital_discovery.bus[1].eq(self.sclk),	# clk
+				self.o_digital_discovery.bus[2].eq(self.copi),	# mosi
+				self.o_digital_discovery.bus[3].eq(self.cipo)	# miso
+			]
 
 
 		# Attach the LEDs and User I/O to the MSBs of our counter.
@@ -213,7 +261,7 @@ if __name__ == "__main__":
 
 		# from simulation_test import dram_sim_model_IS42S16160G
 
-		# #m.submodules.dram_testdriver = dram_testdriver = dram_testdriver()
+		# #m.submodules.dram_testdriver = ram_testdriver = dram_testdriver()
 		# m.submodules.m_sdram_controller = m_sdram_controller = sdram_controller()
 		# m.submodules.m_dram_model = m_dram_model = dram_sim_model_IS42S16160G(m_sdram_controller, sdram_freq)		
 
@@ -240,7 +288,7 @@ if __name__ == "__main__":
 			i_buttons = tb_buttons, leds = tb_leds
 		)
 
-		addrs = test_common.register_addresses
+		addrs = fpga_mcu_interface.register_addresses
 
 		def spi_tests():
 			yield Active()
@@ -331,6 +379,7 @@ if __name__ == "__main__":
 			def elaborate(self, platform):
 				leds = Cat([platform.request("led", i) for i in range(8)])
 				esp32 = platform.request("esp32_spi")
+				o_digital_discovery = platform.request("digital_discovery")
 				io_uart = platform.request("uart")
 				i_buttons = {
 					"pwr" : platform.request("button_pwr", 0),
@@ -346,13 +395,19 @@ if __name__ == "__main__":
 
 				# ### set up the SPI register test interface
 				# m.submodules.reg_if = reg_if = SPIRegisterInterface(
-				# 	address_size=test_common.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
-				# 	register_size=test_common.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
+				# 	address_size=fpga_mcu_interface.spi_register_interface.CMD_ADDR_BITS, # and first bit for write or not
+				# 	register_size=fpga_mcu_interface.spi_register_interface.REG_DATA_BITS, # to match the desired fifo width for later on
 				# 	support_size_autonegotiation=True # see the source docs of this class
 				# )
 				m.submodules.dut = dut = dram_ulx3s_upload_test_IS42S16160G(
-					copi = esp32.gpio4_copi, cipo = esp32.gpio12_cipo, sclk = esp32.gpio16_sclk, cs = esp32.gpio5_cs,
-					i_buttons = i_buttons, leds = leds
+					copi = esp32.gpio4_copi, 
+					cipo = esp32.gpio12_cipo, 
+					sclk = esp32.gpio16_sclk, 
+					cs = esp32.gpio5_cs,
+
+					i_buttons = i_buttons, 
+					leds = leds,
+					o_digital_discovery = o_digital_discovery
 				)
 				# m.d.comb += [ 
 				# 	# wires
@@ -361,7 +416,6 @@ if __name__ == "__main__":
 				# 	reg_if.spi.sck.eq(esp32.gpio16_sclk),
 				# 	reg_if.spi.cs.eq(esp32.gpio5_csn)
 				# ]
-
 				
 
 				######## setup esp32 interaction ######
@@ -403,7 +457,15 @@ if __name__ == "__main__":
 			),
 		]
 
+		# digital discovery connection, for logic probing
+		digital_discovery = [
+			Resource("digital_discovery", 0,
+				Subsignal("bus", Pins("14- 14+ 15- 15+ 16- 16+ 17- 17+ 18- 18+", dir="o", conn=("gpio", 0)), Attrs(IO_TYPE="LVCMOS25"))
+			)
+		]
+
 		platform = ULX3S_85F_Platform()
 		platform.add_resources(esp32_spi)
+		platform.add_resources(digital_discovery)
 		platform.build(top(), do_program=False, build_dir=f"{current_filename}_build")
 

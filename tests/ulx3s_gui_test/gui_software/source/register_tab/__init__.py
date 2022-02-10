@@ -19,8 +19,7 @@ from PyQt5.QtGui import (
 
 import sys, os, json
 sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
-import test_common
-
+from test_common import fpga_mcu_interface
 class register_table(QTableWidget):
 	""" 
 	to provide a table of registers, and provide a way to write to and read them
@@ -91,7 +90,7 @@ class register_table(QTableWidget):
 		
 		def init_members():
 			# add content to table
-			reg_addresses_dict = {k:v for k,v in test_common.register_addresses.__dict__.items() if type(v)==int}
+			reg_addresses_dict = {k:v for k,v in fpga_mcu_interface.register_addresses.__dict__.items() if type(v)==int}
 
 			self.read_buttons = {addr: register_table.register_button("Read", self) for name,addr in reg_addresses_dict.items()}
 			self.write_buttons = {addr: register_table.register_button("Write", self) for name,addr in reg_addresses_dict.items()}

@@ -28,7 +28,7 @@ Test performance:
 - add tests that run on the ULX3S board, and on a second board demonstrating that it can be cross-platform
 
 ## thoughts
-- make the mcu fifo interface as close as possible to the nmigen fifo simulation interface?
+- make the mcu fifo interface as close as possible to the amaranth fifo simulation interface?
 - it seems hard to test! What's the simplest way? connect up to the backend of a logic analyser, then the input to a counter, and make sure no counts are skipped?
 
 

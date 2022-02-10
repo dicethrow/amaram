@@ -87,35 +87,11 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			m.d.comb += self.cs.eq(~self.csn)
 
 
-
-		try_to_use_spi_clk = False
-		if try_to_use_spi_clk:
-			board_spi = SPIDeviceBus()
-			m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk, o_domain="sync")
-
-			# try to use a spi clock?
-			spi_clk = ClockDomain("spi_clk")
-			m.domains += spi_clk
-			m.d.comb += spi_clk.clk.eq(board_spi.sck)
-
-			m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi, o_domain="spi_clk")
-			m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo, o_domain="spi_clk")
-			# m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
-			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs, o_domain="spi_clk")
-		else:
-			board_spi = SPIDeviceBus()
-			m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi)
-			# m.submodules += FFSynchronizer(o=self.cipo, i=board_spi.sdo)
-			# # note that it seems we need to delay the sdo by one sclk cycle...
-			# last_sdo = Signal()
-			# with m.If(Rose(board_spi.sck)): # then the value we read now, we set on the next falling edge
-			# 	m.d.sync += last_sdo.eq(board_spi.sdo)
-			# with m.Elif(Fell(board_spi.sck)): # set it on the falling edge
-			# 	m.d.sync += self.cipo.eq(last_sdo)
-			m.d.comb += self.cipo.eq(board_spi.sdo) # ah! no need for synchronisation?
-			m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
-			m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs)
-		
+		board_spi = SPIDeviceBus()
+		m.submodules += FFSynchronizer(o=board_spi.sdi, i=self.copi)
+		m.d.comb += self.cipo.eq(board_spi.sdo) # ah! no need for synchronisation for sdo
+		m.submodules += FFSynchronizer(o=board_spi.sck, i=self.sclk)
+		m.submodules += FFSynchronizer(o=board_spi.cs, i= self.cs)
 
 		# watch spi signals?
 		m.d.sync += [
@@ -124,8 +100,6 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			self.ila_signals["spi_monitor0"].sck.eq(board_spi.sck),
 			self.ila_signals["spi_monitor0"].cs.eq(board_spi.cs),
 		]
-
-		# m.d.comb += self.ila.trigger.eq(Fell(board_spi.cs)) # try trigger this way
 
 		# Create an SPI bus for our ILA.
 		ila_spi = SPIDeviceBus()
@@ -143,18 +117,13 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 		if True:
 			# Clock divider / counter.
 			with m.If(self.ila.complete):
-				# m.d.sync += self.counter.eq(0)
 				m.d.sync += self.ila_signals["counter"].eq(0)
-			# with m.Else():
-			# m.d.sync += self.counter.eq(self.counter + 1)
 			m.d.sync += self.ila_signals["counter"].eq(self.ila_signals["counter"] + 1)
 		else:
 			# test with a constant, known value
-			# m.d.sync += self.counter.eq(0xF0FF0FFF) 
 			m.d.sync += self.ila_signals["counter"].eq(0xF0FF0FFF)
 
 		# Another example signal, for variety.
-		# m.d.sync += self.toggle.eq(~self.toggle)
 		if False: #not in use presently
 			m.d.sync += self.ila_signals["toggle"].eq(~self.ila_signals["toggle"])
 

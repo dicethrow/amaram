@@ -31,22 +31,24 @@ spi_freq = 1e6
 def spi_write_readinto(dut, srcbuf, dstbuf):
 	assert len(srcbuf) == len(dstbuf)
 	assert type(dstbuf) == bytearray # so we can edit it
+
+	yield Delay(0.5/spi_freq)
+
 	# is there a problem if srcbuf = dstbuf?
 	for byte_index in range(len(srcbuf)):
 		for bit_index in range(7, -1, -1):
 			send_bit = (int(srcbuf[byte_index]) >> bit_index) & 0b1
 
+			# just before falling clock edge
+			yield dut.sclk.eq(0) 
 			yield dut.copi.eq(send_bit)
-
 			yield Delay(0.5/spi_freq)
 
-			yield dut.sclk.eq(0)#(1)
+			# just before rising clock edge
 			rx_bit = (yield dut.cipo)
 			dstbuf[byte_index] |= (rx_bit << bit_index)
-
-			yield Delay(0.5/spi_freq)
 			yield dut.sclk.eq(1)#(0)
-
+			yield Delay(0.5/spi_freq)
 
 
 def reg_io(dut, addr, write=False, write_value=0x0000, active_cs_level=0): # to be similar to the fpga_io.py micropython file

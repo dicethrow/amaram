@@ -3,6 +3,7 @@ from termcolor import cprint
 
 from amaranth import Elaboratable, Module, Signal, Mux, ClockSignal, ClockDomain, ResetSignal, Cat, Const
 from amaranth.hdl.ast import Rose, Stable, Fell, Past
+from amaranth.hdl.mem import Memory
 from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active
 from amaranth.asserts import Assert, Assume, Cover, Past
@@ -21,7 +22,350 @@ sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
 from test_common import fpga_gui_interface, fpga_mcu_interface
 addrs = fpga_mcu_interface.register_addresses
 
-# inspired by the ilaSharedBusExample from luna
+
+class IntegratedLogicAnalyzer_with_FIFO(Elaboratable):
+	""" Super-simple integrated-logic-analyzer generator class for LUNA.
+
+	Attributes
+	----------
+	enable: Signal(), input
+		This input is only available if `with_enable` is True.
+		Only samples with enable high will be captured.
+	trigger: Signal(), input
+		A strobe that determines when we should start sampling.
+		Note that the sample at the same cycle as the trigger will
+		be the first sample to be captured.
+	capturing: Signal(), output
+		Indicates that the trigger has occurred and sample memory
+		is not yet full
+	sampling: Signal(), output
+		Indicates when data is being written into ILA memory
+
+	complete: Signal(), output
+		Indicates when sampling is complete and ready to be read.
+
+	captured_sample_number: Signal(), input
+		Selects which sample the ILA will output. Effectively the address for the ILA's
+		sample buffer.
+	captured_sample: Signal(), output
+		The sample corresponding to the relevant sample number.
+		Can be broken apart by using Cat(*signals).
+
+	Parameters
+	----------
+	signals: iterable of Signals
+		An iterable of signals that should be captured by the ILA.
+	sample_depth: int
+		The depth of the desired buffer, in samples.
+
+	domain: string
+		The clock domain in which the ILA should operate.
+	sample_rate: float
+		Cosmetic indication of the sample rate. Used to format output.
+	samples_pretrigger: int
+		The number of our samples which should be captured _before_ the trigger.
+		This also can act like an implicit synchronizer; so asynchronous inputs
+		are allowed if this number is >= 1. Note that the trigger strobe is read
+		on the rising edge of the clock.
+	with_enable: bool
+		This provides an 'enable' signal.
+		Only samples with enable high will be captured.
+	"""
+
+	def __init__(self, *, signals, sample_depth, domain="sync", sample_rate=60e6, samples_pretrigger=1, with_enable=False):
+		self.domain             = domain
+		self.signals            = signals
+		self.inputs             = Cat(*signals)
+		self.sample_width       = len(self.inputs)
+		self.sample_depth       = sample_depth
+		self.samples_pretrigger = samples_pretrigger
+		self.sample_rate        = sample_rate
+		self.sample_period      = 1 / sample_rate
+
+		#
+		# Create a backing store for our samples.
+		#
+		self.mem = Memory(width=self.sample_width, depth=sample_depth, name="ila_buffer")
+
+
+		#
+		# I/O port
+		#
+		self.with_enable = with_enable
+		if with_enable:
+			self.enable = Signal()
+
+		self.trigger   = Signal()
+		self.capturing = Signal()
+		self.sampling  = Signal()
+		self.complete  = Signal()
+
+		self.captured_sample_number = Signal(range(0, self.sample_depth))
+		self.captured_sample        = Signal(self.sample_width)
+
+
+	def elaborate(self, platform):
+		m  = Module()
+		with_enable = self.with_enable
+
+		# Memory ports.
+		write_port = self.mem.write_port()
+		read_port  = self.mem.read_port(domain='comb')
+		m.submodules += [write_port, read_port]
+
+		# If necessary, create synchronized versions of the relevant signals.
+		if self.samples_pretrigger >= 1:
+			synced_inputs  = Signal.like(self.inputs)
+			delayed_inputs = Signal.like(self.inputs)
+
+			# the first stage captures the trigger
+			# the second stage the first pretrigger sample
+			m.submodules.pretrigger_samples = \
+				FFSynchronizer(self.inputs,  synced_inputs)
+			if with_enable:
+				synced_enable  = Signal()
+				m.submodules.pretrigger_enable = \
+					FFSynchronizer(self.enable, synced_enable)
+
+			if self.samples_pretrigger == 1:
+				m.d.comb += delayed_inputs.eq(synced_inputs)
+				if with_enable:
+					delayed_enable = Signal()
+					m.d.comb += delayed_enable.eq(synced_enable)
+			else: # samples_pretrigger >= 2
+				capture_fifo_width = self.sample_width
+				if with_enable:
+					capture_fifo_width += 1
+
+				pretrigger_fill_counter = Signal(range(self.samples_pretrigger * 2))
+				pretrigger_filled       = Signal()
+				m.d.comb += pretrigger_filled.eq(pretrigger_fill_counter >= (self.samples_pretrigger - 1))
+
+				# fill up pretrigger FIFO with the number of pretrigger samples
+				if (not with_enable):
+					synced_enable = 1
+				with m.If(synced_enable & ~pretrigger_filled):
+					m.d.sync += pretrigger_fill_counter.eq(pretrigger_fill_counter + 1)
+
+				m.submodules.pretrigger_fifo = pretrigger_fifo =  \
+					DomainRenamer(self.domain)(SyncFIFOBuffered(width=capture_fifo_width, depth=self.samples_pretrigger + 1))
+
+				m.d.comb += [
+					pretrigger_fifo.w_data.eq(synced_inputs),
+					# We only want to capture enabled samples
+					# in the pretrigger period.
+					# Since we also capture the enable signal,
+					# we capture unconditionally after the pretrigger FIFO
+					# has been filled
+					pretrigger_fifo.w_en.eq(Mux(pretrigger_filled, 1, synced_enable)),
+					# buffer the specified number of pretrigger samples
+					pretrigger_fifo.r_en.eq(pretrigger_filled),
+
+					delayed_inputs.eq(pretrigger_fifo.r_data),
+				]
+
+				if with_enable:
+					delayed_enable = Signal()
+					m.d.comb += [
+						pretrigger_fifo.w_data[-1].eq(synced_enable),
+						delayed_enable.eq(pretrigger_fifo.r_data[-1]),
+					]
+
+		else:
+			delayed_inputs = Signal.like(self.inputs)
+			m.d.sync += delayed_inputs.eq(self.inputs)
+			if with_enable:
+				delayed_enable = Signal()
+				m.d.sync += delayed_enable.eq(self.enable)
+
+		# Counter that keeps track of our write position.
+		write_position = Signal(range(0, self.sample_depth))
+
+		# Set up our write port to capture the input signals,
+		# and our read port to provide the output.
+		use_fifo_approach = True
+		if use_fifo_approach:
+
+			m.submodules.fifo = fifo = AsyncFIFOBuffered(
+				width=self.sample_width,
+				depth=self.sample_depth,
+				r_domain="sync", 
+				w_domain="sync")
+
+			# Don't sample unless our FSM asserts our sample signal explicitly.
+			sampling = Signal()
+			m.d.comb += [
+				write_port.en.eq(sampling),
+				self.sampling.eq(sampling),
+			]
+
+			with m.FSM(name="ila_fifo_fsm") as fsm:
+				m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
+
+				# IDLE: wait for the trigger strobe
+				with m.State('IDLE'):
+					m.d.comb += sampling.eq(0)
+
+					with m.If(self.trigger):
+						with m.If(fifo.w_rdy):
+							m.next = 'CAPTURE'
+
+						# Prepare to capture the first sample
+						m.d.sync += [
+							write_position .eq(0),
+							self.complete  .eq(0),
+						]
+
+				with m.State('CAPTURE'):
+					enabled = delayed_enable if with_enable else 1
+					m.d.comb += sampling.eq(enabled)
+
+					with m.If(sampling):
+						
+						with m.If(fifo.w_rdy):
+							m.d.sync += [
+								fifo.w_en.eq(1),
+								fifo.w_data.eq(delayed_inputs)
+							]
+
+						with m.Else():  # assuming w_rdy will only happen when the fifo fills up
+							m.d.sync += [
+								fifo.w_en.eq(0),
+								self.complete.eq(1)
+							]
+							m.next = "READABLE"
+				
+				with m.State('READABLE'):
+				
+					with m.If(fifo.r_rdy):
+
+						with m.If((Past(self.captured_sample_number) + 1) == self.captured_sample_number):
+							m.d.sync += [
+								fifo.r_en.eq(1),
+								self.captured_sample.eq(fifo.r_data)
+							]
+						with m.Else():
+							m.d.sync += [
+								fifo.r_en.eq(0),
+							]
+
+					with m.Else():
+						m.next = "IDLE"
+						m.d.sync += [
+							self.captured_sample.eq(0xDEADBEEF) # to indicate it's invalid data
+						]
+
+				
+		else:
+			m.d.comb += [
+				write_port.data        .eq(delayed_inputs),
+				write_port.addr        .eq(write_position),
+
+				self.captured_sample   .eq(read_port.data),
+				read_port.addr         .eq(self.captured_sample_number)
+			]
+
+			# Don't sample unless our FSM asserts our sample signal explicitly.
+			sampling = Signal()
+			m.d.comb += [
+				write_port.en.eq(sampling),
+				self.sampling.eq(sampling),
+			]
+
+			with m.FSM(name="ila_fsm") as fsm:
+				m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
+
+				# IDLE: wait for the trigger strobe
+				with m.State('IDLE'):
+					m.d.comb += sampling.eq(0)
+
+					with m.If(self.trigger):
+						m.next = 'CAPTURE'
+
+						# Prepare to capture the first sample
+						m.d.sync += [
+							write_position .eq(0),
+							self.complete  .eq(0),
+						]
+
+				with m.State('CAPTURE'):
+					enabled = delayed_enable if with_enable else 1
+					m.d.comb += sampling.eq(enabled)
+
+					with m.If(sampling):
+						m.d.sync += write_position .eq(write_position + 1)
+
+						# If this is the last sample, we're done. Finish up.
+						with m.If(write_position == (self.sample_depth - 1)):
+							m.d.sync += self.complete.eq(1)
+							m.next = "IDLE"
+
+		# Convert our sync domain to the domain requested by the user, if necessary.
+		if self.domain != "sync":
+			m = DomainRenamer({"sync": self.domain})(m)
+
+		return m
+
+class SyncSerialILA_with_FIFO(SyncSerialILA):
+	""" 
+	make a subclass where we override its self.ila. 
+	This seems to require pretty much require redoing
+	the __init__ function, where we specify, and then refer to,
+	out new self.ila.
+	"""
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		# signals, sample_depth, clock_polarity=clock_polarity, clock_phase=clock_phase, cs_idles_high=cs_idles_high, 
+
+		#
+		# I/O port
+		#
+		self.spi = SPIDeviceBus()
+
+		#
+		# Init
+		#
+
+		self.clock_phase = kwargs.pop("clock_phase") #clock_phase
+		self.clock_polarity = kwargs.pop("clock_polarity") #clock_polarity
+		# now replace the default ila class with out fifo class
+
+		# Extract the domain from our keyword arguments, and then translate it to sync
+		# before we pass it back below. We'll use a DomainRenamer at the boundary to
+		# handle non-sync domains.
+		self.domain = kwargs.get('domain', 'sync')
+		kwargs['domain'] = 'sync'
+
+		# Create our core integrated logic analyzer.
+		self.ila = IntegratedLogicAnalyzer_with_FIFO(**kwargs)
+
+		# Copy some core parameters from our inner ILA.
+		self.signals       = kwargs.get("signals") #signals
+		self.sample_width  = self.ila.sample_width
+		self.sample_depth  = self.ila.sample_depth
+		self.sample_rate   = self.ila.sample_rate
+		self.sample_period = self.ila.sample_period
+
+		if kwargs.get('with_enable'):
+			self.enable = self.ila.enable
+
+		# Figure out how many bytes we'll send per sample.
+		# We'll always send things squished into 32-bit chunks, as this is what the SPI engine
+		# on our Debug Controller likes most.
+		words_per_sample = (self.ila.sample_width + 31) // 32
+
+		# Bolster our bits_per_word up to a power of two...
+		self.bits_per_sample = words_per_sample * 4 * 8
+		self.bits_per_sample = 2 ** ((self.bits_per_sample - 1).bit_length())
+
+		# ... and compute how many bits should be used.
+		self.bytes_per_sample = self.bits_per_sample // 8
+
+		# Expose our ILA's trigger and status ports directly.
+		self.trigger   = self.ila.trigger
+		self.capturing = self.ila.capturing
+		self.sampling  = self.ila.sampling
+		self.complete  = self.ila.complete
 
 
 class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
@@ -75,10 +419,11 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 
 		def add_ila():
 			self.ila_signals = fpga_gui_interface.get_ila_signals_dict()
-			self.ila = SyncSerialILA(
+			self.ila = SyncSerialILA_with_FIFO(
 				**fpga_gui_interface.get_ila_constructor_kwargs(),
 				clock_polarity=1, clock_phase=1 
 			)
+			
 			self.m.submodules += self.ila
 
 			# connect leds to show some feedback about when the ila is triggered
@@ -97,6 +442,7 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			)
 		
 		def route_spi_signals():
+			# inspired by the ilaSharedBusExample from LUNA
 			self.board_spi = SPIDeviceBus()
 			ila_spi = SPIDeviceBus()
 			reg_spi = SPIDeviceBus()
@@ -153,13 +499,6 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			if False: #not in use presently
 				self.m.d.sync += self.ila_signals["toggle"].eq(~self.ila_signals["toggle"])
 
-				
-			self.m.d.sync += [
-				self.ila_signals["spi_monitor0"].sdi.eq(self.board_spi.sdi),
-				self.ila_signals["spi_monitor0"].sdo.eq(self.board_spi.sdo),
-				self.ila_signals["spi_monitor0"].sck.eq(self.board_spi.sck),
-				self.ila_signals["spi_monitor0"].cs.eq(self.board_spi.cs),
-			]
 
 		
 		handle_cs_or_csn()

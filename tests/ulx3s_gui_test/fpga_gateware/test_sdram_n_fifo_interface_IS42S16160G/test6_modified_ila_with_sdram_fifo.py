@@ -23,6 +23,10 @@ from test_common import fpga_gui_interface, fpga_mcu_interface
 addrs = fpga_mcu_interface.register_addresses
 
 
+# now make the async fifo interface for the sdram... here's the real testing
+
+
+
 class IntegratedLogicAnalyzer_with_FIFO(Elaboratable):
 	""" Super-simple integrated-logic-analyzer generator class for LUNA.
 
@@ -183,139 +187,92 @@ class IntegratedLogicAnalyzer_with_FIFO(Elaboratable):
 
 		# Set up our write port to capture the input signals,
 		# and our read port to provide the output.
-		use_fifo_approach = True
-		if use_fifo_approach:
 
-			m.submodules.fifo = fifo = AsyncFIFOBuffered(
-				width=self.sample_width,
-				depth=self.sample_depth,
-				r_domain="sync", 
-				w_domain="sync")
+		m.submodules.fifo = fifo = AsyncFIFOBuffered(
+			width=self.sample_width,
+			depth=self.sample_depth,
+			r_domain="sync", 
+			w_domain="sync")
 
-			# Don't sample unless our FSM asserts our sample signal explicitly.
-			sampling = Signal()
-			m.d.comb += [
-				write_port.en.eq(sampling),
-				self.sampling.eq(sampling),
-			]
+		# Don't sample unless our FSM asserts our sample signal explicitly.
+		sampling = Signal()
+		m.d.comb += [
+			write_port.en.eq(sampling),
+			self.sampling.eq(sampling),
+		]
 
-			with m.FSM(name="ila_fifo_fsm") as fsm:
-				m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
+		with m.FSM(name="ila_fifo_fsm") as fsm:
+			m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
 
-				# IDLE: wait for the trigger strobe
-				with m.State('IDLE'):
-					m.d.comb += sampling.eq(0)
+			# IDLE: wait for the trigger strobe
+			with m.State('IDLE'):
+				m.d.comb += sampling.eq(0)
 
-					# flush out the fifo if it's not empty
-					with m.If(fifo.r_rdy):
-						m.d.sync += fifo.r_en.eq(1)
+				# flush out the fifo if it's not empty
+				with m.If(fifo.r_rdy):
+					m.d.sync += fifo.r_en.eq(1)
 
-					with m.If(self.trigger):
-						with m.If(fifo.w_rdy):
-							m.next = 'CAPTURE'
-
-						# Prepare to capture the first sample
-						m.d.sync += [
-							write_position .eq(0),
-							self.complete  .eq(0),
-						]
-
-				with m.State('CAPTURE'):
-					enabled = delayed_enable if with_enable else 1
-					m.d.comb += sampling.eq(enabled)
-
-					with m.If(sampling):
-
-						# How many clocks since the first sampled period does the level increase?
-						# this may change based on what type of fifo we're using, obtained from simulation traces
-						fifo_level_delay = 2
-						
-						# keep external interfaces/applications simple by not writing more samples than we have requested
-						with m.If( fifo.w_rdy & ((fifo.w_level + fifo_level_delay) <= self.sample_depth)):
-							m.d.sync += [
-								fifo.w_en.eq(1),
-								fifo.w_data.eq(delayed_inputs)
-							]
-
-						with m.Elif(fifo.r_rdy):
-							m.d.sync += [
-								fifo.w_en.eq(0),
-								self.captured_sample.eq(fifo.r_data), # to propagate the first sample to the output
-								self.complete.eq(1)
-							]
-							m.next = "READABLE"
-
-						with m.Else():  # something has gone wrong - todo: handle this better, e.g. empty the fifo
-							m.next = "IDLE"
-							m.d.sync += [
-								self.captured_sample.eq(0xBEEEBEEE) # to indicate it's invalid data
-							]
-							
-				
-				with m.State('READABLE'):
-				
-					with m.If(fifo.r_rdy):
-
-						with m.If((Past(self.captured_sample_number) + 1) == self.captured_sample_number):
-							m.d.sync += [
-								fifo.r_en.eq(1),
-								self.captured_sample.eq(fifo.r_data)
-							]
-						with m.Else():
-							m.d.sync += [
-								fifo.r_en.eq(0),
-							]
-
-					with m.Else():
-						m.next = "IDLE"
-						m.d.sync += [
-							self.captured_sample.eq(0xDEADBEEF) # to indicate it's invalid data
-						]
-
-				
-		else:
-			m.d.comb += [
-				write_port.data        .eq(delayed_inputs),
-				write_port.addr        .eq(write_position),
-
-				self.captured_sample   .eq(read_port.data),
-				read_port.addr         .eq(self.captured_sample_number)
-			]
-
-			# Don't sample unless our FSM asserts our sample signal explicitly.
-			sampling = Signal()
-			m.d.comb += [
-				write_port.en.eq(sampling),
-				self.sampling.eq(sampling),
-			]
-
-			with m.FSM(name="ila_fsm") as fsm:
-				m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
-
-				# IDLE: wait for the trigger strobe
-				with m.State('IDLE'):
-					m.d.comb += sampling.eq(0)
-
-					with m.If(self.trigger):
+				with m.If(self.trigger):
+					with m.If(fifo.w_rdy):
 						m.next = 'CAPTURE'
 
-						# Prepare to capture the first sample
+					# Prepare to capture the first sample
+					m.d.sync += [
+						write_position .eq(0),
+						self.complete  .eq(0),
+					]
+
+			with m.State('CAPTURE'):
+				enabled = delayed_enable if with_enable else 1
+				m.d.comb += sampling.eq(enabled)
+
+				with m.If(sampling):
+
+					# How many clocks since the first sampled period does the level increase?
+					# this may change based on what type of fifo we're using, obtained from simulation traces
+					fifo_level_delay = 2
+					
+					# keep external interfaces/applications simple by not writing more samples than we have requested
+					with m.If( fifo.w_rdy & ((fifo.w_level + fifo_level_delay) <= self.sample_depth)):
 						m.d.sync += [
-							write_position .eq(0),
-							self.complete  .eq(0),
+							fifo.w_en.eq(1),
+							fifo.w_data.eq(delayed_inputs)
 						]
 
-				with m.State('CAPTURE'):
-					enabled = delayed_enable if with_enable else 1
-					m.d.comb += sampling.eq(enabled)
+					with m.Elif(fifo.r_rdy):
+						m.d.sync += [
+							fifo.w_en.eq(0),
+							self.captured_sample.eq(fifo.r_data), # to propagate the first sample to the output
+							self.complete.eq(1)
+						]
+						m.next = "READABLE"
 
-					with m.If(sampling):
-						m.d.sync += write_position .eq(write_position + 1)
+					with m.Else():  # something has gone wrong - todo: handle this better, e.g. empty the fifo
+						m.next = "IDLE"
+						m.d.sync += [
+							self.captured_sample.eq(0xBEEEBEEE) # to indicate it's invalid data
+						]
+						
+			
+			with m.State('READABLE'):
+			
+				with m.If(fifo.r_rdy):
 
-						# If this is the last sample, we're done. Finish up.
-						with m.If(write_position == (self.sample_depth - 1)):
-							m.d.sync += self.complete.eq(1)
-							m.next = "IDLE"
+					with m.If((Past(self.captured_sample_number) + 1) == self.captured_sample_number):
+						m.d.sync += [
+							fifo.r_en.eq(1),
+							self.captured_sample.eq(fifo.r_data)
+						]
+					with m.Else():
+						m.d.sync += [
+							fifo.r_en.eq(0),
+						]
+
+				with m.Else():
+					m.next = "IDLE"
+					m.d.sync += [
+						self.captured_sample.eq(0xDEADBEEF) # to indicate it's invalid data
+					]
 
 		# Convert our sync domain to the domain requested by the user, if necessary.
 		if self.domain != "sync":

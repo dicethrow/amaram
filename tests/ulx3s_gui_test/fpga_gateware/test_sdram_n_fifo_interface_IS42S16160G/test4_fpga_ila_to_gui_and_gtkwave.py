@@ -153,13 +153,13 @@ class dram_ulx3s_upload_test_IS42S16160G(Elaboratable):
 			if False: #not in use presently
 				self.m.d.sync += self.ila_signals["toggle"].eq(~self.ila_signals["toggle"])
 
-				
-			self.m.d.sync += [
-				self.ila_signals["spi_monitor0"].sdi.eq(self.board_spi.sdi),
-				self.ila_signals["spi_monitor0"].sdo.eq(self.board_spi.sdo),
-				self.ila_signals["spi_monitor0"].sck.eq(self.board_spi.sck),
-				self.ila_signals["spi_monitor0"].cs.eq(self.board_spi.cs),
-			]
+			if "spi_monitor0" in self.ila_signals:
+				self.m.d.sync += [
+					self.ila_signals["spi_monitor0"].sdi.eq(self.board_spi.sdi),
+					self.ila_signals["spi_monitor0"].sdo.eq(self.board_spi.sdo),
+					self.ila_signals["spi_monitor0"].sck.eq(self.board_spi.sck),
+					self.ila_signals["spi_monitor0"].cs.eq(self.board_spi.cs),
+				]
 
 		
 		handle_cs_or_csn()
@@ -230,21 +230,29 @@ if __name__ == "__main__":
 			yield Active()
 			# yield tb_buttons["fireB"].eq(0b1) # lets see if we can read this
 
-			yield Delay(1/1e6)
+			spi_freq = 1e6
+			spi_clk_period = 1/spi_freq
+
+			yield Delay(spi_clk_period)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_LEDS_RW, True, 0xABCD)
-			yield Delay(1/1e6)
+			yield Delay(spi_clk_period)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_LEDS_RW)
 			
 
-			yield Delay(1/1e6)
+			yield Delay(spi_clk_period)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)
-			yield Delay(1/1e6)
+			yield Delay(spi_clk_period)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW, True, 0xABCD)
-			yield Delay(1/1e6)
+			yield Delay(spi_clk_period)
 			yield from fpga_io_sim.reg_io(dut, addrs.REG_ILA_TRIG_RW)
 
-			yield Delay(1/1e6)
-			yield from fpga_io_sim.alt_fifo_io(dut, read_num=32)
+			yield Delay(spi_clk_period)
+			yield from fpga_io_sim.alt_fifo_io(dut, read_num=fpga_gui_interface.get_ila_constructor_kwargs()["sample_depth"])
+
+			# just to add a bit of time at the end
+			yield Delay(20 * spi_clk_period)
+
+			
 
 
 		sim = Simulator(m)

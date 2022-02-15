@@ -40,6 +40,7 @@ class sdram_utils:
 	class dram_ic_timing(enum.Enum): # minimums
 		# assuming we have a -7 speed device? see p.18 of datasheet
 		T_STARTUP = 2e-6 # 100e-6 # for now, make it shorter, for simulation 
+		# T_STARTUP = 100e-6
 		T_RP	= 15e-9
 		T_RC	= 60e-9
 		T_RCD	= 15e-9
@@ -227,6 +228,10 @@ class sdram_tests:
 			i = 0
 			yield Passive()
 			# yield Delay(initial_delay)
+			
+			# wait a little bit longer... in case a refresh needs to happen?
+			yield Delay(1.1 * dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+
 			yield
 			while (yield fifo_ui.w_rdy) & (write_counter <= 0x100):
 				write_counter += 1
@@ -296,7 +301,11 @@ class sdram_tests:
 			i = 0
 			past_r_rdy = False
 			# yield Passive()
-			# yield Active()
+			yield Active()
+
+			# wait a little bit longer... in case a refresh needs to happen?
+			yield Delay(1.1 * dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+
 			yield Delay(13e-6)# + read_offset*1e-7)
 
 
@@ -355,7 +364,8 @@ class sdram_tests:
 
 		def delay_more():
 			yield Active()
-			yield Delay(21e-6)
+			yield Delay(dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+			yield Delay(21e-6) # needed?
 		self.sim.add_process(delay_more)
 
 
@@ -522,7 +532,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 		sdram_tests.add_rtl(self)
 
 	
-	def add_simulations_to(self, sim : Simulator):
+	def add_simulations_to(self, sim : Simulator, do_fifo_simulations = False):
 		self.sim = sim
 
 		# def second_func():
@@ -535,7 +545,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 
 		def initial_delay():
 			yield Active()
-			period = 5e-6 #20e-6
+			period = dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value + 5e-6
 			sections = 100
 			for t in range(sections):
 				# yield self.nflagA.eq(~self.nflagA)
@@ -543,7 +553,8 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 				yield Delay((1/sections) * period)
 			# yield Delay(5e-6)
 
-		sdram_tests.add_simulations_to(self)
+		if do_fifo_simulations:
+			sdram_tests.add_simulations_to(self)
 
 		self.sim.add_process(initial_delay)		
 		self.sim.add_sync_process(self.cmd_monitor, domain="clki")
@@ -734,6 +745,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 			print_bank_debug_statements = True
 			
 			yield Passive()
+			
 			while True:
 
 				def bprint(*args):
@@ -1025,7 +1037,7 @@ if __name__ == "__main__":
 
 		sim.add_clock(1/sdram_freq, domain="sdram")
 		# m_sdram_controller.setup_for_simulation(sim) # used?
-		m_dram_model.add_simulations_to(sim)
+		m_dram_model.add_simulations_to(sim, do_fifo_simulations=True)
 
 		# dram_model = dram_sim_model_IS42S16160G(dram_testdriver, sim)
 

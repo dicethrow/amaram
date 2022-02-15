@@ -4,11 +4,17 @@ from termcolor import cprint
 from amaranth import Elaboratable, Module, Signal, Mux, ClockSignal, ClockDomain, ResetSignal, Cat, Const
 from amaranth.hdl.ast import Rose, Stable, Fell, Past
 from amaranth.hdl.mem import Memory
+from amaranth.hdl.xfrm import DomainRenamer
+from amaranth.hdl.ir import Instance
 from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active
 from amaranth.asserts import Assert, Assume, Cover, Past
-from amaranth.lib.fifo import AsyncFIFOBuffered
+from amaranth.lib.fifo import AsyncFIFOBuffered, FIFOInterface
 #from amaranth.lib.cdc import AsyncFFSynchronizer
+from amaranth.build import Platform, Resource, Subsignal, Pins, PinsN, Attrs
+from amaranth_boards.ulx3s import ULX3S_85F_Platform
+from amaranth.utils import log2_int
+
 
 from amlib.io import SPIRegisterInterface, SPIDeviceBus, SPIMultiplexer
 from amlib.debug.ila import SyncSerialILA
@@ -25,6 +31,298 @@ addrs = fpga_mcu_interface.register_addresses
 
 # now make the async fifo interface for the sdram... here's the real testing
 
+
+# I think this class is from lawrie's ulx3s examples? todo: add attribution
+class ECP5PLL(Elaboratable):
+    """ECP5 PLL
+
+    Instantiates the EHXPLLL primitive, and provides up to three clock outputs. The EHXPLLL primitive itself
+    provides up to four clock outputs, but the last output (CLKOS3) is fed back into the feedback input.
+
+    The frequency ranges are based on: https://github.com/YosysHQ/prjtrellis/blob/master/libtrellis/tools/ecppll.cpp
+    """
+    num_clkouts_max = 3
+
+    clki_div_range = (1, 128+1)
+    clkfb_div_range = (1, 128+1)
+    clko_div_range = (1, 128+1)
+    clki_freq_range = (8e6, 400e6)
+    clko_freq_range = (3.125e6, 400e6)
+    vco_freq_range = (400e6, 800e6)
+
+    def __init__(self):
+        self.reset = Signal()
+        self.locked = Signal()
+        self.clkin_freq = None
+        self.vcxo_freq = None
+        self.num_clkouts = 0
+        self.clkin = None
+        self.clkouts = {}
+        self.config = {}
+        self.params = {}
+        #self.m = Module()
+
+    def register_clkin(self, clkin, freq):
+        # if not isinstance(clkin, (Signal, ClockSignal)):
+        #    raise TypeError("clkin must be of type Signal or ClockSignal, not {!r}"
+        #                    .format(clkin))
+        # else:
+        (clki_freq_min, clki_freq_max) = self.clki_freq_range
+        if(freq < clki_freq_min):
+            raise ValueError("Input clock frequency ({!r}) is lower than the minimum allowed input clock frequency ({!r})"
+                             .format(freq, clki_freq_min))
+        if(freq > clki_freq_max):
+            raise ValueError("Input clock frequency ({!r}) is higher than the maximum allowed input clock frequency ({!r})"
+                             .format(freq, clki_freq_max))
+
+        self.clkin_freq = freq
+        # self.clkin = Signal()
+        # self.m.d.comb += self.clkin.eq(clkin)
+        self.clkin = clkin
+
+    def create_clkout(self, cd, freq, phase=0, margin=1e-2):
+        (clko_freq_min, clko_freq_max) = self.clko_freq_range
+        if freq < clko_freq_min:
+            raise ValueError("Requested output clock frequency ({!r}) is lower than the minimum allowed output clock frequency ({!r})"
+                             .format(freq, clko_freq_min))
+        if freq > clko_freq_max:
+            raise ValueError("Requested output clock frequency ({!r}) is higher than the maximum allowed output clock frequency ({!r})"
+                             .format(freq, clko_freq_max))
+        if self.num_clkouts >= self.num_clkouts_max:
+            raise ValueError("Requested number of PLL clock outputs ({!r}) is higher than the number of PLL outputs ({!r})"
+                             .format(self.num_clkouts, self.num_clkouts_max))
+
+        self.clkouts[self.num_clkouts] = (cd, freq, phase, margin)
+        self.num_clkouts += 1
+
+    def compute_config(self):
+        config = {}
+        for clki_div in range(*self.clkfb_div_range):
+            config["clki_div"] = clki_div
+            for clkfb_div in range(*self.clkfb_div_range):
+                all_valid = True
+                vco_freq = self.clkin_freq/clki_div*clkfb_div*1  # CLKOS3_DIV = 1
+                (vco_freq_min, vco_freq_max) = self.vco_freq_range
+                if vco_freq >= vco_freq_min and vco_freq <= vco_freq_max:
+                    for n, (clock_domain, frequency, phase, margin) in sorted(self.clkouts.items()):
+                        valid = False
+                        for div in range(*self.clko_div_range):
+                            clk_freq = vco_freq / div
+                            if abs(clk_freq - frequency) <= frequency * margin:
+                                config["clko{}_freq".format(n)] = clk_freq
+                                config["clko{}_div".format(n)] = div
+                                config["clko{}_phase".format(n)] = phase
+                                valid = True
+                        if not valid:
+                            all_valid = False
+                else:
+                    all_valid = False
+                if all_valid:
+                    config["vco"] = vco_freq
+                    config["clkfb_div"] = clkfb_div
+                    return config
+        raise ValueError("No PLL config found")
+
+    def elaborate(self, platform: Platform) -> Module:
+        m = Module()
+
+        config = self.compute_config()
+
+        self.params.update(
+            a_FREQUENCY_PIN_CLKI=str(self.clkin_freq / 1e6),
+            a_ICP_CURRENT="6",
+            a_LPF_RESISTOR="16",
+            a_MFG_ENABLE_FILTEROPAMP="1",
+            a_MFG_GMCREF_SEL="2",
+            i_RST=self.reset,
+            i_CLKI=self.clkin,
+            o_LOCK=self.locked,
+            # CLKOS3 reserved for feedback with div=1.
+            p_FEEDBK_PATH="INT_OS3",
+            p_CLKOS3_ENABLE="ENABLED",
+            p_CLKOS3_DIV=1,
+            p_CLKFB_DIV=config["clkfb_div"],
+            p_CLKI_DIV=config["clki_div"],
+        )
+
+        for n, (clock_domain, frequency, phase, margin) in sorted(self.clkouts.items()):
+            n_to_l = {0: "P", 1: "S", 2: "S2"}
+            div = config["clko{}_div".format(n)]
+            cphase = int(phase * (div + 1) / 360 + div)
+            self.params["p_CLKO{}_ENABLE".format(n_to_l[n])] = "ENABLED"
+            self.params["p_CLKO{}_DIV".format(n_to_l[n])] = div
+            self.params["p_CLKO{}_FPHASE".format(n_to_l[n])] = 0
+            self.params["p_CLKO{}_CPHASE".format(n_to_l[n])] = cphase
+            self.params["o_CLKO{}".format(n_to_l[n])] = ClockSignal(
+                clock_domain.name)
+
+        pll = Instance("EHXPLLL", **self.params)
+        m.submodules += pll
+
+        return m
+
+
+
+
+class AsyncFIFOBuffered_SDRAMtest(Elaboratable, FIFOInterface):
+	""" 
+	SDRAM test with a single async fifo interface.
+
+	This should be as standalone as possible.
+
+	called by, for example,:
+	m.submodules.fifo = fifo = AsyncFIFOBuffered_SDRAMtest(
+		width=self.sample_width,
+		depth=self.sample_depth,
+		r_domain="sync", 
+		w_domain="sync")
+
+	"""
+	def __init__(self, *, width, depth, r_domain="read", w_domain="write", exact_depth=False):
+		if depth != 0:
+			try:
+				depth_bits = log2_int(max(0, depth - 1), need_pow2=exact_depth)
+				depth = (1 << depth_bits) + 1
+			except ValueError:
+				raise ValueError("AsyncFIFOBuffered only supports depths that are one higher "
+								 "than powers of 2; requested exact depth {} is not"
+								 .format(depth)) from None
+		super().__init__(width=width, depth=depth, fwft=True)
+
+		self.r_rst = Signal()
+		self._r_domain = r_domain
+		self._w_domain = w_domain
+
+		self.m = Module()
+
+	def elaborate(self, platform):
+
+		def init_system_clocks():
+			
+
+			# as of 20sep2021
+			# from /home/x/Documents/GitHub/ulx3s-nmigen-examples(lawrie)/ov7670_sdram/camtest.py
+
+			# Clock generation
+			# PLL - 143MHz for sdram 
+			sdram_freq = int(143e6)
+			self.m.domains.sdram = cd_sdram = ClockDomain("sdram")
+			# self.m.domains.sdram_clk = cd_sdram_clk = ClockDomain("sdram_clk")
+
+			if platform != None:
+				self.m.submodules.ecp5pll = pll = ECP5PLL()
+				pll.register_clkin(platform.request(platform.default_clk),  platform.default_clk_frequency)
+				pll.create_clkout(cd_sdram, sdram_freq)
+				# pll.create_clkout(cd_sdram_clk, sdram_freq, phase=180)
+			else:
+				pass
+				print("a sim.add_clock() is done in the bottom of the file")
+
+			# Make sync domain around 25MHz
+			# Divide clock by 4, (143 MHz -> 37.5 MHz) so sync is in phase (?) with cd_sdram
+			self.div = Signal(3)
+			self.m.d.sdram += self.div.eq(self.div+1)
+			#m.d.comb += ResetSignal().eq(~reset.all() | pwr)
+			self.m.d.comb += ClockSignal("sync").eq(self.div[1])
+			self.m.domains.sync = cd_sync = ClockDomain("sync") # so it's not resetless
+
+			# if platform != None:
+			# 	self.m.d.comb += ResetSignal("sync").eq(platform.request("button_fire", 1)) # fire B to reset?
+			# else:
+			# 	pass
+
+		def init_sdram():
+			self.m.submodules.sdram_controller = self.sdram_controller = sdram_controller()
+
+			if platform != None:
+				# todo before power up:
+				#	
+
+				sdram_ic = platform.request("sdram")
+				m.d.comb += [
+					sdram_ic.a.eq(self.sdram_controller.o_a),
+					
+					sdram_ic.dqm[0].eq(self.sdram_controller.o_dqm),# assuming there's two DQM things, high and low byte
+					sdram_ic.dqm[1].eq(self.sdram_controller.o_dqm), 
+
+					sdram_ic.dq.oe.eq(self.sdram_controller.o_dqm), # this turns the data bus write or read
+					self.sdram_controller.i_dq.eq(sdram_ic.dq.i),
+					sdram_ic.dq.o.eq(self.sdram_controller.o_dq),
+					
+					sdram_ic.ba.eq(self.sdram_controller.o_ba),
+					sdram_ic.cs.eq(self.sdram_controller.o_cs),
+					sdram_ic.we.eq(self.sdram_controller.o_we),
+					sdram_ic.ras.eq(self.sdram_controller.o_ras),
+					sdram_ic.cas.eq(self.sdram_controller.o_cas),
+
+					sdram_ic.clk.eq(self.sdram_controller.o_clk),
+					sdram_ic.clk_en.eq(self.sdram_controller.o_clk_en)
+				]
+
+				# add self.sdram_controller fifo domains
+				for rw in ["read", "write"]:
+					for i in range(len(self.sdram_controller.fifos)):
+						domain = f"{rw}_{i}"
+						self.m.domains += ClockDomain(domain)
+
+			else:
+				# add the sim model?
+				from test1_simulation import dram_sim_model_IS42S16160G
+				m.submodules.m_dram_model = self.m_dram_model = dram_sim_model_IS42S16160G(self.sdram_controller, int(143e6))		
+
+				# note: the internal simulations are added at bottom of the file...? or not
+
+
+			# then replace them with sync, to make this test easier
+			# will this work?
+			self.m = DomainRenamer({"write_0": self._w_domain, "read_0" : self._r_domain})(self.m)
+			
+
+		# m = Module()
+		m = self.m
+
+		init_system_clocks()
+		init_sdram()
+
+		if self.depth == 0:
+			m.d.comb += [
+				self.w_rdy.eq(0),
+				self.r_rdy.eq(0),
+			]
+			return m
+			
+
+		# m.submodules.unbuffered = fifo = AsyncFIFO(width=self.width, depth=self.depth - 1,
+		# 	r_domain=self._r_domain, w_domain=self._w_domain)
+		fifo = self.sdram_controller.fifos[0]
+
+	
+
+		m.d.comb += [
+			fifo.w_data.eq(self.w_data),
+			self.w_rdy.eq(fifo.w_rdy),
+			fifo.w_en.eq(self.w_en),
+		]
+
+		r_consume_buffered = Signal()
+		m.d.comb += r_consume_buffered.eq((self.r_rdy - self.r_en) & self.r_rdy)
+		m.d[self._r_domain] += self.r_level.eq(fifo.r_level + r_consume_buffered)
+
+		w_consume_buffered = Signal()
+		m.submodules.consume_buffered_cdc = FFSynchronizer(r_consume_buffered, w_consume_buffered, o_domain=self._w_domain, stages=4)
+		m.d.comb += self.w_level.eq(fifo.w_level + w_consume_buffered)
+
+		with m.If(self.r_en | ~self.r_rdy):
+			m.d[self._r_domain] += [
+				self.r_data.eq(fifo.r_data),
+				self.r_rdy.eq(fifo.r_rdy),
+				self.r_rst.eq(fifo.r_rst),
+			]
+			m.d.comb += [
+				fifo.r_en.eq(1)
+			]
+
+		return m
 
 
 class IntegratedLogicAnalyzer_with_FIFO(Elaboratable):
@@ -188,11 +486,19 @@ class IntegratedLogicAnalyzer_with_FIFO(Elaboratable):
 		# Set up our write port to capture the input signals,
 		# and our read port to provide the output.
 
-		m.submodules.fifo = fifo = AsyncFIFOBuffered(
-			width=self.sample_width,
-			depth=self.sample_depth,
-			r_domain="sync", 
-			w_domain="sync")
+		use_sdram_fifo = True
+		if use_sdram_fifo:
+			m.submodules.fifo = fifo = AsyncFIFOBuffered_SDRAMtest(
+				width=self.sample_width,
+				depth=self.sample_depth,
+				r_domain="sync", 
+				w_domain="sync")
+		else:
+			m.submodules.fifo = fifo = AsyncFIFOBuffered(
+				width=self.sample_width,
+				depth=self.sample_depth,
+				r_domain="sync", 
+				w_domain="sync")
 
 		# Don't sample unless our FSM asserts our sample signal explicitly.
 		sampling = Signal()
@@ -568,6 +874,7 @@ if __name__ == "__main__":
 
 		sim = Simulator(m)
 		sim.add_clock(1/25e6, domain="sync")
+		sim.add_clock(1/143e6, domain="sdram")
 
 		sim.add_process(spi_tests)
 
@@ -579,8 +886,7 @@ if __name__ == "__main__":
 			sim.run()
 
 	else: # upload - is there a test we could upload and do on the ulx3s?
-		from amaranth.build import Platform, Resource, Subsignal, Pins, PinsN, Attrs
-		from amaranth_boards.ulx3s import ULX3S_85F_Platform
+
 
 		# from 
 

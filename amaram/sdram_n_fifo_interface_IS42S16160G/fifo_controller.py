@@ -71,17 +71,17 @@ class fifo_controller(sdram_base):
 		
 		- this function ignores the read part of src_fifo, and the write part of dst_fifo
 
-			____________________________________________________
-			|ui_fifo[<i>]										|
-			|													|
-		-->-|-->-[src_fifo[<i>]]-->- ... ->--[dst_fifo[<i>]]->--|--->--
-			|													|
-			|___________________________________________________|
+            ____________________________________________________
+            |ui_fifo[<i>]                                        |
+            |                                                    |
+        -->-|-->-[src_fifo[<i>]]-->- ... ->--[dst_fifo[<i>]]->--|--->--
+            |                                                    |
+            |___________________________________________________|
 
-		clock domains:
+        clock domains:
 
-		|_________|    	|_______________________|		|___________|
-			write_<i>				sdram						read_<i>
+        |_________|        |_______________________|        |___________|
+            write_<i>                sdram                        read_<i>
 
 
 		"""
@@ -239,7 +239,8 @@ class fifo_controller(sdram_base):
 				with self.m.If(readback_phase == 0):
 					self.m.d.comb += readback_addr.eq(self.readback_sdram_addr)
 				with self.m.Else():
-					self.m.d.comb += readback_addr.eq(readback_addr)
+					# self.m.d.comb += readback_addr.eq(readback_addr)
+					pass
 
 
 				self.m.d.comb += [

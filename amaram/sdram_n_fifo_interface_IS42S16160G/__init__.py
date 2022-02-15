@@ -79,6 +79,7 @@ class sdram_controller(sdram_base):
 				("r_rdy", 1),
 				("r_en", 1),
 				("r_level", bits_for(self.depth + 1)),
+				("r_rst", 1), # new 15feb2022 - not used yet but fixes AttributeError()
 
 				("fully_read", 1) # redundant?
 

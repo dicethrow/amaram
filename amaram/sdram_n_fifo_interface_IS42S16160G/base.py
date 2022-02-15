@@ -39,6 +39,7 @@ class cmd_to_dram_ic(enum.Enum):
 
 class dram_ic_timing(enum.Enum): # minimums
 	T_STARTUP = 2e-6 # 100e-6 # for now, make it shorter, for simulation 
+	# T_STARTUP = 100e-6 # for now, make it shorter, for simulation 
 	T_RP	= 15e-9
 	T_RC	= 60e-9
 	T_RCD	= 15e-9

@@ -72,16 +72,16 @@ class fifo_controller(sdram_base):
 		- this function ignores the read part of src_fifo, and the write part of dst_fifo
 
             ____________________________________________________
-            |ui_fifo[<i>]                                        |
-            |                                                    |
+            |ui_fifo[<i>]                                       |
+            |                                                   |
         -->-|-->-[src_fifo[<i>]]-->- ... ->--[dst_fifo[<i>]]->--|--->--
-            |                                                    |
+            |                                                   |
             |___________________________________________________|
 
         clock domains:
 
         |_________|        |_______________________|        |___________|
-            write_<i>                sdram                        read_<i>
+          write_<i>                sdram                       read_<i>
 
 
 		"""
@@ -514,3 +514,79 @@ class fifo_controller(sdram_base):
 
 		return self.m
 
+
+
+if __name__ == "__main__":
+	""" 
+	17feb2022
+
+	Adding tests to each file, so I can more easily make 
+	changes in order to improve timing performance.
+
+	"""
+	from pathlib import Path
+	current_filename = str(Path(__file__).absolute()).split(".py")[0]
+
+	parser = main_parser()
+	args = parser.parse_args()
+
+	m = Module()
+
+	# if args.action in ["generate", "simulate"]:
+	# 	m.submodules.dram_testdriver = dram_testdriver = dram_testdriver()
+
+	if args.action == "generate":
+		pass
+
+	elif args.action == "simulate":
+		class fifo_controller_simulator():
+			def __init__(self):
+				pass
+
+
+
+		sdram_freq = int(143e6)
+		sim = Simulator(m)
+
+		sim.add_clock(1/sdram_freq, domain="sdram")
+		
+		num_fifos = 4
+		for i in range(num_fifos):
+			r_domain = f"read_{i}"
+			w_domain = f"write_{i}"
+			self.sim.add_clock(1/80e6, domain=r_domain)	# represents spi reads
+			# self.sim.add_clock(1/24e6, domain=w_domain)	# represents pclk writes
+			self.sim.add_clock(1/40e6, domain=w_domain)
+
+			fifo_id_identifier = 0xA + i
+
+			# to represent an image sensor filling a fifo
+			sim.add_sync_process(
+				self.write_into_fifo(self.dut.fifos[i], w_domain, id=fifo_id_identifier), 
+				domain=w_domain
+			)
+
+			# to represent reading back the fifos with spi
+			sim.add_sync_process(
+				self.read_from_fifo(self.dut.fifos[i], r_domain, id=fifo_id_identifier), 
+				domain=r_domain
+			)
+
+
+		def delay_more():
+			yield Active()
+			yield Delay(dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+			yield Delay(21e-6) # needed?
+		
+		sim.add_process(delay_more)
+		
+
+		with sim.write_vcd(
+			f"{current_filename}_simulate.vcd",
+			f"{current_filename}_simulate.gtkw", 
+			traces=[]): # todo - how to add clk, reset signals?
+
+			sim.run()
+
+	else: # upload - is there a test we could upload and do on the ulx3s? 
+		pass

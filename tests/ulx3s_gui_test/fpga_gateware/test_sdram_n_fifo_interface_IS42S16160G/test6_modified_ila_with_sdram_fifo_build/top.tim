@@ -1,0 +1,616 @@
+Info: constraining clock net 'clk25_0__io' to 25.00 MHz
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:      2756/83640     3%
+Info:         logic LUTs:   1672/83640     1%
+Info:         carry LUTs:    940/83640     1%
+Info:           RAM LUTs:     96/41820     0%
+Info:          RAMW LUTs:     48/20910     0%
+
+Info:      Total DFFs:      1618/83640     1%
+
+Info: Packing IOs..
+Info: sdram_0__dq__io[15] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_15, removing $nextpnr_iobuf sdram_0__dq__io[15].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_15' constrained to Bel 'X126/Y20/PIOC'.
+Info: sdram_0__dq__io[14] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_14, removing $nextpnr_iobuf sdram_0__dq__io[14].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_14' constrained to Bel 'X126/Y41/PIOC'.
+Info: sdram_0__dq__io[13] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_13, removing $nextpnr_iobuf sdram_0__dq__io[13].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_13' constrained to Bel 'X126/Y14/PIOD'.
+Info: sdram_0__dq__io[12] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_12, removing $nextpnr_iobuf sdram_0__dq__io[12].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_12' constrained to Bel 'X126/Y14/PIOC'.
+Info: sdram_0__dq__io[11] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_11, removing $nextpnr_iobuf sdram_0__dq__io[11].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_11' constrained to Bel 'X126/Y35/PIOA'.
+Info: sdram_0__dq__io[10] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_10, removing $nextpnr_iobuf sdram_0__dq__io[10].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_10' constrained to Bel 'X126/Y35/PIOB'.
+Info: sdram_0__dq__io[9] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_9, removing $nextpnr_iobuf sdram_0__dq__io[9].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_9' constrained to Bel 'X126/Y35/PIOC'.
+Info: sdram_0__dq__io[8] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_8, removing $nextpnr_iobuf sdram_0__dq__io[8].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_8' constrained to Bel 'X126/Y35/PIOD'.
+Info: sdram_0__dq__io[7] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_7, removing $nextpnr_iobuf sdram_0__dq__io[7].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_7' constrained to Bel 'X126/Y86/PIOD'.
+Info: sdram_0__dq__io[6] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_6, removing $nextpnr_iobuf sdram_0__dq__io[6].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_6' constrained to Bel 'X126/Y92/PIOD'.
+Info: sdram_0__dq__io[5] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_5, removing $nextpnr_iobuf sdram_0__dq__io[5].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_5' constrained to Bel 'X126/Y89/PIOD'.
+Info: sdram_0__dq__io[4] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_4, removing $nextpnr_iobuf sdram_0__dq__io[4].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_4' constrained to Bel 'X126/Y83/PIOD'.
+Info: sdram_0__dq__io[3] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_3, removing $nextpnr_iobuf sdram_0__dq__io[3].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_3' constrained to Bel 'X126/Y53/PIOC'.
+Info: sdram_0__dq__io[2] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_2, removing $nextpnr_iobuf sdram_0__dq__io[2].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_2' constrained to Bel 'X126/Y50/PIOD'.
+Info: sdram_0__dq__io[1] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_1, removing $nextpnr_iobuf sdram_0__dq__io[1].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_1' constrained to Bel 'X126/Y50/PIOC'.
+Info: sdram_0__dq__io[0] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_0, removing $nextpnr_iobuf sdram_0__dq__io[0].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_0' constrained to Bel 'X126/Y20/PIOD'.
+Info: esp32_spi_0__gpio0__io feeds TRELLIS_IO pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0_0, removing $nextpnr_iobuf esp32_spi_0__gpio0__io.
+Info: pin 'pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0_0' constrained to Bel 'X0/Y86/PIOD'.
+Info: uart_0__tx__io feeds TRELLIS_IO pin_uart_0__tx.uart_0__tx_0, removing $nextpnr_obuf uart_0__tx__io.
+Info: pin 'pin_uart_0__tx.uart_0__tx_0' constrained to Bel 'X0/Y56/PIOC'.
+Info: uart_0__rx__io feeds TRELLIS_IO pin_uart_0__rx.uart_0__rx_0, removing $nextpnr_ibuf uart_0__rx__io.
+Info: pin 'pin_uart_0__rx.uart_0__rx_0' constrained to Bel 'X0/Y89/PIOB'.
+Info: uart_0__rts__io feeds TRELLIS_IO pin_uart_0__rts.uart_0__rts_0, removing $nextpnr_ibuf uart_0__rts__io.
+Info: pin 'pin_uart_0__rts.uart_0__rts_0' constrained to Bel 'X0/Y86/PIOB'.
+Info: uart_0__dtr__io feeds TRELLIS_IO pin_uart_0__dtr.uart_0__dtr_0, removing $nextpnr_ibuf uart_0__dtr__io.
+Info: pin 'pin_uart_0__dtr.uart_0__dtr_0' constrained to Bel 'X0/Y89/PIOD'.
+Info: sdram_0__we__io feeds TRELLIS_IO pin_sdram_0__we.sdram_0__we_0, removing $nextpnr_obuf sdram_0__we__io.
+Info: pin 'pin_sdram_0__we.sdram_0__we_0' constrained to Bel 'X126/Y86/PIOC'.
+Info: sdram_0__ras__io feeds TRELLIS_IO pin_sdram_0__ras.sdram_0__ras_0, removing $nextpnr_obuf sdram_0__ras__io.
+Info: pin 'pin_sdram_0__ras.sdram_0__ras_0' constrained to Bel 'X126/Y86/PIOB'.
+Info: sdram_0__dqm__io[1] feeds TRELLIS_IO pin_sdram_0__dqm.sdram_0__dqm_1, removing $nextpnr_obuf sdram_0__dqm__io[1].
+Info: pin 'pin_sdram_0__dqm.sdram_0__dqm_1' constrained to Bel 'X126/Y38/PIOA'.
+Info: sdram_0__dqm__io[0] feeds TRELLIS_IO pin_sdram_0__dqm.sdram_0__dqm_0, removing $nextpnr_obuf sdram_0__dqm__io[0].
+Info: pin 'pin_sdram_0__dqm.sdram_0__dqm_0' constrained to Bel 'X126/Y89/PIOC'.
+Info: sdram_0__cs__io feeds TRELLIS_IO pin_sdram_0__cs.sdram_0__cs_0, removing $nextpnr_obuf sdram_0__cs__io.
+Info: pin 'pin_sdram_0__cs.sdram_0__cs_0' constrained to Bel 'X126/Y86/PIOA'.
+Info: sdram_0__clk_en__io feeds TRELLIS_IO pin_sdram_0__clk_en.sdram_0__clk_en_0, removing $nextpnr_obuf sdram_0__clk_en__io.
+Info: pin 'pin_sdram_0__clk_en.sdram_0__clk_en_0' constrained to Bel 'X126/Y38/PIOC'.
+Info: sdram_0__clk__io feeds TRELLIS_IO pin_sdram_0__clk.sdram_0__clk_0, removing $nextpnr_obuf sdram_0__clk__io.
+Info: pin 'pin_sdram_0__clk.sdram_0__clk_0' constrained to Bel 'X126/Y38/PIOB'.
+Info: sdram_0__cas__io feeds TRELLIS_IO pin_sdram_0__cas.sdram_0__cas_0, removing $nextpnr_obuf sdram_0__cas__io.
+Info: pin 'pin_sdram_0__cas.sdram_0__cas_0' constrained to Bel 'X126/Y89/PIOA'.
+Info: sdram_0__ba__io[1] feeds TRELLIS_IO pin_sdram_0__ba.sdram_0__ba_1, removing $nextpnr_obuf sdram_0__ba__io[1].
+Info: pin 'pin_sdram_0__ba.sdram_0__ba_1' constrained to Bel 'X126/Y83/PIOB'.
+Info: sdram_0__ba__io[0] feeds TRELLIS_IO pin_sdram_0__ba.sdram_0__ba_0, removing $nextpnr_obuf sdram_0__ba__io[0].
+Info: pin 'pin_sdram_0__ba.sdram_0__ba_0' constrained to Bel 'X126/Y83/PIOC'.
+Info: sdram_0__a__io[12] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_12, removing $nextpnr_obuf sdram_0__a__io[12].
+Info: pin 'pin_sdram_0__a.sdram_0__a_12' constrained to Bel 'X126/Y41/PIOA'.
+Info: sdram_0__a__io[11] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_11, removing $nextpnr_obuf sdram_0__a__io[11].
+Info: pin 'pin_sdram_0__a.sdram_0__a_11' constrained to Bel 'X126/Y38/PIOD'.
+Info: sdram_0__a__io[10] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_10, removing $nextpnr_obuf sdram_0__a__io[10].
+Info: pin 'pin_sdram_0__a.sdram_0__a_10' constrained to Bel 'X126/Y83/PIOA'.
+Info: sdram_0__a__io[9] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_9, removing $nextpnr_obuf sdram_0__a__io[9].
+Info: pin 'pin_sdram_0__a.sdram_0__a_9' constrained to Bel 'X126/Y41/PIOB'.
+Info: sdram_0__a__io[8] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_8, removing $nextpnr_obuf sdram_0__a__io[8].
+Info: pin 'pin_sdram_0__a.sdram_0__a_8' constrained to Bel 'X126/Y44/PIOA'.
+Info: sdram_0__a__io[7] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_7, removing $nextpnr_obuf sdram_0__a__io[7].
+Info: pin 'pin_sdram_0__a.sdram_0__a_7' constrained to Bel 'X126/Y44/PIOC'.
+Info: sdram_0__a__io[6] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_6, removing $nextpnr_obuf sdram_0__a__io[6].
+Info: pin 'pin_sdram_0__a.sdram_0__a_6' constrained to Bel 'X126/Y41/PIOD'.
+Info: sdram_0__a__io[5] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_5, removing $nextpnr_obuf sdram_0__a__io[5].
+Info: pin 'pin_sdram_0__a.sdram_0__a_5' constrained to Bel 'X126/Y44/PIOB'.
+Info: sdram_0__a__io[4] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_4, removing $nextpnr_obuf sdram_0__a__io[4].
+Info: pin 'pin_sdram_0__a.sdram_0__a_4' constrained to Bel 'X126/Y44/PIOD'.
+Info: sdram_0__a__io[3] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_3, removing $nextpnr_obuf sdram_0__a__io[3].
+Info: pin 'pin_sdram_0__a.sdram_0__a_3' constrained to Bel 'X126/Y47/PIOC'.
+Info: sdram_0__a__io[2] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_2, removing $nextpnr_obuf sdram_0__a__io[2].
+Info: pin 'pin_sdram_0__a.sdram_0__a_2' constrained to Bel 'X126/Y47/PIOA'.
+Info: sdram_0__a__io[1] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_1, removing $nextpnr_obuf sdram_0__a__io[1].
+Info: pin 'pin_sdram_0__a.sdram_0__a_1' constrained to Bel 'X126/Y47/PIOD'.
+Info: sdram_0__a__io[0] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_0, removing $nextpnr_obuf sdram_0__a__io[0].
+Info: pin 'pin_sdram_0__a.sdram_0__a_0' constrained to Bel 'X126/Y47/PIOB'.
+Info: led_7__io feeds TRELLIS_IO pin_led_7.led_7_0, removing $nextpnr_obuf led_7__io.
+Info: pin 'pin_led_7.led_7_0' constrained to Bel 'X0/Y41/PIOD'.
+Info: led_6__io feeds TRELLIS_IO pin_led_6.led_6_0, removing $nextpnr_obuf led_6__io.
+Info: pin 'pin_led_6.led_6_0' constrained to Bel 'X0/Y38/PIOD'.
+Info: led_5__io feeds TRELLIS_IO pin_led_5.led_5_0, removing $nextpnr_obuf led_5__io.
+Info: pin 'pin_led_5.led_5_0' constrained to Bel 'X0/Y44/PIOD'.
+Info: led_4__io feeds TRELLIS_IO pin_led_4.led_4_0, removing $nextpnr_obuf led_4__io.
+Info: pin 'pin_led_4.led_4_0' constrained to Bel 'X0/Y38/PIOB'.
+Info: led_3__io feeds TRELLIS_IO pin_led_3.led_3_0, removing $nextpnr_obuf led_3__io.
+Info: pin 'pin_led_3.led_3_0' constrained to Bel 'X0/Y38/PIOC'.
+Info: led_2__io feeds TRELLIS_IO pin_led_2.led_2_0, removing $nextpnr_obuf led_2__io.
+Info: pin 'pin_led_2.led_2_0' constrained to Bel 'X0/Y38/PIOA'.
+Info: led_1__io feeds TRELLIS_IO pin_led_1.led_1_0, removing $nextpnr_obuf led_1__io.
+Info: pin 'pin_led_1.led_1_0' constrained to Bel 'X0/Y35/PIOD'.
+Info: led_0__io feeds TRELLIS_IO pin_led_0.led_0_0, removing $nextpnr_obuf led_0__io.
+Info: pin 'pin_led_0.led_0_0' constrained to Bel 'X0/Y35/PIOC'.
+Info: esp32_spi_0__tx__io feeds TRELLIS_IO pin_esp32_spi_0__tx.esp32_spi_0__tx_0, removing $nextpnr_obuf esp32_spi_0__tx__io.
+Info: pin 'pin_esp32_spi_0__tx.esp32_spi_0__tx_0' constrained to Bel 'X0/Y50/PIOD'.
+Info: esp32_spi_0__rx__io feeds TRELLIS_IO pin_esp32_spi_0__rx.esp32_spi_0__rx_0, removing $nextpnr_ibuf esp32_spi_0__rx__io.
+Info: pin 'pin_esp32_spi_0__rx.esp32_spi_0__rx_0' constrained to Bel 'X0/Y56/PIOA'.
+Info: esp32_spi_0__gpio5_cs__io feeds TRELLIS_IO pin_esp32_spi_0__gpio5_cs.esp32_spi_0__gpio5_cs_0, removing $nextpnr_ibuf esp32_spi_0__gpio5_cs__io.
+Info: pin 'pin_esp32_spi_0__gpio5_cs.esp32_spi_0__gpio5_cs_0' constrained to Bel 'X0/Y83/PIOC'.
+Info: esp32_spi_0__gpio4_copi__io feeds TRELLIS_IO pin_esp32_spi_0__gpio4_copi.esp32_spi_0__gpio4_copi_0, removing $nextpnr_ibuf esp32_spi_0__gpio4_copi__io.
+Info: pin 'pin_esp32_spi_0__gpio4_copi.esp32_spi_0__gpio4_copi_0' constrained to Bel 'X0/Y53/PIOC'.
+Info: esp32_spi_0__gpio16_sclk__io feeds TRELLIS_IO pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0, removing $nextpnr_ibuf esp32_spi_0__gpio16_sclk__io.
+Info: pin 'pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0' constrained to Bel 'X0/Y89/PIOC'.
+Info: esp32_spi_0__gpio12_cipo__io feeds TRELLIS_IO pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0, removing $nextpnr_obuf esp32_spi_0__gpio12_cipo__io.
+Info: pin 'pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0' constrained to Bel 'X0/Y53/PIOD'.
+Info: esp32_spi_0__en__io feeds TRELLIS_IO pin_esp32_spi_0__en.esp32_spi_0__en_0, removing $nextpnr_obuf esp32_spi_0__en__io.
+Info: pin 'pin_esp32_spi_0__en.esp32_spi_0__en_0' constrained to Bel 'X0/Y47/PIOB'.
+Info: clk25_0__io feeds TRELLIS_IO pin_clk25_0.clk25_0_0, removing $nextpnr_ibuf clk25_0__io.
+Info: pin 'pin_clk25_0.clk25_0_0' constrained to Bel 'X0/Y47/PIOA'.
+Info: pin 'button_up_0__io$tr_io' constrained to Bel 'X126/Y89/PIOB'.
+Info: pin 'button_right_0__io$tr_io' constrained to Bel 'X126/Y17/PIOD'.
+Info: button_pwr_0__io feeds TRELLIS_IO pin_button_pwr_0.button_pwr_0_0, removing $nextpnr_ibuf button_pwr_0__io.
+Info: pin 'pin_button_pwr_0.button_pwr_0_0' constrained to Bel 'X6/Y0/PIOB'.
+Info: pin 'button_left_0__io$tr_io' constrained to Bel 'X6/Y95/PIOA'.
+Info: button_fire_1__io feeds TRELLIS_IO pin_button_fire_1.button_fire_1_0, removing $nextpnr_ibuf button_fire_1__io.
+Info: pin 'pin_button_fire_1.button_fire_1_0' constrained to Bel 'X4/Y95/PIOB'.
+Info: button_fire_0__io feeds TRELLIS_IO pin_button_fire_0.button_fire_0_0, removing $nextpnr_ibuf button_fire_0__io.
+Info: pin 'pin_button_fire_0.button_fire_0_0' constrained to Bel 'X4/Y95/PIOA'.
+Info: pin 'button_down_0__io$tr_io' constrained to Bel 'X6/Y95/PIOB'.
+Info: Packing constants..
+Info: Packing carries...
+Info: Finding LUTFF pairs...
+Info: Packing LUT5-7s...
+Info: Finding LUT-LUT pairs...
+Info: Packing paired LUTs into a SLICE...
+Info: Packing unpaired LUTs into a SLICE...
+Info: Packing unpaired FFs into a SLICE...
+Info: Generating derived timing constraints...
+Info:     Input frequency of PLL 'dut.U$$1.ila.fifo.ecp5pll.U$$0' is constrained to 25.0 MHz
+Info:     Derived frequency constraint of 25.0 MHz for net dut.U$$1.ila.fifo.sdram_clk
+Info: Promoting globals...
+Info:     promoting clock net dut.U$$1.ila.fifo.sdram_clk to global network
+Info:     promoting clock net dut.clk to global network
+Info: Checksum: 0x22392d72
+
+Info: Annotating ports with timing budgets for target frequency 12.00 MHz
+Info: Checksum: 0x0dfb2f11
+
+Info: Device utilisation:
+Info: 	       TRELLIS_SLICE:  1845/41820     4%
+Info: 	          TRELLIS_IO:    67/  365    18%
+Info: 	                DCCA:     2/   56     3%
+Info: 	              DP16KD:     0/  208     0%
+Info: 	          MULT18X18D:     0/  156     0%
+Info: 	              ALU54B:     0/   78     0%
+Info: 	             EHXPLLL:     1/    4    25%
+Info: 	             EXTREFB:     0/    2     0%
+Info: 	                DCUA:     0/    2     0%
+Info: 	           PCSCLKDIV:     0/    2     0%
+Info: 	             IOLOGIC:     0/  224     0%
+Info: 	            SIOLOGIC:     0/  141     0%
+Info: 	                 GSR:     0/    1     0%
+Info: 	               JTAGG:     0/    1     0%
+Info: 	                OSCG:     0/    1     0%
+Info: 	               SEDGA:     0/    1     0%
+Info: 	                 DTR:     0/    1     0%
+Info: 	             USRMCLK:     0/    1     0%
+Info: 	             CLKDIVF:     0/    4     0%
+Info: 	           ECLKSYNCB:     0/   10     0%
+Info: 	             DLLDELD:     0/    8     0%
+Info: 	              DDRDLL:     0/    4     0%
+Info: 	             DQSBUFM:     0/   14     0%
+Info: 	     TRELLIS_ECLKBUF:     0/    8     0%
+Info: 	        ECLKBRIDGECS:     0/    2     0%
+Info: 	                DCSC:     0/    2     0%
+
+Info: Placed 68 cells based on constraints.
+Info: Creating initial analytic placement for 1116 cells, random placement wirelen = 208438.
+Info:     at initial placer iter 0, wirelen = 2782
+Info:     at initial placer iter 1, wirelen = 2549
+Info:     at initial placer iter 2, wirelen = 2482
+Info:     at initial placer iter 3, wirelen = 2513
+Info: Running main analytical placer.
+Info:     at iteration #1, type TRELLIS_SLICE: wirelen solved = 2465, spread = 17992, legal = 19030; time = 0.08s
+Info:     at iteration #2, type TRELLIS_SLICE: wirelen solved = 3084, spread = 19528, legal = 20111; time = 0.09s
+Info:     at iteration #3, type TRELLIS_SLICE: wirelen solved = 3994, spread = 19929, legal = 20358; time = 0.09s
+Info:     at iteration #4, type TRELLIS_SLICE: wirelen solved = 4352, spread = 17063, legal = 17749; time = 0.08s
+Info:     at iteration #5, type TRELLIS_SLICE: wirelen solved = 4670, spread = 15884, legal = 16540; time = 0.09s
+Info:     at iteration #6, type TRELLIS_SLICE: wirelen solved = 5127, spread = 15163, legal = 15786; time = 0.09s
+Info:     at iteration #7, type TRELLIS_SLICE: wirelen solved = 5463, spread = 14660, legal = 15400; time = 0.08s
+Info:     at iteration #8, type TRELLIS_SLICE: wirelen solved = 5630, spread = 13432, legal = 14429; time = 0.08s
+Info:     at iteration #9, type TRELLIS_SLICE: wirelen solved = 5849, spread = 13867, legal = 14505; time = 0.08s
+Info:     at iteration #10, type TRELLIS_SLICE: wirelen solved = 6407, spread = 13563, legal = 14134; time = 0.09s
+Info:     at iteration #11, type TRELLIS_SLICE: wirelen solved = 6670, spread = 13185, legal = 13652; time = 0.09s
+Info:     at iteration #12, type TRELLIS_SLICE: wirelen solved = 6752, spread = 13944, legal = 14334; time = 0.09s
+Info:     at iteration #13, type TRELLIS_SLICE: wirelen solved = 7273, spread = 13003, legal = 13546; time = 0.09s
+Info:     at iteration #14, type TRELLIS_SLICE: wirelen solved = 7409, spread = 14038, legal = 14434; time = 0.08s
+Info:     at iteration #15, type TRELLIS_SLICE: wirelen solved = 7796, spread = 14197, legal = 14598; time = 0.07s
+Info:     at iteration #16, type TRELLIS_SLICE: wirelen solved = 7859, spread = 14476, legal = 14822; time = 0.09s
+Info:     at iteration #17, type TRELLIS_SLICE: wirelen solved = 8085, spread = 14400, legal = 14675; time = 0.09s
+Info:     at iteration #18, type TRELLIS_SLICE: wirelen solved = 8347, spread = 13804, legal = 14335; time = 0.08s
+Info: HeAP Placer Time: 2.52s
+Info:   of which solving equations: 1.40s
+Info:   of which spreading cells: 0.18s
+Info:   of which strict legalisation: 0.07s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 2234, wirelen = 13546
+Info:   at iteration #5: temp = 0.000000, timing cost = 1270, wirelen = 11066
+Info:   at iteration #10: temp = 0.000000, timing cost = 1313, wirelen = 10495
+Info:   at iteration #15: temp = 0.000000, timing cost = 1156, wirelen = 10293
+Info:   at iteration #20: temp = 0.000000, timing cost = 1266, wirelen = 10190
+Info:   at iteration #21: temp = 0.000000, timing cost = 1253, wirelen = 10176 
+Info: SA placement time 7.15s
+
+Info: Max frequency for clock '$glbnet$dut.U$$1.ila.fifo.sdram_clk': 40.52 MHz (PASS at 25.00 MHz)
+Info: Max frequency for clock                     '$glbnet$dut.clk': 75.54 MHz (PASS at 12.00 MHz)
+Info: Clock '$PACKER_GND_NET' has no interior paths
+
+Info: Max delay <async>                                     -> <async>                : 19.32 ns
+Info: Max delay <async>                                     -> posedge $glbnet$dut.clk: 10.67 ns
+Info: Max delay posedge $glbnet$dut.U$$1.ila.fifo.sdram_clk -> <async>                : 25.04 ns
+Info: Max delay posedge $glbnet$dut.clk                     -> posedge $PACKER_GND_NET: 2.83 ns
+Info: Max delay posedge $glbnet$dut.clk                     -> <async>                : 5.31 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 5 endpoint(s)
+Info:          + represents [1,5) endpoint(s)
+Info: [ 15320,  18685) |****+
+Info: [ 18685,  22050) |*****************+
+Info: [ 22050,  25415) |***********+
+Info: [ 25415,  28780) |****+
+Info: [ 28780,  32145) |*************************************+
+Info: [ 32145,  35510) |**********************+
+Info: [ 35510,  38875) |**********************************************************+
+Info: [ 38875,  42240) | 
+Info: [ 42240,  45605) | 
+Info: [ 45605,  48970) | 
+Info: [ 48970,  52335) | 
+Info: [ 52335,  55700) | 
+Info: [ 55700,  59065) |+
+Info: [ 59065,  62430) |**+
+Info: [ 62430,  65795) |******+
+Info: [ 65795,  69160) |***+
+Info: [ 69160,  72525) |************+
+Info: [ 72525,  75890) |*******************************+
+Info: [ 75890,  79255) |****************************************************+
+Info: [ 79255,  82620) |************************************************************ 
+Info: Checksum: 0x3aa225b5
+Info: Routing globals...
+Info:     routing clock net $glbnet$dut.clk using global 0
+Info:     routing clock net $glbnet$dut.U$$1.ila.fifo.sdram_clk using global 1
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 9207 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |      361        638 |  361   638 |      8668|       0.53       0.53|
+Info:       2000 |      672       1327 |  311   689 |      8045|       0.24       0.77|
+Info:       3000 |     1175       1824 |  503   497 |      7654|       0.29       1.06|
+Info:       4000 |     1684       2315 |  509   491 |      7367|       0.27       1.33|
+Info:       5000 |     2105       2894 |  421   579 |      6885|       0.30       1.63|
+Info:       6000 |     2686       3313 |  581   419 |      6626|       0.28       1.91|
+Info:       7000 |     3241       3758 |  555   445 |      6295|       0.32       2.22|
+Info:       8000 |     3755       4244 |  514   486 |      5930|       0.36       2.58|
+Info:       9000 |     4186       4813 |  431   569 |      5486|       0.27       2.85|
+Info:      10000 |     4528       5471 |  342   658 |      4937|       0.26       3.11|
+Info:      11000 |     4725       6274 |  197   803 |      4150|       0.18       3.28|
+Info:      12000 |     4940       7059 |  215   785 |      3430|       0.19       3.47|
+Info:      13000 |     5152       7847 |  212   788 |      2649|       0.18       3.65|
+Info:      14000 |     5245       8754 |   93   907 |      1746|       0.14       3.79|
+Info:      15000 |     5333       9666 |   88   912 |       849|       0.34       4.13|
+Info:      15986 |     5449      10537 |  116   871 |         0|       0.24       4.37|
+Info: Routing complete.
+Info: Router1 time 4.37s
+Info: Checksum: 0xd040f077
+
+Info: Critical path report for clock '$glbnet$dut.U$$1.ila.fifo.sdram_clk' (posedge -> posedge):
+Info: curr total
+Info:  0.5  0.5  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.w_next_addr_TRELLIS_FF_Q_DI_CCU2C_S0_2$CCU2_SLICE.Q0
+Info:  1.3  1.8    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.w_next_addr[4] budget 0.000000 ns (100,23) -> (101,20)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_SD_L6MUX21_Z_2_D1_PFUMX_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amaram/amaram/sdram_n_fifo_interface_IS42S16160G/fifo_controller.py:187
+Info:  0.4  2.2  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_SD_L6MUX21_Z_2_D1_PFUMX_Z_SLICE.OFX0
+Info:  0.0  2.2    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_SD_L6MUX21_Z_2_D1 budget 0.000000 ns (101,20) -> (101,20)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_SD_L6MUX21_Z_2_D1_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:141.38-141.40
+Info:  0.2  2.4  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_SD_L6MUX21_Z_2_D1_PFUMX_Z_SLICE.OFX1
+Info:  1.2  3.6    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_SD[2] budget 0.000000 ns (101,20) -> (101,26)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  4.1  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX0
+Info:  0.0  4.1    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D1 budget 0.000000 ns (101,26) -> (101,26)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:157.62-157.64
+Info:  0.2  4.3  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX1
+Info:  0.0  4.3    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1 budget 0.000000 ns (101,26) -> (101,26)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:157.70-157.72
+Info:  0.2  4.5  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_S0_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.OFX1
+Info:  0.9  5.4    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.words_stored_in_ram_LUT4_Z_19_C_CCU2C_S0_COUT_CCU2C_COUT_1_S0[3] budget 0.797000 ns (101,26) -> (101,28)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D0_L6MUX21_Z_D1_PFUMX_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  5.8  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D0_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX0
+Info:  0.0  5.8    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D0_L6MUX21_Z_D1 budget 0.000000 ns (101,28) -> (101,28)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D0_L6MUX21_Z_D1_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:157.54-157.56
+Info:  0.2  6.1  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D0_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX1
+Info:  0.0  6.1    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D0 budget 0.000000 ns (101,28) -> (101,28)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.FXA
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:157.66-157.68
+Info:  0.2  6.3  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD_L6MUX21_Z_2_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.OFX1
+Info:  1.1  7.5    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_SD[3] budget 2.391000 ns (101,28) -> (103,27)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_D1_PFUMX_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  7.9  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_D1_PFUMX_Z_SLICE.OFX0
+Info:  0.0  7.9    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_D1 budget 0.000000 ns (103,27) -> (103,27)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_D1_PFUMX_Z_SLICE.FXB
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:141.38-141.40
+Info:  0.2  8.1  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state$next_LUT4_Z_C_L6MUX21_Z_1_D1_PFUMX_Z_SLICE.OFX1
+Info:  1.2  9.3    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state_LUT4_B_Z[4] budget 2.390000 ns (103,27) -> (96,26)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state_LUT4_B_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  9.5  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state_LUT4_B_SLICE.F1
+Info:  0.0  9.6    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state_LUT4_C_Z[0] budget 1.434000 ns (96,26) -> (96,26)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.r_en_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  9.8  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.r_en_LUT4_Z_SLICE.F1
+Info:  1.2 11.0    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.consume_buffered_cdc_r_consume_buffered budget 1.434000 ns (96,26) -> (92,25)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.r_rdy_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:63.22-63.23
+Info:  0.2 11.2  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.r_rdy_LUT4_Z_SLICE.F1
+Info:  1.4 12.6    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc.i_CCU2C_S0_3_A0 budget 1.434000 ns (92,25) -> (89,23)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc.i_CCU2C_S0_3$CCU2_SLICE.A0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:341
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:30.22-30.23
+Info:  0.4 13.1  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc.i_CCU2C_S0_3$CCU2_SLICE.FCO
+Info:  0.0 13.1    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc.i_CCU2C_S0_3_COUT[2] budget 0.000000 ns (89,23) -> (89,23)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc.i_CCU2C_S0_2$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:341
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:65.22-65.25
+Info:  0.4 13.5  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc.i_CCU2C_S0_2$CCU2_SLICE.F0
+Info:  1.3 14.8    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.consume_enc_i[2] budget 12.712000 ns (89,23) -> (88,19)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.1.0$DPRAM1_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:388
+Info:  0.2 15.1  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.1.0$DPRAM1_SLICE.F1
+Info:  1.1 16.2    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.0.0_DO[1] budget 2.824000 ns (88,19) -> (89,18)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.0.0_DO_LUT4_C_Z_PFUMX_ALUT_SLICE.D0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4 16.6  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.0.0_DO_LUT4_C_Z_PFUMX_ALUT_SLICE.OFX0
+Info:  0.6 17.2    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.3.0_DO_LUT4_B_D[3] budget 2.824000 ns (89,18) -> (90,19)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.3.0_DO_LUT4_B_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2 17.5  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.3.0_DO_LUT4_B_SLICE.F1
+Info:  0.1 17.6    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage_r_data_TRELLIS_FF_Q_7_DI[3] budget 2.824000 ns (90,19) -> (90,19)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.3.0_DO_LUT4_B_SLICE.DI1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/techmap.v:575.21-575.22
+Info:  0.0 17.6  Setup dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.2.3.0_DO_LUT4_B_SLICE.DI1
+Info: 6.0 ns logic, 11.5 ns routing
+
+Info: Critical path report for clock '$glbnet$dut.clk' (posedge -> posedge):
+Info: curr total
+Info:  0.5  0.5  Source dut.U$$0.interface.command_TRELLIS_FF_Q_SLICE.Q0
+Info:  0.8  1.3    Net dut.U$$0._address[6] budget 3.818000 ns (9,49) -> (9,49)
+Info:                Sink dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_Z_SLICE.B0
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/io/spi.py:474
+Info:  0.2  1.6  Source dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_Z_SLICE.F0
+Info:  0.2  1.8    Net dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D[1] budget 3.818000 ns (9,49) -> (9,49)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_C_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  2.0  Source pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_C_LUT4_Z_SLICE.F1
+Info:  0.9  2.9    Net dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C[0] budget 3.818000 ns (9,49) -> (9,48)
+Info:                Sink dut.U$$1.ila.ila_fifo_fsm_state_TRELLIS_FF_Q_CE_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  3.2  Source dut.U$$1.ila.ila_fifo_fsm_state_TRELLIS_FF_Q_CE_LUT4_Z_SLICE.F1
+Info:  0.9  4.0    Net dut.U$$0.r_rdy_LUT4_D_A[2] budget 3.817000 ns (9,48) -> (7,48)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_C_LUT4_C_Z_LUT4_Z_1_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  4.3  Source pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_C_LUT4_C_Z_LUT4_Z_1_SLICE.F1
+Info:  0.6  4.8    Net pin_button_fire_0.button_fire_0__i_LUT4_B_A[0] budget 3.817000 ns (7,48) -> (7,49)
+Info:                Sink dut.U$$0.unbuffered.produce_r_bin_LUT4_Z_C_LUT4_C_Z_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  5.1  Source dut.U$$0.unbuffered.produce_r_bin_LUT4_Z_C_LUT4_C_Z_LUT4_Z_SLICE.F1
+Info:  0.7  5.8    Net dut.U$$0.consume_buffered_cdc_r_consume_buffered budget 3.817000 ns (7,49) -> (7,51)
+Info:                Sink dut.U$$0.r_rdy$next_LUT4_Z_D_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  6.0  Source dut.U$$0.r_rdy$next_LUT4_Z_D_LUT4_Z_SLICE.F1
+Info:  0.6  6.6    Net dut.U$$0.r_rdy$next_LUT4_Z_D budget 3.817000 ns (7,51) -> (6,51)
+Info:                Sink dut.U$$0.unbuffered.consume_enc.i_CCU2C_S0_2$CCU2_SLICE.A0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:341
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:30.22-30.23
+Info:  0.4  7.1  Source dut.U$$0.unbuffered.consume_enc.i_CCU2C_S0_2$CCU2_SLICE.FCO
+Info:  0.0  7.1    Net dut.U$$0.unbuffered.consume_enc.i_CCU2C_S0_2_COUT[2] budget 0.000000 ns (6,51) -> (6,51)
+Info:                Sink dut.U$$0.unbuffered.consume_enc.i_CCU2C_S0_1$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:341
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:38.23-38.25
+Info:  0.4  7.5  Source dut.U$$0.unbuffered.consume_enc.i_CCU2C_S0_1$CCU2_SLICE.F0
+Info:  1.1  8.6    Net dut.U$$0.unbuffered.consume_enc_i[2] budget 32.000000 ns (6,51) -> (5,49)
+Info:                Sink dut.U$$0.unbuffered.storage.1.1.0$DPRAM1_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:388
+Info:  0.2  8.8  Source dut.U$$0.unbuffered.storage.1.1.0$DPRAM1_SLICE.F1
+Info:  0.9  9.8    Net dut.U$$0.unbuffered.storage.1.0.0_DO[0] budget 8.000000 ns (5,49) -> (4,50)
+Info:                Sink dut.U$$0.unbuffered.storage.1.0.0_DO_LUT4_B_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2 10.0  Source dut.U$$0.unbuffered.storage.1.0.0_DO_LUT4_B_SLICE.F1
+Info:  0.1 10.1    Net dut.U$$0.unbuffered.storage.3.0.0_DO_LUT4_B_Z[7] budget 7.999000 ns (4,50) -> (4,50)
+Info:                Sink dut.U$$0.unbuffered.storage.1.0.0_DO_LUT4_B_SLICE.DI1
+Info:  0.0 10.1  Setup dut.U$$0.unbuffered.storage.1.0.0_DO_LUT4_B_SLICE.DI1
+Info: 3.3 ns logic, 6.8 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> '<async>':
+Info: curr total
+Info:  0.0  0.0  Source pin_button_pwr_0.button_pwr_0_0.O
+Info:  5.7  5.7    Net pin_button_pwr_0.button_pwr_0__i_n budget 41.549000 ns (6,0) -> (2,86)
+Info:                Sink pin_esp32_spi_0__en.esp32_spi_0__en__o_LUT4_Z_SLICE.D0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/vendor/lattice_ecp5.py:464
+Info:  0.2  5.9  Source pin_esp32_spi_0__en.esp32_spi_0__en__o_LUT4_Z_SLICE.F0
+Info:  3.2  9.1    Net pin_esp32_spi_0__en_esp32_spi_0__en__o budget 41.548000 ns (2,86) -> (0,47)
+Info:                Sink pin_esp32_spi_0__en.esp32_spi_0__en_0.I
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info: 0.2 ns logic, 8.9 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$dut.clk':
+Info: curr total
+Info:  0.0  0.0  Source pin_button_fire_0.button_fire_0_0.O
+Info:  4.2  4.2    Net dut_button_fire_0__i budget 20.657000 ns (4,95) -> (8,49)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_A_LUT4_Z_SLICE.A1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  4.5  Source pin_button_fire_0.button_fire_0__i_LUT4_B_A_LUT4_Z_SLICE.F1
+Info:  0.0  4.5    Net pin_button_fire_0.button_fire_0__i_LUT4_B_Z[3] budget 10.144000 ns (8,49) -> (8,49)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_SLICE.D0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  4.7  Source pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_SLICE.F0
+Info:  0.4  5.2    Net dut.U$$0.interface.current_word$next_LUT4_Z_4_A[1] budget 10.144000 ns (8,49) -> (8,49)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  5.4  Source pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_SLICE.F1
+Info:  0.1  5.5    Net dut.U$$0.interface.current_word$next[0] budget 10.144000 ns (8,49) -> (8,49)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_SLICE.DI1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/io/spi.py:507
+Info:  0.0  5.5  Setup pin_button_fire_0.button_fire_0__i_LUT4_B_Z_LUT4_D_SLICE.DI1
+Info: 0.7 ns logic, 4.8 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$dut.U$$1.ila.fifo.sdram_clk' -> '<async>':
+Info: curr total
+Info:  0.5  0.5  Source dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_index$next_L6MUX21_Z_D1_PFUMX_Z_SLICE.Q1
+Info:  1.3  1.8    Net dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_router_fsm_state_LUT4_B_Z_LUT4_C_Z_PFUMX_ALUT_Z[5] budget 41.287998 ns (97,24) -> (99,21)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_A_PFUMX_Z_1_C0_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  2.1  Source dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_A_PFUMX_Z_1_C0_LUT4_Z_SLICE.F1
+Info:  1.2  3.3    Net dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_A_PFUMX_Z_1_C0[4] budget 41.286999 ns (99,21) -> (109,21)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_A_PFUMX_Z_1_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.3  3.6  Source dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_A_PFUMX_Z_1_SLICE.OFX0
+Info:  1.2  4.8    Net dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_A[0] budget 4.726000 ns (109,21) -> (109,25)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_SLICE.C0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  5.0  Source dut.U$$1.ila.fifo.sdram_controller.read_write_controller.sdram_addr_LUT4_Z_11_SLICE.F0
+Info:  0.9  5.9    Net pin_sdram_0__dq.sdram_0__dq__oe_LUT4_Z_B_LUT4_Z_A_LUT4_D_Z_LUT4_Z_1_D_LUT4_D_Z_LUT4_C_Z[4] budget 20.520000 ns (109,25) -> (108,26)
+Info:                Sink pin_sdram_0__a.sdram_0__a__o_LUT4_Z_B_LUT4_Z_D_PFUMX_Z_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.3  6.2  Source pin_sdram_0__a.sdram_0__a__o_LUT4_Z_B_LUT4_Z_D_PFUMX_Z_SLICE.OFX0
+Info:  1.4  7.5    Net pin_sdram_0__a.sdram_0__a__o_LUT4_Z_B_LUT4_Z_D[2] budget 5.754000 ns (108,26) -> (113,26)
+Info:                Sink pin_sdram_0__a.sdram_0__a__o_LUT4_Z_B_LUT4_Z_D_LUT4_A_SLICE.A0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  7.8  Source pin_sdram_0__a.sdram_0__a__o_LUT4_Z_B_LUT4_Z_D_LUT4_A_SLICE.F0
+Info:  1.2  9.0    Net pin_sdram_0__a.sdram_0__a__o_LUT4_Z_1_A_LUT4_Z_A[1] budget 5.754000 ns (113,26) -> (117,27)
+Info:                Sink pin_sdram_0__cas.sdram_0__cas__o_n_LUT4_Z_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  9.3  Source pin_sdram_0__cas.sdram_0__cas__o_n_LUT4_Z_SLICE.F1
+Info:  0.7  9.9    Net pin_sdram_0__a.sdram_0__a__o_L6MUX21_Z_D0_PFUMX_Z_C0[0] budget 11.601000 ns (117,27) -> (118,27)
+Info:                Sink pin_sdram_0__we.sdram_0__we__o_n_L6MUX21_Z_D0_PFUMX_Z_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.3 10.2  Source pin_sdram_0__we.sdram_0__we__o_n_L6MUX21_Z_D0_PFUMX_Z_SLICE.OFX0
+Info:  0.0 10.2    Net pin_sdram_0__we.sdram_0__we__o_n_L6MUX21_Z_D0 budget 0.000000 ns (118,27) -> (118,27)
+Info:                Sink pin_sdram_0__we.sdram_0__we__o_n_L6MUX21_Z_D1_PFUMX_Z_SLICE.FXA
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:141.34-141.36
+Info:  0.2 10.4  Source pin_sdram_0__we.sdram_0__we__o_n_L6MUX21_Z_D1_PFUMX_Z_SLICE.OFX1
+Info:  4.7 15.1    Net pin_sdram_0__we.sdram_0__we__o_n budget 40.090000 ns (118,27) -> (126,86)
+Info:                Sink pin_sdram_0__we.sdram_0__we_0.I
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/vendor/lattice_ecp5.py:472
+Info: 2.5 ns logic, 12.7 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$dut.clk' -> 'posedge $PACKER_GND_NET':
+Info: curr total
+Info:  0.5  0.5  Source $PACKER_VCC_SLICE.Q1
+Info:  0.9  1.4    Net dut.U$$1.ila.fifo_w_en budget 82.418999 ns (87,21) -> (89,24)
+Info:                Sink dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.0.0.0$DPRAM0_SLICE.WRE
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/fifo.py:80
+Info:  0.4  1.8  Setup dut.U$$1.ila.fifo.sdram_controller.fifo_controller.fifo_0_src.unbuffered.storage.0.0.0$DPRAM0_SLICE.WRE
+Info: 0.9 ns logic, 0.9 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$dut.clk' -> '<async>':
+Info: curr total
+Info:  0.5  0.5  Source dut.U$$0.interface.command_TRELLIS_FF_Q_SLICE.Q0
+Info:  0.8  1.3    Net dut.U$$0._address[6] budget 3.818000 ns (9,49) -> (9,49)
+Info:                Sink dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_Z_SLICE.B0
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/io/spi.py:474
+Info:  0.2  1.6  Source dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_Z_SLICE.F0
+Info:  0.2  1.8    Net dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D[1] budget 5.376000 ns (9,49) -> (9,49)
+Info:                Sink dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  2.0  Source dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_Z_SLICE.F1
+Info:  0.8  2.8    Net dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z[3] budget 10.145000 ns (9,49) -> (8,50)
+Info:                Sink pin_button_fire_0.button_fire_0__i_LUT4_B_D_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  3.0  Source pin_button_fire_0.button_fire_0__i_LUT4_B_D_LUT4_Z_SLICE.F1
+Info:  0.7  3.7    Net dut.U$$0.r_rdy_LUT4_D_A_LUT4_Z_C_LUT4_Z_D_LUT4_D_Z_LUT4_C_Z[0] budget 16.372999 ns (8,50) -> (7,50)
+Info:                Sink dut.U$$0.r_rdy_LUT4_D_A_LUT4_D_Z_LUT4_Z_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  3.9  Source dut.U$$0.r_rdy_LUT4_D_A_LUT4_D_Z_LUT4_Z_SLICE.F1
+Info:  0.4  4.3    Net dut.U$$0.r_rdy_LUT4_D_A_LUT4_D_Z[4] budget 16.372000 ns (7,50) -> (7,50)
+Info:                Sink dut.U$$0.interface.current_word$next_LUT4_Z_2_A_PFUMX_Z_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.0  4.3  Setup dut.U$$0.interface.current_word$next_LUT4_Z_2_A_PFUMX_Z_SLICE.M0
+Info: 1.5 ns logic, 2.8 ns routing
+
+Info: Max frequency for clock '$glbnet$dut.U$$1.ila.fifo.sdram_clk': 56.87 MHz (PASS at 25.00 MHz)
+Info: Max frequency for clock                     '$glbnet$dut.clk': 98.66 MHz (PASS at 12.00 MHz)
+Info: Clock '$PACKER_GND_NET' has no interior paths
+
+Info: Max delay <async>                                     -> <async>                : 9.15 ns
+Info: Max delay <async>                                     -> posedge $glbnet$dut.clk: 5.52 ns
+Info: Max delay posedge $glbnet$dut.U$$1.ila.fifo.sdram_clk -> <async>                : 15.15 ns
+Info: Max delay posedge $glbnet$dut.clk                     -> posedge $PACKER_GND_NET: 1.80 ns
+Info: Max delay posedge $glbnet$dut.clk                     -> <async>                : 4.30 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 5 endpoint(s)
+Info:          + represents [1,5) endpoint(s)
+Info: [ 22415,  25444) |*****+
+Info: [ 25444,  28473) |*********************+
+Info: [ 28473,  31502) |*****+
+Info: [ 31502,  34531) |************************+
+Info: [ 34531,  37560) |***************************************************+
+Info: [ 37560,  40589) |*******************************+
+Info: [ 40589,  43618) | 
+Info: [ 43618,  46647) | 
+Info: [ 46647,  49676) | 
+Info: [ 49676,  52705) | 
+Info: [ 52705,  55734) | 
+Info: [ 55734,  58763) | 
+Info: [ 58763,  61792) | 
+Info: [ 61792,  64821) | 
+Info: [ 64821,  67850) | 
+Info: [ 67850,  70879) |******+
+Info: [ 70879,  73908) |*******+
+Info: [ 73908,  76937) |********************+
+Info: [ 76937,  79966) |************************************************************ 
+Info: [ 79966,  82995) |*********************************************************+
+
+Info: Program finished normally.

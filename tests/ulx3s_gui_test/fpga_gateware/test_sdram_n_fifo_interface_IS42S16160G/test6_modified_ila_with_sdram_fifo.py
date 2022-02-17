@@ -205,7 +205,8 @@ class AsyncFIFOBuffered_SDRAMtest(Elaboratable, FIFOInterface):
 
 			# Clock generation
 			# PLL - 143MHz for sdram 
-			sdram_freq = int(143e6)
+			# sdram_freq = int(143e6)
+			sdram_freq = int(platform.default_clk_frequency)
 			self.m.domains.sdram = cd_sdram = ClockDomain("sdram")
 			# self.m.domains.sdram_clk = cd_sdram_clk = ClockDomain("sdram_clk")
 

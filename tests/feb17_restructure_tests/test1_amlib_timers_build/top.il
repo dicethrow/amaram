@@ -2,29 +2,29 @@
 attribute \generator "Amaranth"
 attribute \amaranth.hierarchy "top.i_button_ffsync"
 module \i_button_ffsync
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 0 \i_unsync_buttons__pwr
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 1 \i_unsync_buttons__fireA
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 2 \i_unsync_buttons__fireB
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 3 \i_unsync_buttons__up
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 4 \i_unsync_buttons__down
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 5 \i_unsync_buttons__left
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 input 6 \i_unsync_buttons__right
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 output 7 \i_buttons__pwr
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 output 8 \i_buttons__left
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 output 9 \i_buttons__right
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
   wire width 1 input 10 \rst
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
   wire width 1 input 11 \clk
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/cdc.py:89"
   wire width 7 \stage0
@@ -50,13 +50,13 @@ module \i_button_ffsync
     sync posedge \clk
       update \stage1 \stage1$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_buttons__fireA
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_buttons__fireB
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_buttons__up
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_buttons__down
   process $group_2
     assign \i_buttons__pwr 1'0
@@ -73,14 +73,18 @@ end
 attribute \generator "Amaranth"
 attribute \amaranth.hierarchy "top.tb.dut.delayer"
 module \delayer
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
   wire width 1 input 0 \sync_1e6_rst
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
   wire width 1 input 1 \sync_1e6_clk
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:12"
   wire width 1 input 2 \start
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:13"
   wire width 1 output 3 \done
+  attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11"
+  wire width 32 output 4 \counter_out
+  attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11"
+  wire width 32 \counter_out$next
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:20"
   wire width 2 \fsm_state
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:20"
@@ -103,10 +107,6 @@ module \delayer
     assign \done $1
     sync init
   end
-  attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11"
-  wire width 32 \counter_out
-  attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11"
-  wire width 32 \counter_out$next
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:10"
   wire width 32 \reload
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30"
@@ -207,7 +207,7 @@ module \delayer
         switch { 1'1 }
           attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:25"
           case 1'1
-            assign \counter_out$next 32'00000000000000000000000011111111
+            assign \counter_out$next 32'00000000000011110100001001000000
           attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:27"
           case
             assign \counter_out$next \reload
@@ -346,31 +346,38 @@ end
 attribute \generator "Amaranth"
 attribute \amaranth.hierarchy "top.tb.dut"
 module \dut
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35"
-  wire width 1 input 0 \ui__trigger
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35"
-  wire width 1 output 1 \ui__done
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 input 0 \sync_1e6_rst
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 input 1 \sync_1e6_clk
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:39"
+  wire width 1 input 2 \ui__trigger
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:39"
+  wire width 1 output 3 \ui__done
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:39"
   wire width 1 \ui__done$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
-  wire width 1 input 2 \sync_1e6_rst
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
-  wire width 1 input 3 \sync_1e6_clk
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:40"
+  wire width 32 output 4 \debug__count
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:40"
+  wire width 32 \debug__count$next
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:12"
   wire width 1 \delayer_start
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:12"
   wire width 1 \delayer_start$next
   attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:13"
   wire width 1 \delayer_done
+  attribute \src "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11"
+  wire width 32 \delayer_counter_out
   cell \delayer \delayer
     connect \sync_1e6_rst \sync_1e6_rst
     connect \sync_1e6_clk \sync_1e6_clk
     connect \start \delayer_start
     connect \done \delayer_done
+    connect \counter_out \delayer_counter_out
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:46"
   wire width 1 \ui__trigger$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:46"
   wire width 1 \ui__trigger$1$next
   process $group_0
     assign \ui__trigger$1$next \ui__trigger$1
@@ -385,9 +392,9 @@ module \dut
     sync posedge \sync_1e6_clk
       update \ui__trigger$1 \ui__trigger$1$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:46"
   wire width 1 \ui__done$2
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:46"
   wire width 1 \ui__done$2$next
   process $group_1
     assign \ui__done$next \ui__done
@@ -402,7 +409,24 @@ module \dut
     sync posedge \sync_1e6_clk
       update \ui__done \ui__done$next
   end
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:47"
+  wire width 32 \debug__count$3
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:47"
+  wire width 32 \debug__count$3$next
   process $group_2
+    assign \debug__count$next \debug__count
+    assign \debug__count$next \debug__count$3
+    attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
+    switch \sync_1e6_rst
+      case 1'1
+        assign \debug__count$next 32'00000000000000000000000000000000
+    end
+    sync init
+      update \debug__count 32'00000000000000000000000000000000
+    sync posedge \sync_1e6_clk
+      update \debug__count \debug__count$next
+  end
+  process $group_3
     assign \delayer_start$next \delayer_start
     assign \delayer_start$next \ui__trigger$1
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
@@ -415,7 +439,7 @@ module \dut
     sync posedge \sync_1e6_clk
       update \delayer_start \delayer_start$next
   end
-  process $group_3
+  process $group_4
     assign \ui__done$2$next \ui__done$2
     assign \ui__done$2$next \delayer_done
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
@@ -428,128 +452,169 @@ module \dut
     sync posedge \sync_1e6_clk
       update \ui__done$2 \ui__done$2$next
   end
+  process $group_5
+    assign \debug__count$3$next \debug__count$3
+    assign \debug__count$3$next \delayer_counter_out
+    attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
+    switch \sync_1e6_rst
+      case 1'1
+        assign \debug__count$3$next 32'00000000000000000000000000000000
+    end
+    sync init
+      update \debug__count$3 32'00000000000000000000000000000000
+    sync posedge \sync_1e6_clk
+      update \debug__count$3 \debug__count$3$next
+  end
 end
 attribute \generator "Amaranth"
 attribute \amaranth.hierarchy "top.tb"
 module \tb
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 input 0 \ui__trigger
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 output 1 \ui__done
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 \ui__done$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 input 2 \ui__reset
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:68"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:82"
   wire width 8 output 3 \leds
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:68"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:82"
   wire width 8 \leds$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
-  wire width 1 output 4 \rst
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 output 4 \sync_1e6_rst
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 \sync_1e6_rst$next
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
+  wire width 1 output 5 \rst
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
   wire width 1 \rst$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
-  wire width 1 output 5 \clk
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 output 6 \sync_1e6_clk
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 \sync_1e6_clk$next
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
+  wire width 1 output 7 \clk
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143"
-  wire width 1 input 6 \clk25_0__i
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35"
+  wire width 1 input 8 \clk25_0__i
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:39"
   wire width 1 \dut_ui__trigger
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:39"
   wire width 1 \dut_ui__trigger$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:39"
   wire width 1 \dut_ui__done
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
-  wire width 1 \dut_sync_1e6_rst
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
-  wire width 1 \dut_sync_1e6_rst$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
-  wire width 1 \dut_sync_1e6_clk
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82"
-  wire width 1 \dut_sync_1e6_clk$next
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:40"
+  wire width 32 \dut_debug__count
   cell \dut \dut
+    connect \sync_1e6_rst \sync_1e6_rst
+    connect \sync_1e6_clk \sync_1e6_clk
     connect \ui__trigger \dut_ui__trigger
     connect \ui__done \dut_ui__done
-    connect \sync_1e6_rst \dut_sync_1e6_rst
-    connect \sync_1e6_clk \dut_sync_1e6_clk
+    connect \debug__count \dut_debug__count
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:89"
   wire width 1 \ui__trigger$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:89"
   wire width 1 \ui__trigger$1$next
   process $group_0
     assign \ui__trigger$1$next \ui__trigger$1
     assign \ui__trigger$1$next \ui__trigger
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__trigger$1$next 1'0
     end
     sync init
       update \ui__trigger$1 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__trigger$1 \ui__trigger$1$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:89"
   wire width 1 \ui__done$2
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:89"
   wire width 1 \ui__done$2$next
   process $group_1
     assign \ui__done$next \ui__done
     assign \ui__done$next \ui__done$2
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__done$next 1'0
     end
     sync init
       update \ui__done 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__done \ui__done$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:89"
   wire width 1 \ui__reset$3
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:89"
   wire width 1 \ui__reset$3$next
   process $group_2
     assign \ui__reset$3$next \ui__reset$3
     assign \ui__reset$3$next \ui__reset
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__reset$3$next 1'0
     end
     sync init
       update \ui__reset$3 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__reset$3 \ui__reset$3$next
   end
   process $group_3
     assign \dut_ui__trigger$next \dut_ui__trigger
     assign \dut_ui__trigger$next \ui__trigger$1
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \dut_ui__trigger$next 1'0
     end
     sync init
       update \dut_ui__trigger 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \dut_ui__trigger \dut_ui__trigger$next
   end
   process $group_4
     assign \ui__done$2$next \ui__done$2
     assign \ui__done$2$next \dut_ui__done
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__done$2$next 1'0
     end
     sync init
       update \ui__done$2 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__done$2 \ui__done$2$next
   end
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:90"
+  wire width 32 \debug__count
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:90"
+  wire width 32 \debug__count$next
   process $group_5
+    assign \debug__count$next \debug__count
+    assign \debug__count$next \dut_debug__count
+    attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
+    switch \sync_1e6_rst
+      case 1'1
+        assign \debug__count$next 32'00000000000000000000000000000000
+    end
+    sync init
+      update \debug__count 32'00000000000000000000000000000000
+    sync posedge \sync_1e6_clk
+      update \debug__count \debug__count$next
+  end
+  process $group_6
+    assign \leds$next \leds
+    assign \leds$next \debug__count [31:10] [7:0]
+    sync init
+      update \leds 8'00000000
+    sync posedge \sync_1e6_clk
+      update \leds \leds$next
+  end
+  process $group_7
     assign \rst$next \rst
     assign \rst$next \ui__reset$3
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
@@ -562,33 +627,20 @@ module \tb
     sync posedge \clk
       update \rst \rst$next
   end
-  process $group_6
-    assign \dut_sync_1e6_rst$next \dut_sync_1e6_rst
-    assign \dut_sync_1e6_rst$next \ui__reset$3
-    attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
-      case 1'1
-        assign \dut_sync_1e6_rst$next 1'0
-    end
-    sync init
-      update \dut_sync_1e6_rst 1'0
-    sync posedge \clk
-      update \dut_sync_1e6_rst \dut_sync_1e6_rst$next
-  end
-  process $group_7
+  process $group_8
     assign \clk 1'0
     assign \clk { \clk25_0__i }
     sync init
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:94"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:116"
   wire width 4 \clk_counter
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:94"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:116"
   wire width 4 \clk_counter$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   wire width 5 $4
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   wire width 5 $5
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   cell $add $6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -599,11 +651,11 @@ module \tb
     connect \B 1'1
     connect \Y $5
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   wire width 5 $7
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   wire width 1 $8
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   cell $eq $9
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -614,7 +666,7 @@ module \tb
     connect \B 4'1011
     connect \Y $8
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:118"
   cell $mux $10
     parameter \WIDTH 5
     connect \A $5
@@ -623,7 +675,7 @@ module \tb
     connect \Y $7
   end
   connect $4 $7
-  process $group_8
+  process $group_9
     assign \clk_counter$next \clk_counter
     assign \clk_counter$next $4 [3:0]
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
@@ -636,21 +688,34 @@ module \tb
     sync posedge \clk
       update \clk_counter \clk_counter$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96"
+  process $group_10
+    assign \sync_1e6_rst$next \sync_1e6_rst
+    assign \sync_1e6_rst$next \ui__reset$3
+    attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
+    switch \rst
+      case 1'1
+        assign \sync_1e6_rst$next 1'0
+    end
+    sync init
+      update \sync_1e6_rst 1'0
+    sync posedge \clk
+      update \sync_1e6_rst \sync_1e6_rst$next
+  end
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:120"
   wire width 1 $11
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:120"
   cell $not $12
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A \dut_sync_1e6_clk
+    connect \A \sync_1e6_clk
     connect \Y $11
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:120"
   wire width 1 $13
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:120"
   wire width 1 $14
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:120"
   cell $eq $15
     parameter \A_SIGNED 0
     parameter \A_WIDTH 4
@@ -661,189 +726,26 @@ module \tb
     connect \B 1'0
     connect \Y $14
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:120"
   cell $mux $16
     parameter \WIDTH 1
-    connect \A \dut_sync_1e6_clk
+    connect \A \sync_1e6_clk
     connect \B $11
     connect \S $14
     connect \Y $13
   end
-  process $group_9
-    assign \dut_sync_1e6_clk$next \dut_sync_1e6_clk
-    assign \dut_sync_1e6_clk$next $13
+  process $group_11
+    assign \sync_1e6_clk$next \sync_1e6_clk
+    assign \sync_1e6_clk$next $13
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
     switch \rst
       case 1'1
-        assign \dut_sync_1e6_clk$next 1'0
+        assign \sync_1e6_clk$next 1'0
     end
     sync init
-      update \dut_sync_1e6_clk 1'0
+      update \sync_1e6_clk 1'0
     sync posedge \clk
-      update \dut_sync_1e6_clk \dut_sync_1e6_clk$next
-  end
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  wire width 1 $17
-  attribute \amaranth.sample_reg 1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-  wire width 1 $sample$s$ui__trigger$sync$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-  wire width 1 $sample$s$ui__trigger$sync$1$next
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  cell $not $18
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $sample$s$ui__trigger$sync$1
-    connect \Y $17
-  end
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  wire width 1 $19
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  cell $and $20
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $17
-    connect \B \ui__trigger$1
-    connect \Y $19
-  end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102"
-  wire width 1 $21
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102"
-  cell $not $22
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \leds [0]
-    connect \Y $21
-  end
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  wire width 1 $23
-  attribute \amaranth.sample_reg 1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-  wire width 1 $sample$s$ui__done$sync$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-  wire width 1 $sample$s$ui__done$sync$1$next
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  cell $not $24
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $sample$s$ui__done$sync$1
-    connect \Y $23
-  end
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  wire width 1 $25
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  cell $and $26
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $23
-    connect \B \ui__done$2
-    connect \Y $25
-  end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102"
-  wire width 1 $27
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102"
-  cell $not $28
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \leds [1]
-    connect \Y $27
-  end
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  wire width 1 $29
-  attribute \amaranth.sample_reg 1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-  wire width 1 $sample$s$ui__reset$sync$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-  wire width 1 $sample$s$ui__reset$sync$1$next
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  cell $not $30
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $sample$s$ui__reset$sync$1
-    connect \Y $29
-  end
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  wire width 1 $31
-  attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
-  cell $and $32
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \B_SIGNED 0
-    parameter \B_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A $29
-    connect \B \ui__reset$3
-    connect \Y $31
-  end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102"
-  wire width 1 $33
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102"
-  cell $not $34
-    parameter \A_SIGNED 0
-    parameter \A_WIDTH 1
-    parameter \Y_WIDTH 1
-    connect \A \leds [2]
-    connect \Y $33
-  end
-  process $group_10
-    assign \leds$next \leds
-    attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-    switch { $19 }
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-      case 1'1
-        assign \leds$next [0] $21
-    end
-    attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-    switch { $25 }
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-      case 1'1
-        assign \leds$next [1] $27
-    end
-    attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-    switch { $31 }
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101"
-      case 1'1
-        assign \leds$next [2] $33
-    end
-    sync init
-      update \leds 8'00000000
-    sync posedge \clk
-      update \leds \leds$next
-  end
-  process $group_11
-    assign $sample$s$ui__trigger$sync$1$next $sample$s$ui__trigger$sync$1
-    assign $sample$s$ui__trigger$sync$1$next \ui__trigger$1
-    sync init
-      update $sample$s$ui__trigger$sync$1 1'0
-    sync posedge \clk
-      update $sample$s$ui__trigger$sync$1 $sample$s$ui__trigger$sync$1$next
-  end
-  process $group_12
-    assign $sample$s$ui__done$sync$1$next $sample$s$ui__done$sync$1
-    assign $sample$s$ui__done$sync$1$next \ui__done$2
-    sync init
-      update $sample$s$ui__done$sync$1 1'0
-    sync posedge \clk
-      update $sample$s$ui__done$sync$1 $sample$s$ui__done$sync$1$next
-  end
-  process $group_13
-    assign $sample$s$ui__reset$sync$1$next $sample$s$ui__reset$sync$1
-    assign $sample$s$ui__reset$sync$1$next \ui__reset$3
-    sync init
-      update $sample$s$ui__reset$sync$1 1'0
-    sync posedge \clk
-      update $sample$s$ui__reset$sync$1 $sample$s$ui__reset$sync$1$next
+      update \sync_1e6_clk \sync_1e6_clk$next
   end
 end
 attribute \generator "Amaranth"
@@ -1294,43 +1196,47 @@ module \top
   wire width 1 input 26 \button_right_0__io
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129"
   wire width 1 input 27 \clk25_0__io
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 \sync_1e6_clk
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:114"
+  wire width 1 \sync_1e6_rst
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
   wire width 1 \clk
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:105"
   wire width 1 \rst
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__pwr
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__pwr$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__fireA
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__fireA$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__fireB
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__fireB$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__up
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__up$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__down
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__down$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__left
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__left$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__right
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:245"
   wire width 1 \i_button_ffsync_i_unsync_buttons__right$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_button_ffsync_i_buttons__pwr
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_button_ffsync_i_buttons__left
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:266"
   wire width 1 \i_button_ffsync_i_buttons__right
   cell \i_button_ffsync \i_button_ffsync
     connect \i_unsync_buttons__pwr \i_button_ffsync_i_unsync_buttons__pwr
@@ -1346,17 +1252,17 @@ module \top
     connect \rst \rst
     connect \clk \clk
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 \tb_ui__trigger
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 \tb_ui__trigger$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 \tb_ui__done
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 \tb_ui__reset
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:81"
   wire width 1 \tb_ui__reset$next
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:68"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:82"
   wire width 8 \tb_leds
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143"
   wire width 1 \tb_clk25_0__i
@@ -1365,7 +1271,9 @@ module \top
     connect \ui__done \tb_ui__done
     connect \ui__reset \tb_ui__reset
     connect \leds \tb_leds
+    connect \sync_1e6_rst \sync_1e6_rst
     connect \rst \rst
+    connect \sync_1e6_clk \sync_1e6_clk
     connect \clk \clk
     connect \clk25_0__i \tb_clk25_0__i
   end
@@ -1664,9 +1572,9 @@ module \top
     sync posedge \clk
       update \pin_uart_0__tx_uart_0__tx__o \pin_uart_0__tx_uart_0__tx__o$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   wire width 1 $1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   cell $eq $2
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1677,9 +1585,9 @@ module \top
     connect \B 1'1
     connect \Y $1
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   wire width 1 $3
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   cell $eq $4
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1690,9 +1598,9 @@ module \top
     connect \B 1'1
     connect \Y $3
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   wire width 1 $5
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   cell $and $6
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1729,9 +1637,9 @@ module \top
     connect \B 1'0
     connect \Y $9
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:297"
   wire width 1 $11
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:297"
   cell $and $12
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1768,9 +1676,9 @@ module \top
     connect \B 1'0
     connect \Y $15
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:300"
   wire width 1 $17
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:300"
   cell $and $18
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1807,9 +1715,9 @@ module \top
     connect \B 1'1
     connect \Y $21
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:303"
   wire width 1 $23
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:303"
   cell $and $24
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1820,9 +1728,9 @@ module \top
     connect \B $21
     connect \Y $23
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:295"
   wire width 1 $25
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:295"
   cell $not $26
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1830,9 +1738,9 @@ module \top
     connect \A \i_button_ffsync_i_buttons__pwr
     connect \Y $25
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:295"
   wire width 1 $27
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:295"
   cell $and $28
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1843,9 +1751,9 @@ module \top
     connect \B $25
     connect \Y $27
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:298"
   wire width 1 $29
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:298"
   cell $not $30
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1853,9 +1761,9 @@ module \top
     connect \A \i_button_ffsync_i_buttons__pwr
     connect \Y $29
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:298"
   wire width 1 $31
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:298"
   cell $and $32
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1866,9 +1774,9 @@ module \top
     connect \B $29
     connect \Y $31
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:301"
   wire width 1 $33
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:301"
   cell $not $34
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1876,9 +1784,9 @@ module \top
     connect \A \i_button_ffsync_i_buttons__pwr
     connect \Y $33
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:301"
   wire width 1 $35
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:301"
   cell $and $36
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1889,9 +1797,9 @@ module \top
     connect \B $33
     connect \Y $35
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:304"
   wire width 1 $37
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:304"
   cell $not $38
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1899,9 +1807,9 @@ module \top
     connect \A \i_button_ffsync_i_buttons__pwr
     connect \Y $37
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:304"
   wire width 1 $39
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:304"
   cell $and $40
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1914,18 +1822,18 @@ module \top
   end
   process $group_9
     assign \pin_esp32_spi_0__en_esp32_spi_0__en__o$next \pin_esp32_spi_0__en_esp32_spi_0__en__o
-    attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+    attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
     switch { $23 $17 $11 $5 }
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
       case 4'---1
         assign { \pin_esp32_spi_0__en_esp32_spi_0__en__o$next } $27
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:297"
       case 4'--1-
         assign { \pin_esp32_spi_0__en_esp32_spi_0__en__o$next } $31
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:300"
       case 4'-1--
         assign { \pin_esp32_spi_0__en_esp32_spi_0__en__o$next } $35
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:303"
       case 4'1---
         assign { \pin_esp32_spi_0__en_esp32_spi_0__en__o$next } $39
     end
@@ -1939,9 +1847,9 @@ module \top
     sync posedge \clk
       update \pin_esp32_spi_0__en_esp32_spi_0__en__o \pin_esp32_spi_0__en_esp32_spi_0__en__o$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   wire width 1 $41
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   cell $eq $42
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1952,9 +1860,9 @@ module \top
     connect \B 1'1
     connect \Y $41
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   wire width 1 $43
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   cell $eq $44
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -1965,9 +1873,9 @@ module \top
     connect \B 1'1
     connect \Y $43
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   wire width 1 $45
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
   cell $and $46
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -2004,9 +1912,9 @@ module \top
     connect \B 1'0
     connect \Y $49
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:297"
   wire width 1 $51
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:297"
   cell $and $52
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -2043,9 +1951,9 @@ module \top
     connect \B 1'0
     connect \Y $55
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:300"
   wire width 1 $57
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:300"
   cell $and $58
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -2082,9 +1990,9 @@ module \top
     connect \B 1'1
     connect \Y $61
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:303"
   wire width 1 $63
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:303"
   cell $and $64
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
@@ -2097,18 +2005,18 @@ module \top
   end
   process $group_10
     assign \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o
-    attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+    attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
     switch { $63 $57 $51 $45 }
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:294"
       case 4'---1
         assign \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next 1'1
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:297"
       case 4'--1-
         assign \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next 1'1
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:300"
       case 4'-1--
         assign \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next 1'1
-      attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283"
+      attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:303"
       case 4'1---
         assign \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next 1'0
     end
@@ -2122,87 +2030,87 @@ module \top
     sync posedge \clk
       update \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:318"
   wire width 1 \ui__trigger
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:318"
   wire width 1 \ui__trigger$next
   process $group_11
     assign \tb_ui__trigger$next \tb_ui__trigger
     assign \tb_ui__trigger$next \ui__trigger
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \tb_ui__trigger$next 1'0
     end
     sync init
       update \tb_ui__trigger 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \tb_ui__trigger \tb_ui__trigger$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:318"
   wire width 1 \ui__done
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:318"
   wire width 1 \ui__done$next
   process $group_12
     assign \ui__done$next \ui__done
     assign \ui__done$next \tb_ui__done
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__done$next 1'0
     end
     sync init
       update \ui__done 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__done \ui__done$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:318"
   wire width 1 \ui__reset
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:318"
   wire width 1 \ui__reset$next
   process $group_13
     assign \tb_ui__reset$next \tb_ui__reset
     assign \tb_ui__reset$next \ui__reset
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \tb_ui__reset$next 1'0
     end
     sync init
       update \tb_ui__reset 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \tb_ui__reset \tb_ui__reset$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:325"
   wire width 1 \trigger
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:325"
   wire width 1 \trigger$next
   process $group_14
     assign \trigger$next \trigger
     assign \trigger$next \i_button_ffsync_i_buttons__left
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \trigger$next 1'0
     end
     sync init
       update \trigger 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \trigger \trigger$next
   end
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
   wire width 1 $65
   attribute \amaranth.sample_reg 1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305"
-  wire width 1 $sample$s$trigger$sync$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305"
-  wire width 1 $sample$s$trigger$sync$1$next
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:325"
+  wire width 1 $sample$s$trigger$sync_1e6$1
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:325"
+  wire width 1 $sample$s$trigger$sync_1e6$1$next
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
   cell $not $66
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $sample$s$trigger$sync$1
+    connect \A $sample$s$trigger$sync_1e6$1
     connect \Y $65
   end
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
@@ -2222,45 +2130,45 @@ module \top
     assign \ui__trigger$next \ui__trigger
     assign \ui__trigger$next $67
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__trigger$next 1'0
     end
     sync init
       update \ui__trigger 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__trigger \ui__trigger$next
   end
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:328"
   wire width 1 \reset
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308"
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:328"
   wire width 1 \reset$next
   process $group_16
     assign \reset$next \reset
     assign \reset$next \i_button_ffsync_i_buttons__right
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \reset$next 1'0
     end
     sync init
       update \reset 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \reset \reset$next
   end
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
   wire width 1 $69
   attribute \amaranth.sample_reg 1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308"
-  wire width 1 $sample$s$reset$sync$1
-  attribute \src "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308"
-  wire width 1 $sample$s$reset$sync$1$next
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:328"
+  wire width 1 $sample$s$reset$sync_1e6$1
+  attribute \src "tests/feb17_restructure_tests/test1_amlib_timers.py:328"
+  wire width 1 $sample$s$reset$sync_1e6$1$next
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
   cell $not $70
     parameter \A_SIGNED 0
     parameter \A_WIDTH 1
     parameter \Y_WIDTH 1
-    connect \A $sample$s$reset$sync$1
+    connect \A $sample$s$reset$sync_1e6$1
     connect \Y $69
   end
   attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369"
@@ -2280,13 +2188,13 @@ module \top
     assign \ui__reset$next \ui__reset
     assign \ui__reset$next $71
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \ui__reset$next 1'0
     end
     sync init
       update \ui__reset 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \ui__reset \ui__reset$next
   end
   process $group_18
@@ -2300,7 +2208,7 @@ module \top
     assign \pin_led_7_led_7__o$next \pin_led_7_led_7__o
     assign { { \pin_led_7_led_7__o$next } { \pin_led_6_led_6__o$next } { \pin_led_5_led_5__o$next } { \pin_led_4_led_4__o$next } { \pin_led_3_led_3__o$next } { \pin_led_2_led_2__o$next } { \pin_led_1_led_1__o$next } { \pin_led_0_led_0__o$next } } \tb_leds
     attribute \src "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519"
-    switch \rst
+    switch \sync_1e6_rst
       case 1'1
         assign \pin_led_0_led_0__o$next 1'0
         assign \pin_led_1_led_1__o$next 1'0
@@ -2320,7 +2228,7 @@ module \top
       update \pin_led_5_led_5__o 1'0
       update \pin_led_6_led_6__o 1'0
       update \pin_led_7_led_7__o 1'0
-    sync posedge \clk
+    sync posedge \sync_1e6_clk
       update \pin_led_0_led_0__o \pin_led_0_led_0__o$next
       update \pin_led_1_led_1__o \pin_led_1_led_1__o$next
       update \pin_led_2_led_2__o \pin_led_2_led_2__o$next
@@ -2331,19 +2239,19 @@ module \top
       update \pin_led_7_led_7__o \pin_led_7_led_7__o$next
   end
   process $group_26
-    assign $sample$s$trigger$sync$1$next $sample$s$trigger$sync$1
-    assign $sample$s$trigger$sync$1$next \trigger
+    assign $sample$s$trigger$sync_1e6$1$next $sample$s$trigger$sync_1e6$1
+    assign $sample$s$trigger$sync_1e6$1$next \trigger
     sync init
-      update $sample$s$trigger$sync$1 1'0
-    sync posedge \clk
-      update $sample$s$trigger$sync$1 $sample$s$trigger$sync$1$next
+      update $sample$s$trigger$sync_1e6$1 1'0
+    sync posedge \sync_1e6_clk
+      update $sample$s$trigger$sync_1e6$1 $sample$s$trigger$sync_1e6$1$next
   end
   process $group_27
-    assign $sample$s$reset$sync$1$next $sample$s$reset$sync$1
-    assign $sample$s$reset$sync$1$next \reset
+    assign $sample$s$reset$sync_1e6$1$next $sample$s$reset$sync_1e6$1
+    assign $sample$s$reset$sync_1e6$1$next \reset
     sync init
-      update $sample$s$reset$sync$1 1'0
-    sync posedge \clk
-      update $sample$s$reset$sync$1 $sample$s$reset$sync$1$next
+      update $sample$s$reset$sync_1e6$1 1'0
+    sync posedge \sync_1e6_clk
+      update $sample$s$reset$sync_1e6$1 $sample$s$reset$sync_1e6$1$next
   end
 end

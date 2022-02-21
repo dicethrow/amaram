@@ -30,20 +30,33 @@ class timerTest(Elaboratable):
 		("done",	1,	DIR_FANIN)
 	]
 
-	def __init__(self):
+	debug_layout = [
+		("count",	32,	DIR_FANIN)
+	]
+
+	def __init__(self, load):
 		super().__init__()
 		self.ui = Record(timerTest.ui_layout)
+		self.debug = Record(timerTest.debug_layout)
+		self.load = load
 
 	def elaborate(self, platform: Platform) -> Module:
 		m = Module()
 
 		ui = Record.like(self.ui)
-		m.d.sync += self.ui.connect(ui)
+		debug = Record.like(self.debug)
+		m.d.sync += [
+			self.ui.connect(ui),
+			self.debug.connect(debug)
+		]
 
-		m.submodules.delayer = delayer = Timer(load=int(0xFF))
+		m.submodules.delayer = delayer = Timer(load=int(self.load))
 
-		m.d.sync += delayer.start.eq(ui.trigger) # comb?
-		m.d.sync += ui.done.eq(delayer.done)
+		m.d.sync += [
+			delayer.start.eq(ui.trigger), # comb?
+			ui.done.eq(delayer.done),
+			debug.count.eq(delayer.counter_out)
+		]
 
 		return m
 
@@ -59,8 +72,9 @@ if __name__ == "__main__":
 			("trigger",			1, DIR_FANOUT),
 			("done",			1, DIR_FANIN),
 			("reset",			1, DIR_FANOUT), # note - this doesn't seem to show in traces, but still works?
-			# ("leds", 			8, DIR_FANOUT) # can't do reset-less here, so using a separate interface
+			# ("leds", 			8, DIR_FANOUT) # can't do reset-less here, so using a separate signal
 		]
+
 		
 		def __init__(self):
 			super().__init__()
@@ -70,36 +84,42 @@ if __name__ == "__main__":
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.dut = dut = DomainRenamer("sync_1e6")(timerTest())
+			m.submodules.dut = dut = DomainRenamer("sync_1e6")(timerTest(load = 1e2 if platform == None else 1e6))
 
 			ui = Record.like(self.ui)
-			m.d.sync += [
+			debug = Record.like(dut.debug)
+			m.d.sync_1e6 += [
 				self.ui.connect(ui),
-				ui.connect(dut.ui, exclude=["reset"])
+				ui.connect(dut.ui, exclude=["reset"]),
+				debug.connect(dut.debug)
 			]
-
-			m.domains.sync = cd_sync = ClockDomain("sync")
-			m.domains.sync_1e6 = cd_sync_1e6 = ClockDomain("sync_1e6")
-			m.d.sync += [
-				cd_sync.rst.eq(ui.reset),
-				cd_sync_1e6.rst.eq(ui.reset)
-			]
-			if platform != None:
-				m.d.comb += cd_sync.clk.eq(platform.request("clk25"))
-				platform.add_clock_constraint(cd_sync.clk,  platform.default_clk_frequency)
-			else:
-				pass
-				# the sim clock is added later
-			divisor = 25
-			clk_counter = Signal(shape=range(int(divisor/2)+1)) # is this right?
-			m.d.sync += clk_counter.eq(Mux(clk_counter == (int(divisor/2)-1), 0, clk_counter+1)) # not quite accurate but close enough
-			m.d.sync += cd_sync_1e6.clk.eq(Mux(clk_counter==0,~cd_sync_1e6.clk,cd_sync_1e6.clk))
-
 
 			# change a led flag each time one of these rises, so we can see quick changes
-			for i, each in enumerate([ui.trigger, ui.done, ui.reset]):
-				with m.If(Rose(each)):
-					m.d.sync += self.leds[i].eq(~self.leds[i])
+			# for i, each in enumerate([ui.trigger, ui.done, ui.reset]):
+			# 	with m.If(Rose(each)):
+			# 		m.d.sync += self.leds[i].eq(~self.leds[i])
+			m.d.sync_1e6 += self.leds.eq(debug.count[10:])
+
+			def init_clocks():
+				### add default clock
+				m.domains.sync = cd_sync = ClockDomain("sync")
+				m.d.sync += cd_sync.rst.eq(ui.reset) # or should this be comb?
+				if platform != None:
+					m.d.comb += cd_sync.clk.eq(platform.request("clk25"))
+					platform.add_clock_constraint(cd_sync.clk,  platform.default_clk_frequency)
+				else:
+					... # note - the sim clock is added later
+
+				### add slower clock for counters (i.e. so they don't limit speed)
+				m.domains.sync_1e6 = cd_sync_1e6 = ClockDomain("sync_1e6")
+				divisor = 25
+				clk_counter = Signal(shape=range(int(divisor/2)+1)) # is this right?
+				m.d.sync += [
+					clk_counter.eq(Mux(clk_counter == (int(divisor/2)-1), 0, clk_counter+1)), # not quite accurate but close enough
+					cd_sync_1e6.rst.eq(ui.reset), # or should this be comb?
+					cd_sync_1e6.clk.eq(Mux(clk_counter==0,~cd_sync_1e6.clk,cd_sync_1e6.clk))
+				]
+			init_clocks()
 
 			return m
 
@@ -127,10 +147,10 @@ if __name__ == "__main__":
 
 					yield from strobe(self.ui.trigger)
 
-					# while not (yield self.ui.done):
-					# 	yield
+					while not (yield self.ui.done):
+						yield
 
-					yield Delay(100e-6)
+					# yield Delay(100e-6)
 
 					yield Delay(1e-6) # delay at end
 
@@ -145,7 +165,7 @@ if __name__ == "__main__":
 
 				m.submodules.tb = tb = Testbench()
 				ui = Record.like(self.ui)
-				m.d.sync += [
+				m.d.sync_1e6 += [
 					self.ui.connect(ui),
 					ui.connect(tb.ui, exclude=["reset"])
 				]
@@ -168,7 +188,7 @@ if __name__ == "__main__":
 		top = Simulate()
 		sim = Simulator(top)
 		sim.add_clock(1/25e6, domain="sync")
-		sim.add_sync_process(top.timer_test, domain="sync")
+		sim.add_sync_process(top.timer_test, domain="sync_1e6")
 
 		with sim.write_vcd(
 			f"{current_filename}_simulate.vcd",
@@ -295,17 +315,17 @@ if __name__ == "__main__":
 
 				m.submodules.tb = tb = Testbench()	
 
-				ui = Record(Testbench.timerTest_test_interface_layout)
-				m.d.sync += ui.connect(tb.ui)
+				ui = Record.like(tb.ui)
+				m.d.sync_1e6 += ui.connect(tb.ui)
 
 				trigger = Signal.like(ui.trigger)
 				reset = Signal.like(ui.reset)
-				m.d.sync += [
+				m.d.sync_1e6 += [
 					trigger.eq(self.i_buttons.left),
-					ui.trigger.eq(Rose(trigger)),
+					ui.trigger.eq(Rose(trigger, domain="sync_1e6")),
 
 					reset.eq(self.i_buttons.right),
-					ui.reset.eq(Rose(reset)),
+					ui.reset.eq(Rose(reset, domain="sync_1e6")),
 
 					self.leds.eq(tb.leds),
 				]

@@ -210,16 +210,16 @@ Marked 1 switch rules as full_case in process $group_2 in module delayer.
 Removed a total of 0 dead cases.
 
 2.4.3. Executing PROC_PRUNE pass (remove redundant assignments in processes).
-Removed 55 redundant assignments.
-Promoted 55 assignments to connections.
+Removed 56 redundant assignments.
+Promoted 52 assignments to connections.
 
 2.4.4. Executing PROC_INIT pass (extract init attributes).
 Found init rule in `\TRELLIS_FF.$proc$/home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_sim.v:0$223'.
   Set init value: \Q = 1'0
 Found init rule in `\top.$group_27'.
-  Set init value: $sample$s$reset$sync$1 = 1'0
+  Set init value: $sample$s$reset$sync_1e6$1 = 1'0
 Found init rule in `\top.$group_26'.
-  Set init value: $sample$s$trigger$sync$1 = 1'0
+  Set init value: $sample$s$trigger$sync_1e6$1 = 1'0
 Found init rule in `\top.$group_18'.
   Set init value: \pin_led_0_led_0__o = 1'0
   Set init value: \pin_led_1_led_1__o = 1'0
@@ -265,22 +265,18 @@ Found init rule in `\top.$group_1'.
   Set init value: \i_button_ffsync_i_unsync_buttons__fireA = 1'0
 Found init rule in `\top.$group_0'.
   Set init value: \i_button_ffsync_i_unsync_buttons__pwr = 1'0
-Found init rule in `\tb.$group_13'.
-  Set init value: $sample$s$ui__reset$sync$1 = 1'0
-Found init rule in `\tb.$group_12'.
-  Set init value: $sample$s$ui__done$sync$1 = 1'0
 Found init rule in `\tb.$group_11'.
-  Set init value: $sample$s$ui__trigger$sync$1 = 1'0
+  Set init value: \sync_1e6_clk = 1'0
 Found init rule in `\tb.$group_10'.
-  Set init value: \leds = 8'00000000
+  Set init value: \sync_1e6_rst = 1'0
 Found init rule in `\tb.$group_9'.
-  Set init value: \dut_sync_1e6_clk = 1'0
-Found init rule in `\tb.$group_8'.
   Set init value: \clk_counter = 4'0000
-Found init rule in `\tb.$group_6'.
-  Set init value: \dut_sync_1e6_rst = 1'0
-Found init rule in `\tb.$group_5'.
+Found init rule in `\tb.$group_7'.
   Set init value: \rst = 1'0
+Found init rule in `\tb.$group_6'.
+  Set init value: \leds = 8'00000000
+Found init rule in `\tb.$group_5'.
+  Set init value: \debug__count = 0
 Found init rule in `\tb.$group_4'.
   Set init value: \ui__done$2 = 1'0
 Found init rule in `\tb.$group_3'.
@@ -291,10 +287,14 @@ Found init rule in `\tb.$group_1'.
   Set init value: \ui__done = 1'0
 Found init rule in `\tb.$group_0'.
   Set init value: \ui__trigger$1 = 1'0
-Found init rule in `\dut.$group_3'.
+Found init rule in `\dut.$group_5'.
+  Set init value: \debug__count$3 = 0
+Found init rule in `\dut.$group_4'.
   Set init value: \ui__done$2 = 1'0
-Found init rule in `\dut.$group_2'.
+Found init rule in `\dut.$group_3'.
   Set init value: \delayer_start = 1'0
+Found init rule in `\dut.$group_2'.
+  Set init value: \debug__count = 0
 Found init rule in `\dut.$group_1'.
   Set init value: \ui__done = 1'0
 Found init rule in `\dut.$group_0'.
@@ -374,22 +374,18 @@ Creating decoders for process `\top.$group_0'.
      1/1: \i_button_ffsync_i_unsync_buttons__pwr$next
 Creating decoders for process `\pin_button_pwr_0.$group_0'.
 Creating decoders for process `\pin_esp32_spi_0__gpio5_cs.$group_0'.
-Creating decoders for process `\tb.$group_13'.
-Creating decoders for process `\tb.$group_12'.
 Creating decoders for process `\tb.$group_11'.
+     1/1: \sync_1e6_clk$next
 Creating decoders for process `\tb.$group_10'.
-     1/3: \leds$next [2]
-     2/3: \leds$next [1]
-     3/3: \leds$next [0]
+     1/1: \sync_1e6_rst$next
 Creating decoders for process `\tb.$group_9'.
-     1/1: \dut_sync_1e6_clk$next
-Creating decoders for process `\tb.$group_8'.
      1/1: \clk_counter$next
+Creating decoders for process `\tb.$group_8'.
 Creating decoders for process `\tb.$group_7'.
-Creating decoders for process `\tb.$group_6'.
-     1/1: \dut_sync_1e6_rst$next
-Creating decoders for process `\tb.$group_5'.
      1/1: \rst$next
+Creating decoders for process `\tb.$group_6'.
+Creating decoders for process `\tb.$group_5'.
+     1/1: \debug__count$next
 Creating decoders for process `\tb.$group_4'.
      1/1: \ui__done$2$next
 Creating decoders for process `\tb.$group_3'.
@@ -400,10 +396,14 @@ Creating decoders for process `\tb.$group_1'.
      1/1: \ui__done$next
 Creating decoders for process `\tb.$group_0'.
      1/1: \ui__trigger$1$next
-Creating decoders for process `\dut.$group_3'.
+Creating decoders for process `\dut.$group_5'.
+     1/1: \debug__count$3$next
+Creating decoders for process `\dut.$group_4'.
      1/1: \ui__done$2$next
-Creating decoders for process `\dut.$group_2'.
+Creating decoders for process `\dut.$group_3'.
      1/1: \delayer_start$next
+Creating decoders for process `\dut.$group_2'.
+     1/1: \debug__count$next
 Creating decoders for process `\dut.$group_1'.
      1/1: \ui__done$next
 Creating decoders for process `\dut.$group_0'.
@@ -502,9 +502,9 @@ Creating register for signal `\TRELLIS_DPR16X4.$memwr$\mem$/home/ubuntu/Document
   created $dff cell `$procdff$376' with positive edge clock.
 Creating register for signal `\TRELLIS_DPR16X4.\muxwre' using process `\TRELLIS_DPR16X4.$proc$/home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_sim.v:213$119'.
   created direct connection (no actual register cell created).
-Creating register for signal `\top.$sample$s$reset$sync$1' using process `\top.$group_27'.
+Creating register for signal `\top.$sample$s$reset$sync_1e6$1' using process `\top.$group_27'.
   created $dff cell `$procdff$377' with positive edge clock.
-Creating register for signal `\top.$sample$s$trigger$sync$1' using process `\top.$group_26'.
+Creating register for signal `\top.$sample$s$trigger$sync_1e6$1' using process `\top.$group_26'.
   created $dff cell `$procdff$378' with positive edge clock.
 Creating register for signal `\top.\pin_led_0_led_0__o' using process `\top.$group_18'.
   created $dff cell `$procdff$379' with positive edge clock.
@@ -558,35 +558,35 @@ Creating register for signal `\top.\i_button_ffsync_i_unsync_buttons__fireA' usi
   created $dff cell `$procdff$403' with positive edge clock.
 Creating register for signal `\top.\i_button_ffsync_i_unsync_buttons__pwr' using process `\top.$group_0'.
   created $dff cell `$procdff$404' with positive edge clock.
-Creating register for signal `\tb.$sample$s$ui__reset$sync$1' using process `\tb.$group_13'.
+Creating register for signal `\tb.\sync_1e6_clk' using process `\tb.$group_11'.
   created $dff cell `$procdff$405' with positive edge clock.
-Creating register for signal `\tb.$sample$s$ui__done$sync$1' using process `\tb.$group_12'.
+Creating register for signal `\tb.\sync_1e6_rst' using process `\tb.$group_10'.
   created $dff cell `$procdff$406' with positive edge clock.
-Creating register for signal `\tb.$sample$s$ui__trigger$sync$1' using process `\tb.$group_11'.
+Creating register for signal `\tb.\clk_counter' using process `\tb.$group_9'.
   created $dff cell `$procdff$407' with positive edge clock.
-Creating register for signal `\tb.\leds' using process `\tb.$group_10'.
+Creating register for signal `\tb.\rst' using process `\tb.$group_7'.
   created $dff cell `$procdff$408' with positive edge clock.
-Creating register for signal `\tb.\dut_sync_1e6_clk' using process `\tb.$group_9'.
+Creating register for signal `\tb.\leds' using process `\tb.$group_6'.
   created $dff cell `$procdff$409' with positive edge clock.
-Creating register for signal `\tb.\clk_counter' using process `\tb.$group_8'.
+Creating register for signal `\tb.\debug__count' using process `\tb.$group_5'.
   created $dff cell `$procdff$410' with positive edge clock.
-Creating register for signal `\tb.\dut_sync_1e6_rst' using process `\tb.$group_6'.
-  created $dff cell `$procdff$411' with positive edge clock.
-Creating register for signal `\tb.\rst' using process `\tb.$group_5'.
-  created $dff cell `$procdff$412' with positive edge clock.
 Creating register for signal `\tb.\ui__done$2' using process `\tb.$group_4'.
-  created $dff cell `$procdff$413' with positive edge clock.
+  created $dff cell `$procdff$411' with positive edge clock.
 Creating register for signal `\tb.\dut_ui__trigger' using process `\tb.$group_3'.
-  created $dff cell `$procdff$414' with positive edge clock.
+  created $dff cell `$procdff$412' with positive edge clock.
 Creating register for signal `\tb.\ui__reset$3' using process `\tb.$group_2'.
-  created $dff cell `$procdff$415' with positive edge clock.
+  created $dff cell `$procdff$413' with positive edge clock.
 Creating register for signal `\tb.\ui__done' using process `\tb.$group_1'.
-  created $dff cell `$procdff$416' with positive edge clock.
+  created $dff cell `$procdff$414' with positive edge clock.
 Creating register for signal `\tb.\ui__trigger$1' using process `\tb.$group_0'.
+  created $dff cell `$procdff$415' with positive edge clock.
+Creating register for signal `\dut.\debug__count$3' using process `\dut.$group_5'.
+  created $dff cell `$procdff$416' with positive edge clock.
+Creating register for signal `\dut.\ui__done$2' using process `\dut.$group_4'.
   created $dff cell `$procdff$417' with positive edge clock.
-Creating register for signal `\dut.\ui__done$2' using process `\dut.$group_3'.
+Creating register for signal `\dut.\delayer_start' using process `\dut.$group_3'.
   created $dff cell `$procdff$418' with positive edge clock.
-Creating register for signal `\dut.\delayer_start' using process `\dut.$group_2'.
+Creating register for signal `\dut.\debug__count' using process `\dut.$group_2'.
   created $dff cell `$procdff$419' with positive edge clock.
 Creating register for signal `\dut.\ui__done' using process `\dut.$group_1'.
   created $dff cell `$procdff$420' with positive edge clock.
@@ -654,17 +654,15 @@ Found and cleaned up 1 empty switch in `\top.$group_0'.
 Removing empty process `top.$group_0'.
 Removing empty process `pin_button_pwr_0.$group_0'.
 Removing empty process `pin_esp32_spi_0__gpio5_cs.$group_0'.
-Removing empty process `tb.$group_13'.
-Removing empty process `tb.$group_12'.
+Found and cleaned up 1 empty switch in `\tb.$group_11'.
 Removing empty process `tb.$group_11'.
-Found and cleaned up 3 empty switches in `\tb.$group_10'.
+Found and cleaned up 1 empty switch in `\tb.$group_10'.
 Removing empty process `tb.$group_10'.
 Found and cleaned up 1 empty switch in `\tb.$group_9'.
 Removing empty process `tb.$group_9'.
-Found and cleaned up 1 empty switch in `\tb.$group_8'.
 Removing empty process `tb.$group_8'.
+Found and cleaned up 1 empty switch in `\tb.$group_7'.
 Removing empty process `tb.$group_7'.
-Found and cleaned up 1 empty switch in `\tb.$group_6'.
 Removing empty process `tb.$group_6'.
 Found and cleaned up 1 empty switch in `\tb.$group_5'.
 Removing empty process `tb.$group_5'.
@@ -678,6 +676,10 @@ Found and cleaned up 1 empty switch in `\tb.$group_1'.
 Removing empty process `tb.$group_1'.
 Found and cleaned up 1 empty switch in `\tb.$group_0'.
 Removing empty process `tb.$group_0'.
+Found and cleaned up 1 empty switch in `\dut.$group_5'.
+Removing empty process `dut.$group_5'.
+Found and cleaned up 1 empty switch in `\dut.$group_4'.
+Removing empty process `dut.$group_4'.
 Found and cleaned up 1 empty switch in `\dut.$group_3'.
 Removing empty process `dut.$group_3'.
 Found and cleaned up 1 empty switch in `\dut.$group_2'.
@@ -779,8 +781,8 @@ Optimizing module top.
 
 2.9. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
-Removed 9 unused cells and 141 unused wires.
-<suppressed ~19 debug messages>
+Removed 16 unused cells and 145 unused wires.
+<suppressed ~33 debug messages>
 
 2.10. Executing CHECK pass (checking for obvious problems).
 Checking module top...
@@ -793,8 +795,8 @@ Optimizing module top.
 
 2.11.2. Executing OPT_MERGE pass (detect identical cells).
 Finding identical cells in module `\top'.
-<suppressed ~57 debug messages>
-Removed a total of 19 cells.
+<suppressed ~54 debug messages>
+Removed a total of 18 cells.
 
 2.11.3. Executing OPT_MUXTREE pass (detect dead branches in mux trees).
 Running muxtree optimizer on module \top..
@@ -802,7 +804,7 @@ Running muxtree optimizer on module \top..
   Evaluating internal representation of mux trees.
   Analyzing evaluation results.
 Removed 0 multiplexer ports.
-<suppressed ~42 debug messages>
+<suppressed ~39 debug messages>
 
 2.11.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
   Optimizing cells in module \top.
@@ -819,8 +821,8 @@ Removed a total of 2 cells.
 
 2.11.7. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
-Removed 0 unused cells and 19 unused wires.
-<suppressed ~1 debug messages>
+Removed 0 unused cells and 20 unused wires.
+<suppressed ~3 debug messages>
 
 2.11.8. Executing OPT_EXPR pass (perform const folding).
 Optimizing module top.
@@ -833,7 +835,7 @@ Running muxtree optimizer on module \top..
   Evaluating internal representation of mux trees.
   Analyzing evaluation results.
 Removed 0 multiplexer ports.
-<suppressed ~41 debug messages>
+<suppressed ~38 debug messages>
 
 2.11.11. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
   Optimizing cells in module \top.
@@ -889,7 +891,7 @@ Running muxtree optimizer on module \top..
   Evaluating internal representation of mux trees.
   Analyzing evaluation results.
 Removed 0 multiplexer ports.
-<suppressed ~41 debug messages>
+<suppressed ~38 debug messages>
 
 2.13.4. Executing OPT_REDUCE pass (consolidate $*mux and $reduce_* inputs).
   Optimizing cells in module \top.
@@ -932,32 +934,22 @@ Adding EN signal on $auto$ff.cc:262:slice$457 ($sdff) from module top (D = $flat
 Adding SRST signal on $flatten\tb.\dut.\delayer.$procdff$422 ($dff) from module top (D = $flatten\tb.\dut.\delayer.$procmux$350_Y, Q = \tb.dut.delayer.fsm_state, rval = 2'01).
 Adding EN signal on $auto$ff.cc:262:slice$461 ($sdff) from module top (D = $flatten\tb.\dut.\delayer.$procmux$350_Y, Q = \tb.dut.delayer.fsm_state).
 Adding SRST signal on $flatten\tb.\dut.$procdff$421 ($dff) from module top (D = \tb.dut_ui__trigger, Q = \tb.dut.ui__trigger$1, rval = 1'0).
-Adding SRST signal on $flatten\tb.\dut.$procdff$420 ($dff) from module top (D = \tb.dut.ui__done$2, Q = \tb.dut.ui__done, rval = 1'0).
-Adding SRST signal on $flatten\tb.\dut.$procdff$419 ($dff) from module top (D = \tb.dut.ui__trigger$1, Q = \tb.dut.delayer_start, rval = 1'0).
-Adding SRST signal on $flatten\tb.\dut.$procdff$418 ($dff) from module top (D = \tb.dut.delayer_done, Q = \tb.dut.ui__done$2, rval = 1'0).
-Adding SRST signal on $flatten\tb.$procdff$417 ($dff) from module top (D = \tb_ui__trigger, Q = \tb.ui__trigger$1, rval = 1'0).
-Adding SRST signal on $flatten\tb.$procdff$415 ($dff) from module top (D = \tb_ui__reset, Q = \tb.ui__reset$3, rval = 1'0).
-Adding SRST signal on $flatten\tb.$procdff$414 ($dff) from module top (D = \tb.ui__trigger$1, Q = \tb.dut_ui__trigger, rval = 1'0).
-Adding SRST signal on $flatten\tb.$procdff$413 ($dff) from module top (D = \tb.dut.ui__done, Q = \tb.ui__done$2, rval = 1'0).
-Adding SRST signal on $flatten\tb.$procdff$411 ($dff) from module top (D = \tb.ui__reset$3, Q = \tb.dut_sync_1e6_rst, rval = 1'0).
-Adding SRST signal on $flatten\tb.$procdff$410 ($dff) from module top (D = $flatten\tb.$5 [3:0], Q = \tb.clk_counter, rval = 4'0000).
-Adding SRST signal on $flatten\tb.$procdff$409 ($dff) from module top (D = $flatten\tb.$13, Q = \tb.dut_sync_1e6_clk, rval = 1'0).
-Adding EN signal on $auto$ff.cc:262:slice$483 ($sdff) from module top (D = $flatten\tb.$11, Q = \tb.dut_sync_1e6_clk).
-Adding EN signal on $flatten\tb.$procdff$408 ($dff) from module top (D = $flatten\tb.$33, Q = \tb.leds [2]).
-Adding EN signal on $flatten\tb.$procdff$408 ($dff) from module top (D = $flatten\tb.$27, Q = \tb.leds [1]).
-Adding EN signal on $flatten\tb.$procdff$408 ($dff) from module top (D = $flatten\tb.$21, Q = \tb.leds [0]).
-Adding EN signal on $flatten\tb.$procdff$408 ($dff) from module top (D = \tb.leds [7:3], Q = \tb.leds [7:3]).
-Handling D = Q on $auto$ff.cc:262:slice$488 ($dffe) from module top (removing D path).
-Setting constant 0-bit at position 0 on $auto$ff.cc:262:slice$488 ($dffe) from module top.
-Setting constant 0-bit at position 1 on $auto$ff.cc:262:slice$488 ($dffe) from module top.
-Setting constant 0-bit at position 2 on $auto$ff.cc:262:slice$488 ($dffe) from module top.
-Setting constant 0-bit at position 3 on $auto$ff.cc:262:slice$488 ($dffe) from module top.
-Setting constant 0-bit at position 4 on $auto$ff.cc:262:slice$488 ($dffe) from module top.
+Adding SRST signal on $flatten\tb.\dut.$procdff$419 ($dff) from module top (D = \tb.dut.debug__count$3, Q = \tb.dut.debug__count, rval = 0).
+Adding SRST signal on $flatten\tb.\dut.$procdff$418 ($dff) from module top (D = \tb.dut.ui__trigger$1, Q = \tb.dut.delayer_start, rval = 1'0).
+Adding SRST signal on $flatten\tb.\dut.$procdff$416 ($dff) from module top (D = \tb.dut.delayer.counter_out, Q = \tb.dut.debug__count$3, rval = 0).
+Adding SRST signal on $flatten\tb.$procdff$415 ($dff) from module top (D = \tb_ui__trigger, Q = \tb.ui__trigger$1, rval = 1'0).
+Adding SRST signal on $flatten\tb.$procdff$413 ($dff) from module top (D = \tb_ui__reset, Q = \tb.ui__reset$3, rval = 1'0).
+Adding SRST signal on $flatten\tb.$procdff$412 ($dff) from module top (D = \tb.ui__trigger$1, Q = \tb.dut_ui__trigger, rval = 1'0).
+Adding SRST signal on $flatten\tb.$procdff$410 ($dff) from module top (D = \tb.dut.debug__count, Q = \tb.debug__count, rval = 0).
+Adding SRST signal on $flatten\tb.$procdff$407 ($dff) from module top (D = $flatten\tb.$5 [3:0], Q = \tb.clk_counter, rval = 4'0000).
+Adding SRST signal on $flatten\tb.$procdff$406 ($dff) from module top (D = \tb.ui__reset$3, Q = \tb.sync_1e6_rst, rval = 1'0).
+Adding SRST signal on $flatten\tb.$procdff$405 ($dff) from module top (D = $flatten\tb.$13, Q = \tb.sync_1e6_clk, rval = 1'0).
+Adding EN signal on $auto$ff.cc:262:slice$483 ($sdff) from module top (D = $flatten\tb.$11, Q = \tb.sync_1e6_clk).
 
 2.13.7. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
-Removed 44 unused cells and 42 unused wires.
-<suppressed ~84 debug messages>
+Removed 40 unused cells and 41 unused wires.
+<suppressed ~80 debug messages>
 
 2.13.8. Executing OPT_EXPR pass (perform const folding).
 Optimizing module top.
@@ -979,11 +971,10 @@ Performed a total of 0 changes.
 
 2.13.12. Executing OPT_MERGE pass (detect identical cells).
 Finding identical cells in module `\top'.
-<suppressed ~15 debug messages>
-Removed a total of 5 cells.
+<suppressed ~3 debug messages>
+Removed a total of 1 cells.
 
 2.13.13. Executing OPT_DFF pass (perform DFF optimizations).
-Setting constant 0-bit at position 0 on $auto$ff.cc:262:slice$449 ($sdff) from module top.
 
 2.13.14. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
@@ -1022,24 +1013,26 @@ Optimizing module top.
 2.13.23. Finished OPT passes. (There is nothing left to do.)
 
 2.14. Executing WREDUCE pass (reducing word size of cells).
+Removed top 1 bits (of 2) from port B of cell top.$auto$opt_dff.cc:198:make_patterns_logic$468 ($ne).
 Removed top 1 bits (of 2) from port B of cell top.$auto$opt_dff.cc:198:make_patterns_logic$466 ($ne).
 Removed cell top.$procmux$277 ($mux).
 Removed cell top.$procmux$287 ($mux).
-Removed top 1 bits (of 2) from port B of cell top.$auto$opt_dff.cc:198:make_patterns_logic$468 ($ne).
 Removed top 1 bits (of 2) from port B of cell top.$flatten\tb.\dut.\delayer.$procmux$357_CMP0 ($eq).
 Removed cell top.$flatten\tb.\dut.\delayer.$procmux$355 ($mux).
 Removed cell top.$flatten\tb.\dut.\delayer.$procmux$352 ($mux).
 Removed top 1 bits (of 33) from port Y of cell top.$flatten\tb.\dut.\delayer.$12 ($sub).
+Removed top 14 bits (of 32) from FF cell top.$auto$ff.cc:262:slice$478 ($sdff).
 Removed top 1 bits (of 5) from port Y of cell top.$flatten\tb.$6 ($add).
+Removed top 14 bits (of 32) from FF cell top.$auto$ff.cc:262:slice$472 ($sdff).
+Removed top 14 bits (of 32) from FF cell top.$auto$ff.cc:262:slice$474 ($sdff).
 Removed top 1 bits (of 5) from wire top.$flatten\tb.$5.
 Removed top 1 bits (of 33) from wire top.$flatten\tb.\dut.\delayer.$10.
-Removed top 5 bits (of 8) from wire top.tb_leds.
 
 2.15. Executing PEEPOPT pass (run peephole optimizers).
 
 2.16. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
-Removed 0 unused cells and 7 unused wires.
+Removed 0 unused cells and 6 unused wires.
 <suppressed ~1 debug messages>
 
 2.17. Executing SHARE pass (SAT-based resource sharing).
@@ -1085,9 +1078,9 @@ Extracting $alu and $macc cells in module top:
   creating $alu model for $macc $flatten\tb.\dut.\delayer.$12.
   creating $alu model for $macc $flatten\tb.$6.
   creating $alu model for $flatten\tb.\dut.\delayer.$19 ($gt): new $alu
-  creating $alu cell for $flatten\tb.\dut.\delayer.$19: $auto$alumacc.cc:485:replace_alu$496
-  creating $alu cell for $flatten\tb.$6: $auto$alumacc.cc:485:replace_alu$501
-  creating $alu cell for $flatten\tb.\dut.\delayer.$12: $auto$alumacc.cc:485:replace_alu$504
+  creating $alu cell for $flatten\tb.\dut.\delayer.$19: $auto$alumacc.cc:485:replace_alu$489
+  creating $alu cell for $flatten\tb.$6: $auto$alumacc.cc:485:replace_alu$494
+  creating $alu cell for $flatten\tb.\dut.\delayer.$12: $auto$alumacc.cc:485:replace_alu$497
   created 3 $alu and 0 $macc cells.
 
 2.23. Executing OPT pass (performing simple optimizations).
@@ -1212,7 +1205,7 @@ No more expansions possible.
 
 2.30.1. Executing OPT_EXPR pass (perform const folding).
 Optimizing module top.
-<suppressed ~5 debug messages>
+<suppressed ~34 debug messages>
 
 2.30.2. Executing OPT_MERGE pass (detect identical cells).
 Finding identical cells in module `\top'.
@@ -1302,28 +1295,27 @@ Successfully finished Verilog frontend.
 Using extmapper simplemap for cells of type $ne.
 Using extmapper simplemap for cells of type $not.
 Using extmapper simplemap for cells of type $and.
-Using extmapper simplemap for cells of type $sdff.
 Using extmapper simplemap for cells of type $reduce_bool.
 Using extmapper simplemap for cells of type $mux.
 Using template $paramod$6a42b6fefed750f8a1c58eab59479d960557103c\_80_ecp5_alu for cells of type $alu.
 Using extmapper simplemap for cells of type $dff.
+Using extmapper simplemap for cells of type $sdff.
 Using extmapper simplemap for cells of type $sdffe.
-Using extmapper simplemap for cells of type $dffe.
 Using extmapper simplemap for cells of type $reduce_or.
 Using extmapper simplemap for cells of type $reduce_and.
 Using extmapper simplemap for cells of type $eq.
 Using template $paramod$521ce43182eecb9f60c72393a788160d2c356bf5\_90_pmux for cells of type $pmux.
-Using template $paramod$32a7b7b86c07519b7537abc18e96f0331f97914d\_90_alu for cells of type $alu.
 Using extmapper simplemap for cells of type $logic_not.
+Using template $paramod$32a7b7b86c07519b7537abc18e96f0331f97914d\_90_alu for cells of type $alu.
 Using template $paramod$c04af8dbf0e5d1d69bbccb2c7bd8a93fc9ef54dc\_80_ecp5_alu for cells of type $alu.
-Using extmapper simplemap for cells of type $logic_or.
 Using extmapper simplemap for cells of type $logic_and.
+Using extmapper simplemap for cells of type $logic_or.
 Using extmapper simplemap for cells of type $pos.
 Using extmapper simplemap for cells of type $xor.
 Using template $paramod\_90_lcu\WIDTH=32'00000000000000000000000000000100 for cells of type $lcu.
 Using extmapper simplemap for cells of type $or.
 No more expansions possible.
-<suppressed ~513 debug messages>
+<suppressed ~504 debug messages>
 
 2.34. Executing OPT pass (performing simple optimizations).
 
@@ -1333,15 +1325,15 @@ Optimizing module top.
 
 2.34.2. Executing OPT_MERGE pass (detect identical cells).
 Finding identical cells in module `\top'.
-<suppressed ~108 debug messages>
-Removed a total of 36 cells.
+<suppressed ~111 debug messages>
+Removed a total of 37 cells.
 
 2.34.3. Executing OPT_DFF pass (perform DFF optimizations).
 
 2.34.4. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
-Removed 81 unused cells and 283 unused wires.
-<suppressed ~98 debug messages>
+Removed 111 unused cells and 284 unused wires.
+<suppressed ~128 debug messages>
 
 2.34.5. Finished fast OPT passes.
 
@@ -1427,20 +1419,19 @@ Successfully finished Verilog frontend.
 
 2.37.2. Continuing TECHMAP pass.
 Using template IB for cells of type IB.
+Using template \$_SDFFE_PP0N_ for cells of type $_SDFFE_PP0N_.
 Using template \$_SDFF_PP0_ for cells of type $_SDFF_PP0_.
 Using template $paramod\$_DFF_P_\_TECHMAP_WIREINIT_Q_=1'0 for cells of type $_DFF_P_.
-Using template \$_SDFFE_PP0N_ for cells of type $_SDFFE_PP0N_.
-Using template $paramod\$_DFFE_PP_\_TECHMAP_WIREINIT_Q_=1'0 for cells of type $_DFFE_PP_.
 Using template \$_SDFFE_PP0P_ for cells of type $_SDFFE_PP0P_.
 Using template OB for cells of type OB.
 Using template BB for cells of type BB.
 Using template \$_SDFFE_PP1P_ for cells of type $_SDFFE_PP1P_.
 No more expansions possible.
-<suppressed ~192 debug messages>
+<suppressed ~209 debug messages>
 
 2.38. Executing OPT_EXPR pass (perform const folding).
 Optimizing module top.
-<suppressed ~12 debug messages>
+<suppressed ~42 debug messages>
 
 2.39. Executing SIMPLEMAP pass (map simple cells to gate primitives).
 
@@ -1451,7 +1442,7 @@ Handling GSR in top.
 
 2.42. Executing OPT_CLEAN pass (remove unused cells and wires).
 Finding unused cells or wires in module \top..
-Removed 0 unused cells and 460 unused wires.
+Removed 0 unused cells and 595 unused wires.
 <suppressed ~1 debug messages>
 
 2.43. Executing TECHMAP pass (map to technology primitives).
@@ -1469,7 +1460,7 @@ No more expansions possible.
 2.44. Executing ABC pass (technology mapping using ABC).
 
 2.44.1. Extracting gate netlist of module `\top' to `<abc-temp-dir>/input.blif'..
-Extracted 163 gates and 256 wires to a netlist network with 91 inputs and 56 outputs.
+Extracted 153 gates and 237 wires to a netlist network with 82 inputs and 49 outputs.
 
 2.44.1.1. Executing ABC.
 Running ABC command: <yosys-exe-dir>/yosys-abc -s -f <abc-temp-dir>/abc.script 2>&1
@@ -1488,22 +1479,22 @@ ABC: + dch -f
 ABC: + if 
 ABC: + mfs2 
 ABC: + dress 
-ABC: Total number of equiv classes                =      55.
-ABC: Participating nodes from both networks       =     119.
-ABC: Participating nodes from the first network   =      56. (  81.16 % of nodes)
-ABC: Participating nodes from the second network  =      63. (  91.30 % of nodes)
-ABC: Node pairs (any polarity)                    =      56. (  81.16 % of names can be moved)
-ABC: Node pairs (same polarity)                   =      56. (  81.16 % of names can be moved)
-ABC: Total runtime =     0.03 sec
+ABC: Total number of equiv classes                =      49.
+ABC: Participating nodes from both networks       =     106.
+ABC: Participating nodes from the first network   =      49. (  79.03 % of nodes)
+ABC: Participating nodes from the second network  =      57. (  91.94 % of nodes)
+ABC: Node pairs (any polarity)                    =      49. (  79.03 % of names can be moved)
+ABC: Node pairs (same polarity)                   =      49. (  79.03 % of names can be moved)
+ABC: Total runtime =     0.02 sec
 ABC: + write_blif <abc-temp-dir>/output.blif 
 
 2.44.1.2. Re-integrating ABC results.
-ABC RESULTS:              $lut cells:       67
-ABC RESULTS:        internal signals:      109
-ABC RESULTS:           input signals:       91
-ABC RESULTS:          output signals:       56
+ABC RESULTS:              $lut cells:       60
+ABC RESULTS:        internal signals:      106
+ABC RESULTS:           input signals:       82
+ABC RESULTS:          output signals:       49
 Removing temp directory.
-Removed 0 unused cells and 164 unused wires.
+Removed 0 unused cells and 144 unused wires.
 
 2.45. Executing TECHMAP pass (map to technology primitives).
 
@@ -1584,35 +1575,35 @@ Successfully finished Verilog frontend.
 2.45.2. Continuing TECHMAP pass.
 Using template $paramod$43779580bfffd5d5a9f321249a174febf1dac288\$lut for cells of type $lut.
 Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0100 for cells of type $lut.
-Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
-Using template $paramod$658b9ed803f0d3d335616d3858b53e0a2522f1e8\$lut for cells of type $lut.
-Using template $paramod$9bdc414229f06e785dc8fd97a243faa9336e164a\$lut for cells of type $lut.
-Using template $paramod$571404c0889eaf57f492cb5e37f8acb5df5852f9\$lut for cells of type $lut.
-Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00010000 for cells of type $lut.
-Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10110000 for cells of type $lut.
-Using template $paramod$99e8e978b22ef71f0dc5bc15b07fc355d272684f\$lut for cells of type $lut.
 Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1110 for cells of type $lut.
-Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1011 for cells of type $lut.
-Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01111000 for cells of type $lut.
 Using template $paramod$415b9dd3a15783ae56c103f189fd8e182f997441\$lut for cells of type $lut.
-Using template $paramod$287fc40df277be5303029e92cf8599a6aab4ddf0\$lut for cells of type $lut.
+Using template $paramod$658b9ed803f0d3d335616d3858b53e0a2522f1e8\$lut for cells of type $lut.
+Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00010000 for cells of type $lut.
+Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000001\LUT=2'01 for cells of type $lut.
 Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0001 for cells of type $lut.
+Using template $paramod$359fe4e746656bf9c72aecaff84fc7bdea9f55a5\$lut for cells of type $lut.
+Using template $paramod$571404c0889eaf57f492cb5e37f8acb5df5852f9\$lut for cells of type $lut.
+Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'10110000 for cells of type $lut.
+Using template $paramod$287fc40df277be5303029e92cf8599a6aab4ddf0\$lut for cells of type $lut.
 Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'0110 for cells of type $lut.
 Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'00001011 for cells of type $lut.
-Using template $paramod$359fe4e746656bf9c72aecaff84fc7bdea9f55a5\$lut for cells of type $lut.
+Using template $paramod$9bdc414229f06e785dc8fd97a243faa9336e164a\$lut for cells of type $lut.
+Using template $paramod$99e8e978b22ef71f0dc5bc15b07fc355d272684f\$lut for cells of type $lut.
+Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000010\LUT=4'1011 for cells of type $lut.
+Using template $paramod\$lut\WIDTH=32'00000000000000000000000000000011\LUT=8'01111000 for cells of type $lut.
 No more expansions possible.
-<suppressed ~371 debug messages>
+<suppressed ~365 debug messages>
 
 2.46. Executing OPT_LUT_INS pass (discard unused LUT inputs).
 Optimizing LUTs in top.
-  Optimizing lut $abc$1643$auto$blifparse.cc:515:parse_blif$1648.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
-  Optimizing lut $abc$1643$auto$blifparse.cc:515:parse_blif$1646.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
-  Optimizing lut $abc$1643$auto$blifparse.cc:515:parse_blif$1647.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
-Removed 0 unused cells and 137 unused wires.
+  Optimizing lut $abc$1713$auto$blifparse.cc:515:parse_blif$1717.genblk1.genblk1.genblk1.genblk1.genblk1.lut0 (4 -> 0)
+  Optimizing lut $abc$1713$auto$blifparse.cc:515:parse_blif$1716.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+  Optimizing lut $abc$1713$auto$blifparse.cc:515:parse_blif$1715.genblk1.genblk1.genblk1.genblk1.genblk1.lut1 (4 -> 0)
+Removed 0 unused cells and 125 unused wires.
 
 2.47. Executing AUTONAME pass.
-Renamed 985 objects in module top (19 iterations).
-<suppressed ~252 debug messages>
+Renamed 993 objects in module top (20 iterations).
+<suppressed ~266 debug messages>
 
 2.48. Executing HIERARCHY pass (managing design hierarchy).
 
@@ -1627,18 +1618,18 @@ Removed 0 unused modules.
 
 === top ===
 
-   Number of wires:                232
-   Number of wire bits:            544
-   Number of public wires:         232
-   Number of public wire bits:     544
+   Number of wires:                225
+   Number of wire bits:            698
+   Number of public wires:         225
+   Number of public wire bits:     698
    Number of memories:               0
    Number of memory bits:            0
    Number of processes:              0
-   Number of cells:                202
+   Number of cells:                224
      CCU2C                          32
-     LUT4                           68
+     LUT4                           62
      PFUMX                           3
-     TRELLIS_FF                     78
+     TRELLIS_FF                    106
      TRELLIS_IO                     21
 
 2.50. Executing CHECK pass (checking for obvious problems).
@@ -1647,6 +1638,6 @@ Found and reported 0 problems.
 
 3. Executing JSON backend.
 
-End of script. Logfile hash: 676f546674, CPU: user 1.47s system 0.12s, MEM: 286.11 MB peak
+End of script. Logfile hash: 909d468c41, CPU: user 1.27s system 0.09s, MEM: 285.68 MB peak
 Yosys 0.13+3 (git sha1 61324cf55, clang 10.0.0-4ubuntu1 -fPIC -Os)
-Time spent: 48% 13x read_verilog (0 sec), 9% 20x opt_clean (0 sec), ...
+Time spent: 47% 13x read_verilog (0 sec), 10% 1x abc (0 sec), ...

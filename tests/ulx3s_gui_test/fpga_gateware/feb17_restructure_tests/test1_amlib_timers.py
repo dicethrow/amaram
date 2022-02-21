@@ -5,6 +5,7 @@ from amaranth import Elaboratable, Module, Signal, Mux, ClockSignal, ClockDomain
 from amaranth.hdl.ast import Rose, Stable, Fell, Past
 from amaranth.hdl.rec import DIR_NONE, DIR_FANOUT, DIR_FANIN, Layout, Record
 from amaranth.hdl.mem import Memory
+from amaranth.hdl.xfrm import DomainRenamer
 from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active
 from amaranth.asserts import Assert, Assume, Cover, Past
@@ -24,25 +25,25 @@ from amaranth.build import Platform
 # addrs = fpga_mcu_interface.register_addresses
 
 class timerTest(Elaboratable):
+	ui_layout = [
+		("trigger",	1,	DIR_FANOUT),
+		("done",	1,	DIR_FANIN)
+	]
+
 	def __init__(self):
 		super().__init__()
-		self.trigger = Signal()
-		self.done = Signal()
-
-	def ports(self):
-		return [
-			self.trigger,
-			self.done
-		]
+		self.ui = Record(timerTest.ui_layout)
 
 	def elaborate(self, platform: Platform) -> Module:
 		m = Module()
 
-		m.submodules.delayer = delayer = Timer(width=16, load=int(0xFFF))
+		ui = Record.like(self.ui)
+		m.d.sync += self.ui.connect(ui)
 
-		with m.If(self.trigger):
-			m.d.comb += delayer.start.eq(1)
-		m.d.sync += self.done.eq(delayer.done)
+		m.submodules.delayer = delayer = Timer(load=int(0xFF))
+
+		m.d.sync += delayer.start.eq(ui.trigger) # comb?
+		m.d.sync += ui.done.eq(delayer.done)
 
 		return m
 
@@ -58,34 +59,47 @@ if __name__ == "__main__":
 			("trigger",			1, DIR_FANOUT),
 			("done",			1, DIR_FANIN),
 			("reset",			1, DIR_FANOUT), # note - this doesn't seem to show in traces, but still works?
-
-			# ("leds", 			8, DIR_FANOUT)
+			# ("leds", 			8, DIR_FANOUT) # can't do reset-less here, so using a separate interface
 		]
 		
 		def __init__(self):
 			super().__init__()
-			self.dut_test_io = Record(Testbench.timerTest_test_interface_layout)
+			self.ui = Record(Testbench.timerTest_test_interface_layout)
 			self.leds = Signal(8, reset_less=True)
 
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.dut = dut = timerTest()
+			m.submodules.dut = dut = DomainRenamer("sync_1e6")(timerTest())
 
-			# m.domains.sync = cd_sync = ClockDomain("sync")
-			# m.d.sync += cd_sync.rst.eq(self.dut_test_io.reset)
-
+			ui = Record.like(self.ui)
 			m.d.sync += [
-				dut.trigger.eq(self.dut_test_io.trigger),
-				self.dut_test_io.done.eq(dut.done),
-				# self.dut_test_io.leds.eq(Cat(self.dut_test_io.trigger, self.dut_test_io.done, self.dut_test_io.reset))
+				self.ui.connect(ui),
+				ui.connect(dut.ui, exclude=["reset"])
 			]
 
-			for each in [self.dut_test_io.trigger, self.dut_test_io.done, self.dut_test_io.reset]:
+			m.domains.sync = cd_sync = ClockDomain("sync")
+			m.domains.sync_1e6 = cd_sync_1e6 = ClockDomain("sync_1e6")
+			m.d.sync += [
+				cd_sync.rst.eq(ui.reset),
+				cd_sync_1e6.rst.eq(ui.reset)
+			]
+			if platform != None:
+				m.d.comb += cd_sync.clk.eq(platform.request("clk25"))
+				platform.add_clock_constraint(cd_sync.clk,  platform.default_clk_frequency)
+			else:
+				pass
+				# the sim clock is added later
+			divisor = 25
+			clk_counter = Signal(shape=range(int(divisor/2)+1)) # is this right?
+			m.d.sync += clk_counter.eq(Mux(clk_counter == (int(divisor/2)-1), 0, clk_counter+1)) # not quite accurate but close enough
+			m.d.sync += cd_sync_1e6.clk.eq(Mux(clk_counter==0,~cd_sync_1e6.clk,cd_sync_1e6.clk))
+
+
+			# change a led flag each time one of these rises, so we can see quick changes
+			for i, each in enumerate([ui.trigger, ui.done, ui.reset]):
 				with m.If(Rose(each)):
-					m.d.sync += self.leds.eq(self.leds + 1)
-				with m.Else():
-					m.d.sync += self.leds.eq(self.leds)
+					m.d.sync += self.leds[i].eq(~self.leds[i])
 
 			return m
 
@@ -97,7 +111,7 @@ if __name__ == "__main__":
 		class Simulate(Elaboratable):
 			def __init__(self):
 				super().__init__()
-				self.sim_test_io = Record(Testbench.timerTest_test_interface_layout)
+				self.ui = Record(Testbench.timerTest_test_interface_layout)
 
 			def timer_test(self):
 				def strobe(signal):
@@ -111,18 +125,18 @@ if __name__ == "__main__":
 
 					yield Delay(1e-6) # delay at start
 
-					yield from strobe(self.sim_test_io.trigger)
+					yield from strobe(self.ui.trigger)
 
-					while not (yield self.sim_test_io.done):
-						yield
+					# while not (yield self.ui.done):
+					# 	yield
 
-					# yield Delay(100e-6)
+					yield Delay(100e-6)
 
 					yield Delay(1e-6) # delay at end
 
 					# now do a reset
 					
-					yield from strobe(self.sim_test_io.reset)
+					yield from strobe(self.ui.reset)
 					# yield from strobe(ClockSignal().rst)
 
 
@@ -130,10 +144,14 @@ if __name__ == "__main__":
 				m = Module()
 
 				m.submodules.tb = tb = Testbench()
-				m.d.sync += self.sim_test_io.connect(tb.dut_test_io)
+				ui = Record.like(self.ui)
+				m.d.sync += [
+					self.ui.connect(ui),
+					ui.connect(tb.ui, exclude=["reset"])
+				]
 
-				m.domains.sync = cd_sync = ClockDomain("sync")
-				m.d.sync += cd_sync.rst.eq(tb.dut_test_io.reset)
+				# m.domains.sync = cd_sync = ClockDomain("sync")
+				# m.d.sync += cd_sync.rst.eq(ui.reset)
 				
 				return m
 
@@ -202,27 +220,42 @@ if __name__ == "__main__":
 				self.leds = Cat([platform.request("led", i) for i in range(8)])
 				esp32 = platform.request("esp32_spi")
 				io_uart = platform.request("uart")
-				clk25 = platform.request("clk25")
-				self.i_buttons = {
-					"pwr" : platform.request("button_pwr", 0),
-					"fireA" : platform.request("button_fire", 0),
-					"fireB" : platform.request("button_fire", 1),
-					"up" : platform.request("button_up", 0),
-					"down" : platform.request("button_down", 0),
-					"left" : platform.request("button_left", 0),
-					"right" : platform.request("button_right", 0)
-				}
+				# clk25 = platform.request("clk25")
+
+				i_unsync_buttons = Record([
+					("pwr",			1, DIR_FANOUT),
+					("fireA",		1, DIR_FANOUT),
+					("fireB",		1, DIR_FANOUT),
+					("up",			1, DIR_FANOUT),
+					("down",		1, DIR_FANOUT),
+					("left",		1, DIR_FANOUT),
+					("right",		1, DIR_FANOUT),
+				])
 
 				m = Module()
+
+				m.d.sync += [
+					i_unsync_buttons.pwr.eq(platform.request("button_pwr", 0)),
+					i_unsync_buttons.fireA.eq(platform.request("button_fire", 0)),
+					i_unsync_buttons.fireB.eq(platform.request("button_fire", 1)),
+					i_unsync_buttons.up.eq(platform.request("button_up", 0)),
+					i_unsync_buttons.down.eq(platform.request("button_down", 0)),
+					i_unsync_buttons.left.eq(platform.request("button_left", 0)),
+					i_unsync_buttons.right.eq(platform.request("button_right", 0)),
+				]
+				self.i_buttons = Record.like(i_unsync_buttons)
+				m.submodules.i_button_ffsync = FFSynchronizer(i_unsync_buttons, self.i_buttons) # useful?
+
 				
-				cd_sync = ClockDomain("sync")
-				m.d.comb += cd_sync.clk.eq(clk25)
-				m.domains += cd_sync
+				# cd_sync = ClockDomain("sync")
+				# m.d.comb += cd_sync.clk.eq(clk25)
+				# m.domains += cd_sync
+				# platform.add_clock_constraint(cd_sync.clk,  platform.default_clk_frequency)
 
 				# external logic analyser, if desired
 				if False:
 					o_digital_discovery = platform.request("digital_discovery")
-					m.d.comb += [
+					m.d.sync += [
 						o_digital_discovery.bus[0].eq(esp32.gpio5_cs), 	# cs
 						o_digital_discovery.bus[1].eq(esp32.gpio16_sclk),	# clk
 						o_digital_discovery.bus[2].eq(esp32.gpio4_copi),	# mosi
@@ -232,48 +265,48 @@ if __name__ == "__main__":
 				######## setup esp32 interaction ######
 
 				# route the esp32's uart
-				m.d.comb += [
+				m.d.sync += [
 					esp32.tx.eq(io_uart.rx),
 					io_uart.tx.eq(esp32.rx),
 				]
 
 				# implement the esp32's reset/boot requirements
 				with m.If((io_uart.dtr.i == 1) & (io_uart.rts.i == 1)):
-					m.d.comb += esp32.en.eq(1 & ~self.i_buttons["pwr"]) 
-					m.d.comb += esp32.gpio0.o.eq(1)
+					m.d.sync += esp32.en.eq(1 & ~self.i_buttons.pwr) 
+					m.d.sync += esp32.gpio0.o.eq(1)
 				with m.Elif((io_uart.dtr == 0) & (io_uart.rts == 0)):
-					m.d.comb += esp32.en.eq(1 & ~self.i_buttons["pwr"])
-					m.d.comb += esp32.gpio0.o.eq(1)
+					m.d.sync += esp32.en.eq(1 & ~self.i_buttons.pwr)
+					m.d.sync += esp32.gpio0.o.eq(1)
 				with m.Elif((io_uart.dtr == 1) & (io_uart.rts == 0)):
-					m.d.comb += esp32.en.eq(0 & ~self.i_buttons["pwr"])
-					m.d.comb += esp32.gpio0.o.eq(1)
+					m.d.sync += esp32.en.eq(0 & ~self.i_buttons.pwr)
+					m.d.sync += esp32.gpio0.o.eq(1)
 				with m.Elif((io_uart.dtr == 0) & (io_uart.rts == 1)):
-					m.d.comb += esp32.en.eq(1 & ~self.i_buttons["pwr"])
-					m.d.comb += esp32.gpio0.o.eq(0)
+					m.d.sync += esp32.en.eq(1 & ~self.i_buttons.pwr)
+					m.d.sync += esp32.gpio0.o.eq(0)
 
 				return m
 
 		class Upload(UploadBase):
 			def __init__(self):
 				super().__init__()
-				self.sim_test_io = Record(Testbench.timerTest_test_interface_layout)
-
+				
 			def elaborate(self, platform = None):
 				m = super().elaborate(platform)
 
-				trigger = Signal()
-				reset = Signal()
-				m.d.comb += [
-					trigger.eq(self.i_buttons["left"]),
-					reset.eq(self.i_buttons["right"])
-				]
-
-
 				m.submodules.tb = tb = Testbench()	
+
+				ui = Record(Testbench.timerTest_test_interface_layout)
+				m.d.sync += ui.connect(tb.ui)
+
+				trigger = Signal.like(ui.trigger)
+				reset = Signal.like(ui.reset)
 				m.d.sync += [
-					self.sim_test_io.connect(tb.dut_test_io),
-					self.sim_test_io.trigger.eq(Rose(trigger)),
-					self.sim_test_io.reset.eq(Rose(reset)),
+					trigger.eq(self.i_buttons.left),
+					ui.trigger.eq(Rose(trigger)),
+
+					reset.eq(self.i_buttons.right),
+					ui.reset.eq(Rose(reset)),
+
 					self.leds.eq(tb.leds),
 				]
 

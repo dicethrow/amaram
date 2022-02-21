@@ -41,8 +41,6 @@ LOCATE COMP "uart_0__rts__io" SITE "M3";
 IOBUF PORT "uart_0__rts__io" IO_TYPE=LVCMOS33;
 LOCATE COMP "uart_0__dtr__io" SITE "N1";
 IOBUF PORT "uart_0__dtr__io" IO_TYPE=LVCMOS33;
-LOCATE COMP "clk25_0__io" SITE "G2";
-IOBUF PORT "clk25_0__io" IO_TYPE=LVCMOS33;
 LOCATE COMP "button_pwr_0__io" SITE "D6";
 IOBUF PORT "button_pwr_0__io" IO_TYPE=LVCMOS33 PULLMODE=UP;
 LOCATE COMP "button_fire_0__io" SITE "R1";
@@ -57,5 +55,8 @@ LOCATE COMP "button_left_0__io" SITE "U1";
 IOBUF PORT "button_left_0__io" IO_TYPE=LVCMOS33 PULLMODE=DOWN;
 LOCATE COMP "button_right_0__io" SITE "H16";
 IOBUF PORT "button_right_0__io" IO_TYPE=LVCMOS33 PULLMODE=DOWN;
+LOCATE COMP "clk25_0__io" SITE "G2";
+IOBUF PORT "clk25_0__io" IO_TYPE=LVCMOS33;
 FREQUENCY PORT "clk25_0__io" 25000000.0 HZ;
+FREQUENCY NET "clk" 25000000.0 HZ;
 # (add_preferences placeholder)

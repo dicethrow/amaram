@@ -3,20 +3,20 @@
 
 (* \amaranth.hierarchy  = "top.tb.dut.delayer" *)
 (* generator = "Amaranth" *)
-module delayer(rst, start, done, clk);
-  reg \$auto$verilog_backend.cc:2083:dump_module$25  = 0;
+module delayer(sync_1e6_clk, start, done, sync_1e6_rst);
+  reg \$auto$verilog_backend.cc:2083:dump_module$50  = 0;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:21" *)
   wire \$1 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:37" *)
-  wire [16:0] \$10 ;
+  wire [32:0] \$10 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:37" *)
-  wire [16:0] \$11 ;
+  wire [32:0] \$11 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:42" *)
   wire \$13 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:45" *)
-  wire [16:0] \$15 ;
+  wire [32:0] \$15 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:45" *)
-  wire [16:0] \$16 ;
+  wire [32:0] \$16 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *)
   wire \$18 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *)
@@ -30,15 +30,13 @@ module delayer(rst, start, done, clk);
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *)
   wire \$5 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:33" *)
-  wire [16:0] \$7 ;
+  wire [32:0] \$7 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:33" *)
-  wire [16:0] \$8 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
-  input clk;
+  wire [32:0] \$8 ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11" *)
-  reg [15:0] counter_out = 16'h0000;
+  reg [31:0] counter_out = 32'd0;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:11" *)
-  reg [15:0] \counter_out$next ;
+  reg [31:0] \counter_out$next ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:13" *)
   output done;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:20" *)
@@ -46,11 +44,13 @@ module delayer(rst, start, done, clk);
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:20" *)
   reg [1:0] \fsm_state$next ;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:10" *)
-  wire [15:0] reload;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
-  input rst;
+  wire [31:0] reload;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:12" *)
   input start;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  input sync_1e6_clk;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  input sync_1e6_rst;
   assign \$11  = counter_out - (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:37" *) 1'h1;
   assign \$18  = counter_out > (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *) 1'h0;
   assign \$1  = ! (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:21" *) fsm_state;
@@ -59,12 +59,12 @@ module delayer(rst, start, done, clk);
   assign \$3  = counter_out > (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *) 1'h0;
   assign \$5  = start & (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *) \$3 ;
   assign \$8  = counter_out - (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:33" *) 1'h1;
-  always @(posedge clk)
+  always @(posedge sync_1e6_clk)
     fsm_state <= \fsm_state$next ;
-  always @(posedge clk)
+  always @(posedge sync_1e6_clk)
     counter_out <= \counter_out$next ;
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$25 ) begin end
+    if (\$auto$verilog_backend.cc:2083:dump_module$50 ) begin end
     \counter_out$next  = counter_out;
     (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:20" *)
     casez (fsm_state)
@@ -72,18 +72,18 @@ module delayer(rst, start, done, clk);
       /* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:23" */
       2'h1:
         begin
-          \counter_out$next  = 16'h0fff;
+          \counter_out$next  = 32'd255;
           (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" *)
           casez (\$5 )
             /* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:30" */
             1'h1:
-                \counter_out$next  = \$8 [15:0];
+                \counter_out$next  = \$8 [31:0];
           endcase
         end
       /* \amaranth.decoding  = "RUNNING/2" */
       /* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:36" */
       2'h2:
-          \counter_out$next  = \$11 [15:0];
+          \counter_out$next  = \$11 [31:0];
       /* \amaranth.decoding  = "DONE/0" */
       /* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:41" */
       2'h0:
@@ -91,17 +91,17 @@ module delayer(rst, start, done, clk);
           casez (\$13 )
             /* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:42" */
             1'h1:
-                \counter_out$next  = \$16 [15:0];
+                \counter_out$next  = \$16 [31:0];
           endcase
     endcase
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
-    casez (rst)
+    casez (sync_1e6_rst)
       1'h1:
-          \counter_out$next  = 16'h0000;
+          \counter_out$next  = 32'd0;
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$25 ) begin end
+    if (\$auto$verilog_backend.cc:2083:dump_module$50 ) begin end
     \fsm_state$next  = fsm_state;
     (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:20" *)
     casez (fsm_state)
@@ -138,7 +138,7 @@ module delayer(rst, start, done, clk);
           endcase
     endcase
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
-    casez (rst)
+    casez (sync_1e6_rst)
       1'h1:
           \fsm_state$next  = 2'h1;
     endcase
@@ -146,66 +146,151 @@ module delayer(rst, start, done, clk);
   assign \$7  = \$8 ;
   assign \$10  = \$11 ;
   assign \$15  = \$16 ;
-  assign reload = 16'h0000;
+  assign reload = 32'd0;
   assign done = \$1 ;
   assign \$13  = 1'h0;
-  assign \$16  = 17'h1ffff;
+  assign \$16  = 33'h1ffffffff;
   assign \$24  = 1'h0;
 endmodule
 
 (* \amaranth.hierarchy  = "top.tb.dut" *)
 (* generator = "Amaranth" *)
-module dut(rst, trigger, done, clk);
-  reg \$auto$verilog_backend.cc:2083:dump_module$26  = 0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
-  input clk;
+module dut(ui__done, sync_1e6_rst, sync_1e6_clk, ui__trigger);
+  reg \$auto$verilog_backend.cc:2083:dump_module$51  = 0;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:13" *)
   wire delayer_done;
   (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:12" *)
-  reg delayer_start;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:30" *)
-  output done;
-  reg done = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:30" *)
-  reg \done$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
-  input rst;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:29" *)
-  input trigger;
-  always @(posedge clk)
-    done <= \done$next ;
+  reg delayer_start = 1'h0;
+  (* src = "/home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/utils/timer.py:12" *)
+  reg \delayer_start$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  input sync_1e6_clk;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  input sync_1e6_rst;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35" *)
+  output ui__done;
+  reg ui__done = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40" *)
+  reg \ui__done$2  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40" *)
+  reg \ui__done$2$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35" *)
+  reg \ui__done$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35" *)
+  input ui__trigger;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40" *)
+  reg \ui__trigger$1  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:40" *)
+  reg \ui__trigger$1$next ;
+  always @(posedge sync_1e6_clk)
+    \ui__done$2  <= \ui__done$2$next ;
+  always @(posedge sync_1e6_clk)
+    delayer_start <= \delayer_start$next ;
+  always @(posedge sync_1e6_clk)
+    ui__done <= \ui__done$next ;
+  always @(posedge sync_1e6_clk)
+    \ui__trigger$1  <= \ui__trigger$1$next ;
   delayer delayer (
-    .clk(clk),
     .done(delayer_done),
-    .rst(rst),
-    .start(delayer_start)
+    .start(delayer_start),
+    .sync_1e6_clk(sync_1e6_clk),
+    .sync_1e6_rst(sync_1e6_rst)
   );
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$26 ) begin end
-    delayer_start = 1'h0;
-    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:43" *)
-    casez (trigger)
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:43" */
+    if (\$auto$verilog_backend.cc:2083:dump_module$51 ) begin end
+    \ui__trigger$1$next  = ui__trigger;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (sync_1e6_rst)
       1'h1:
-          delayer_start = 1'h1;
+          \ui__trigger$1$next  = 1'h0;
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$26 ) begin end
-    \done$next  = delayer_done;
+    if (\$auto$verilog_backend.cc:2083:dump_module$51 ) begin end
+    \ui__done$next  = \ui__done$2 ;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
-    casez (rst)
+    casez (sync_1e6_rst)
       1'h1:
-          \done$next  = 1'h0;
+          \ui__done$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$51 ) begin end
+    \delayer_start$next  = \ui__trigger$1 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (sync_1e6_rst)
+      1'h1:
+          \delayer_start$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$51 ) begin end
+    \ui__done$2$next  = delayer_done;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (sync_1e6_rst)
+      1'h1:
+          \ui__done$2$next  = 1'h0;
     endcase
   end
 endmodule
 
+(* \amaranth.hierarchy  = "top.i_button_ffsync" *)
+(* generator = "Amaranth" *)
+module i_button_ffsync(i_unsync_buttons__fireA, i_unsync_buttons__fireB, i_unsync_buttons__up, i_unsync_buttons__down, i_unsync_buttons__left, i_unsync_buttons__right, i_buttons__pwr, i_buttons__left, i_buttons__right, rst, clk, i_unsync_buttons__pwr);
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
+  input clk;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_buttons__down;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_buttons__fireA;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_buttons__fireB;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  output i_buttons__left;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  output i_buttons__pwr;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  output i_buttons__right;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_buttons__up;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__down;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__fireA;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__fireB;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__left;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__pwr;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__right;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  input i_unsync_buttons__up;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
+  input rst;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/cdc.py:89" *)
+  reg [6:0] stage0 = 7'h00;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/cdc.py:89" *)
+  wire [6:0] \stage0$next ;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/cdc.py:89" *)
+  reg [6:0] stage1 = 7'h00;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/cdc.py:89" *)
+  wire [6:0] \stage1$next ;
+  always @(posedge clk)
+    stage1 <= stage0;
+  always @(posedge clk)
+    stage0 <= { i_unsync_buttons__right, i_unsync_buttons__left, i_unsync_buttons__down, i_unsync_buttons__up, i_unsync_buttons__fireB, i_unsync_buttons__fireA, i_unsync_buttons__pwr };
+  assign { i_buttons__right, i_buttons__left, i_buttons__down, i_buttons__up, i_buttons__fireB, i_buttons__fireA, i_buttons__pwr } = stage1;
+  assign \stage1$next  = stage0;
+  assign \stage0$next  = { i_unsync_buttons__right, i_unsync_buttons__left, i_unsync_buttons__down, i_unsync_buttons__up, i_unsync_buttons__fireB, i_unsync_buttons__fireA, i_unsync_buttons__pwr };
+endmodule
+
 (* \amaranth.hierarchy  = "top.pin_button_down_0" *)
 (* generator = "Amaranth" *)
-module pin_button_down_0(button_down_0__io);
+module pin_button_down_0(button_down_0__io, button_down_0__i);
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire button_down_0__i;
+  output button_down_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input button_down_0__io;
   IB button_down_0_0 (
@@ -216,9 +301,9 @@ endmodule
 
 (* \amaranth.hierarchy  = "top.pin_button_fire_0" *)
 (* generator = "Amaranth" *)
-module pin_button_fire_0(button_fire_0__io);
+module pin_button_fire_0(button_fire_0__io, button_fire_0__i);
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire button_fire_0__i;
+  output button_fire_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input button_fire_0__io;
   IB button_fire_0_0 (
@@ -229,9 +314,9 @@ endmodule
 
 (* \amaranth.hierarchy  = "top.pin_button_fire_1" *)
 (* generator = "Amaranth" *)
-module pin_button_fire_1(button_fire_1__io);
+module pin_button_fire_1(button_fire_1__io, button_fire_1__i);
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire button_fire_1__i;
+  output button_fire_1__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input button_fire_1__io;
   IB button_fire_1_0 (
@@ -287,9 +372,9 @@ endmodule
 
 (* \amaranth.hierarchy  = "top.pin_button_up_0" *)
 (* generator = "Amaranth" *)
-module pin_button_up_0(button_up_0__io);
+module pin_button_up_0(button_up_0__io, button_up_0__i);
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire button_up_0__i;
+  output button_up_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input button_up_0__io;
   IB button_up_0_0 (
@@ -590,210 +675,331 @@ endmodule
 
 (* \amaranth.hierarchy  = "top.tb" *)
 (* generator = "Amaranth" *)
-module tb(dut_test_io__trigger, dut_test_io__done, dut_test_io__reset, leds, rst, clk);
-  reg \$auto$verilog_backend.cc:2083:dump_module$27  = 0;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
-  wire \$1 ;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
-  wire \$10 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *)
-  wire [8:0] \$12 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *)
-  wire [8:0] \$13 ;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
-  wire \$15 ;
+module tb(ui__done, ui__reset, leds, rst, clk, clk25_0__i, ui__trigger);
+  reg \$auto$verilog_backend.cc:2083:dump_module$52  = 0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96" *)
+  wire \$11 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96" *)
+  wire \$13 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96" *)
+  wire \$14 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
   wire \$17 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *)
-  wire [8:0] \$19 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *)
-  wire [8:0] \$20 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
-  wire \$3 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *)
-  wire [8:0] \$5 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *)
-  wire [8:0] \$6 ;
+  wire \$19 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102" *)
+  wire \$21 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
+  wire \$23 ;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
+  wire \$25 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102" *)
+  wire \$27 ;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
+  wire \$29 ;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
+  wire \$31 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102" *)
+  wire \$33 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *)
+  wire [4:0] \$4 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *)
+  wire [4:0] \$5 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *)
+  wire [4:0] \$7 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *)
   wire \$8 ;
   (* \amaranth.sample_reg  = 32'd1 *)
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg \$sample$s$dut_test_io__done$sync$1  = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  wire \$sample$s$dut_test_io__done$sync$1$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \$sample$s$ui__done$sync$1  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  wire \$sample$s$ui__done$sync$1$next ;
   (* \amaranth.sample_reg  = 32'd1 *)
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg \$sample$s$dut_test_io__reset$sync$1  = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  wire \$sample$s$dut_test_io__reset$sync$1$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \$sample$s$ui__reset$sync$1  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  wire \$sample$s$ui__reset$sync$1$next ;
   (* \amaranth.sample_reg  = 32'd1 *)
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg \$sample$s$dut_test_io__trigger$sync$1  = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  wire \$sample$s$dut_test_io__trigger$sync$1$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
-  input clk;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:30" *)
-  wire dut_done;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  output dut_test_io__done;
-  reg dut_test_io__done = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg \dut_test_io__done$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  input dut_test_io__reset;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  input dut_test_io__trigger;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:29" *)
-  reg dut_trigger = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:29" *)
-  reg \dut_trigger$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \$sample$s$ui__trigger$sync$1  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  wire \$sample$s$ui__trigger$sync$1$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
+  output clk;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  input clk25_0__i;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:94" *)
+  reg [3:0] clk_counter = 4'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:94" *)
+  reg [3:0] \clk_counter$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  reg dut_sync_1e6_clk = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  reg \dut_sync_1e6_clk$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  reg dut_sync_1e6_rst = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:82" *)
+  reg \dut_sync_1e6_rst$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35" *)
+  wire dut_ui__done;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35" *)
+  reg dut_ui__trigger = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:35" *)
+  reg \dut_ui__trigger$next ;
   (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:68" *)
   output [7:0] leds;
   reg [7:0] leds = 8'h00;
   (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:68" *)
   reg [7:0] \leds$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
-  input rst;
-  assign \$10  = \$8  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) dut_test_io__done;
-  assign \$13  = leds + (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *) 1'h1;
-  assign \$15  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$dut_test_io__reset$sync$1 ;
-  assign \$17  = \$15  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) dut_test_io__reset;
-  assign \$1  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$dut_test_io__trigger$sync$1 ;
-  assign \$20  = leds + (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *) 1'h1;
-  assign \$3  = \$1  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) dut_test_io__trigger;
-  assign \$6  = leds + (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:86" *) 1'h1;
-  assign \$8  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$dut_test_io__done$sync$1 ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
+  output rst;
+  reg rst = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
+  reg \rst$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  output ui__done;
+  reg ui__done = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \ui__done$2  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \ui__done$2$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  reg \ui__done$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  input ui__reset;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \ui__reset$3  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \ui__reset$3$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  input ui__trigger;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \ui__trigger$1  = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+  reg \ui__trigger$1$next ;
+  assign \$7  = \$8  ? (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *) 5'h00 : \$5 ;
+  assign \$11  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96" *) dut_sync_1e6_clk;
+  assign \$14  = ! (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96" *) clk_counter;
+  assign \$13  = \$14  ? (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:96" *) \$11  : dut_sync_1e6_clk;
+  assign \$17  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$ui__trigger$sync$1 ;
+  assign \$19  = \$17  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \ui__trigger$1 ;
+  assign \$21  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102" *) leds[0];
+  assign \$23  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$ui__done$sync$1 ;
+  assign \$25  = \$23  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \ui__done$2 ;
+  assign \$27  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102" *) leds[1];
+  assign \$29  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$ui__reset$sync$1 ;
+  assign \$31  = \$29  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \ui__reset$3 ;
+  assign \$33  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:102" *) leds[2];
+  assign \$5  = clk_counter + (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *) 1'h1;
+  assign \$8  = clk_counter == (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:95" *) 4'hb;
   always @(posedge clk)
-    \$sample$s$dut_test_io__reset$sync$1  <= dut_test_io__reset;
+    \$sample$s$ui__reset$sync$1  <= \ui__reset$3 ;
   always @(posedge clk)
-    \$sample$s$dut_test_io__done$sync$1  <= dut_test_io__done;
+    \$sample$s$ui__done$sync$1  <= \ui__done$2 ;
   always @(posedge clk)
-    \$sample$s$dut_test_io__trigger$sync$1  <= dut_test_io__trigger;
+    \$sample$s$ui__trigger$sync$1  <= \ui__trigger$1 ;
   always @(posedge clk)
-    leds <= \leds$next ;
+    leds <= { leds[7:3], \leds$next [2:0] };
   always @(posedge clk)
-    dut_test_io__done <= \dut_test_io__done$next ;
+    dut_sync_1e6_clk <= \dut_sync_1e6_clk$next ;
   always @(posedge clk)
-    dut_trigger <= \dut_trigger$next ;
+    clk_counter <= \clk_counter$next ;
+  always @(posedge clk)
+    dut_sync_1e6_rst <= \dut_sync_1e6_rst$next ;
+  always @(posedge clk)
+    rst <= \rst$next ;
+  always @(posedge clk)
+    \ui__done$2  <= \ui__done$2$next ;
+  always @(posedge clk)
+    dut_ui__trigger <= \dut_ui__trigger$next ;
+  always @(posedge clk)
+    \ui__reset$3  <= \ui__reset$3$next ;
+  always @(posedge clk)
+    ui__done <= \ui__done$next ;
+  always @(posedge clk)
+    \ui__trigger$1  <= \ui__trigger$1$next ;
   dut dut (
-    .clk(clk),
-    .done(dut_done),
-    .rst(rst),
-    .trigger(dut_trigger)
+    .sync_1e6_clk(dut_sync_1e6_clk),
+    .sync_1e6_rst(dut_sync_1e6_rst),
+    .ui__done(dut_ui__done),
+    .ui__trigger(dut_ui__trigger)
   );
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$27 ) begin end
-    \dut_trigger$next  = dut_test_io__trigger;
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \ui__trigger$1$next  = ui__trigger;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
     casez (rst)
       1'h1:
-          \dut_trigger$next  = 1'h0;
+          \ui__trigger$1$next  = 1'h0;
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$27 ) begin end
-    \dut_test_io__done$next  = dut_done;
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \ui__done$next  = \ui__done$2 ;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
     casez (rst)
       1'h1:
-          \dut_test_io__done$next  = 1'h0;
+          \ui__done$next  = 1'h0;
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$27 ) begin end
-    (* full_case = 32'd1 *)
-    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-    casez (\$3 )
-    endcase
-    (* full_case = 32'd1 *)
-    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-    casez (\$10 )
-    endcase
-    (* full_case = 32'd1 *)
-    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-    casez (\$17 )
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" */
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \leds$next [2:0] = leds[2:0];
+    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+    casez (\$19 )
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" */
       1'h1:
-          \leds$next  = \$20 [7:0];
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:87" */
-      default:
-          \leds$next  = leds;
+          \leds$next [0] = \$21 ;
+    endcase
+    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+    casez (\$25 )
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" */
+      1'h1:
+          \leds$next [1] = \$27 ;
+    endcase
+    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" *)
+    casez (\$31 )
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:101" */
+      1'h1:
+          \leds$next [2] = \$33 ;
     endcase
   end
-  assign \$5  = \$6 ;
-  assign \$12  = \$13 ;
-  assign \$19  = \$20 ;
-  assign \$sample$s$dut_test_io__reset$sync$1$next  = dut_test_io__reset;
-  assign \$sample$s$dut_test_io__done$sync$1$next  = dut_test_io__done;
-  assign \$sample$s$dut_test_io__trigger$sync$1$next  = dut_test_io__trigger;
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \ui__reset$3$next  = ui__reset;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \ui__reset$3$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \dut_ui__trigger$next  = \ui__trigger$1 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \dut_ui__trigger$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \ui__done$2$next  = dut_ui__done;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \ui__done$2$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \rst$next  = \ui__reset$3 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \rst$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \dut_sync_1e6_rst$next  = \ui__reset$3 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \dut_sync_1e6_rst$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \clk_counter$next  = \$7 [3:0];
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \clk_counter$next  = 4'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$52 ) begin end
+    \dut_sync_1e6_clk$next  = \$13 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \dut_sync_1e6_clk$next  = 1'h0;
+    endcase
+  end
+  assign \$4  = \$7 ;
+  assign \$sample$s$ui__reset$sync$1$next  = \ui__reset$3 ;
+  assign \$sample$s$ui__done$sync$1$next  = \ui__done$2 ;
+  assign \$sample$s$ui__trigger$sync$1$next  = \ui__trigger$1 ;
+  assign \leds$next [7:3] = leds[7:3];
+  assign clk = clk25_0__i;
 endmodule
 
 (* \amaranth.hierarchy  = "top" *)
 (* top =  1  *)
 (* generator = "Amaranth" *)
-module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led_6__io, led_7__io, esp32_spi_0__en__io, esp32_spi_0__tx__io, esp32_spi_0__rx__io, esp32_spi_0__gpio4_copi__io, esp32_spi_0__gpio5_cs__io, esp32_spi_0__gpio12_cipo__io, esp32_spi_0__gpio16_sclk__io, uart_0__rx__io, uart_0__tx__io, uart_0__rts__io, uart_0__dtr__io, clk25_0__io, button_pwr_0__io
-, button_fire_0__io, button_fire_1__io, button_up_0__io, button_down_0__io, button_left_0__io, button_right_0__io, esp32_spi_0__gpio0__io);
-  reg \$auto$verilog_backend.cc:2083:dump_module$28  = 0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led_6__io, led_7__io, esp32_spi_0__en__io, esp32_spi_0__tx__io, esp32_spi_0__rx__io, esp32_spi_0__gpio4_copi__io, esp32_spi_0__gpio5_cs__io, esp32_spi_0__gpio12_cipo__io, esp32_spi_0__gpio16_sclk__io, uart_0__rx__io, uart_0__tx__io, uart_0__rts__io, uart_0__dtr__io, button_pwr_0__io, button_fire_0__io
+, button_fire_1__io, button_up_0__io, button_down_0__io, button_left_0__io, button_right_0__io, clk25_0__io, esp32_spi_0__gpio0__io);
+  reg \$auto$verilog_backend.cc:2083:dump_module$53  = 0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
   wire \$1 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:244" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277" *)
   wire \$11 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$13 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$15 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:247" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280" *)
   wire \$17 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$19 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$21 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:250" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283" *)
   wire \$23 ;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275" *)
   wire \$25 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:242" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275" *)
   wire \$27 ;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278" *)
   wire \$29 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
   wire \$3 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:245" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278" *)
   wire \$31 ;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281" *)
   wire \$33 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:248" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281" *)
   wire \$35 ;
-  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284" *)
   wire \$37 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:251" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284" *)
   wire \$39 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
   wire \$41 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
   wire \$43 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
   wire \$45 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$47 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$49 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
   wire \$5 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:244" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277" *)
   wire \$51 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$53 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$55 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:247" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280" *)
   wire \$57 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$59 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$61 ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:250" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283" *)
   wire \$63 ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *)
   wire \$65 ;
@@ -808,14 +1014,14 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *)
   wire \$9 ;
   (* \amaranth.sample_reg  = 32'd1 *)
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:276" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308" *)
   reg \$sample$s$reset$sync$1  = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:276" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308" *)
   wire \$sample$s$reset$sync$1$next ;
   (* \amaranth.sample_reg  = 32'd1 *)
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305" *)
   reg \$sample$s$trigger$sync$1  = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305" *)
   wire \$sample$s$trigger$sync$1$next ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input button_down_0__io;
@@ -831,7 +1037,7 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   input button_right_0__io;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input button_up_0__io;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
   wire clk;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input clk25_0__io;
@@ -851,6 +1057,40 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   input esp32_spi_0__rx__io;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   output esp32_spi_0__tx__io;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_button_ffsync_i_buttons__left;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_button_ffsync_i_buttons__pwr;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:246" *)
+  wire i_button_ffsync_i_buttons__right;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__down = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__down$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__fireA = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__fireA$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__fireB = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__fireB$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__left = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__left$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__pwr = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__pwr$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__right = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__right$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg i_button_ffsync_i_unsync_buttons__up = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:225" *)
+  reg \i_button_ffsync_i_unsync_buttons__up$next ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   output led_0__io;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
@@ -868,21 +1108,33 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   output led_7__io;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  wire pin_button_down_0_button_down_0__i;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  wire pin_button_fire_0_button_fire_0__i;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  wire pin_button_fire_1_button_fire_1__i;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
   wire pin_button_left_0_button_left_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
   wire pin_button_pwr_0_button_pwr_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
   wire pin_button_right_0_button_right_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire pin_clk25_0_clk25_0__i;
+  wire pin_button_up_0_button_up_0__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  reg pin_esp32_spi_0__en_esp32_spi_0__en__o;
+  reg pin_esp32_spi_0__en_esp32_spi_0__en__o = 1'h0;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  reg pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o;
+  reg \pin_esp32_spi_0__en_esp32_spi_0__en__o$next ;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  reg pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o = 1'h0;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  reg \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
   wire pin_esp32_spi_0__rx_esp32_spi_0__rx__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire pin_esp32_spi_0__tx_esp32_spi_0__tx__o;
+  reg pin_esp32_spi_0__tx_esp32_spi_0__tx__o = 1'h0;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  reg \pin_esp32_spi_0__tx_esp32_spi_0__tx__o$next ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
   reg pin_led_0_led_0__o = 1'h0;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
@@ -922,37 +1174,33 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
   wire pin_uart_0__rx_uart_0__rx__i;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
-  wire pin_uart_0__tx_uart_0__tx__o;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:276" *)
-  wire reset;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:218" *)
+  reg pin_uart_0__tx_uart_0__tx__o = 1'h0;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  reg \pin_uart_0__tx_uart_0__tx__o$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308" *)
+  reg reset = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:308" *)
+  reg \reset$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:81" *)
   wire rst;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:259" *)
-  reg sim_test_io__done = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:259" *)
-  reg \sim_test_io__done$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:259" *)
-  reg sim_test_io__reset = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:259" *)
-  reg \sim_test_io__reset$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:259" *)
-  reg sim_test_io__trigger = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:259" *)
-  reg \sim_test_io__trigger$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  wire tb_dut_test_io__done;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg tb_dut_test_io__reset = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg \tb_dut_test_io__reset$next ;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg tb_dut_test_io__trigger = 1'h0;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:85" *)
-  reg \tb_dut_test_io__trigger$next ;
+  (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143" *)
+  wire tb_clk25_0__i;
   (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:68" *)
   wire [7:0] tb_leds;
-  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275" *)
-  wire trigger;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  wire tb_ui__done;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  reg tb_ui__reset = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  reg \tb_ui__reset$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  reg tb_ui__trigger = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:67" *)
+  reg \tb_ui__trigger$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305" *)
+  reg trigger = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:305" *)
+  reg \trigger$next ;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   input uart_0__dtr__io;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
@@ -961,46 +1209,84 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   input uart_0__rx__io;
   (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:129" *)
   output uart_0__tx__io;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298" *)
+  reg ui__done = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298" *)
+  reg \ui__done$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298" *)
+  reg ui__reset = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298" *)
+  reg \ui__reset$next ;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298" *)
+  reg ui__trigger = 1'h0;
+  (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:298" *)
+  reg \ui__trigger$next ;
   assign \$9  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__rts_uart_0__rts__i;
-  assign \$11  = \$7  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:244" *) \$9 ;
+  assign \$11  = \$7  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277" *) \$9 ;
   assign \$15  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__rts_uart_0__rts__i;
-  assign \$17  = \$13  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:247" *) \$15 ;
+  assign \$17  = \$13  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280" *) \$15 ;
   assign \$19  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__dtr_uart_0__dtr__i;
-  assign \$23  = \$19  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:250" *) \$21 ;
-  assign \$25  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_button_pwr_0_button_pwr_0__i;
-  assign \$29  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_button_pwr_0_button_pwr_0__i;
-  assign \$33  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_button_pwr_0_button_pwr_0__i;
-  assign \$37  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_button_pwr_0_button_pwr_0__i;
-  assign \$45  = \$41  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *) \$43 ;
+  assign \$23  = \$19  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283" *) \$21 ;
+  assign \$25  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:275" *) i_button_ffsync_i_buttons__pwr;
+  assign \$29  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:278" *) i_button_ffsync_i_buttons__pwr;
+  assign \$33  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:281" *) i_button_ffsync_i_buttons__pwr;
+  assign \$37  = ~ (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:284" *) i_button_ffsync_i_buttons__pwr;
+  assign \$45  = \$41  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *) \$43 ;
   assign \$47  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__dtr_uart_0__dtr__i;
   assign \$49  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__rts_uart_0__rts__i;
-  assign \$51  = \$47  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:244" *) \$49 ;
+  assign \$51  = \$47  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277" *) \$49 ;
   assign \$55  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__rts_uart_0__rts__i;
-  assign \$57  = \$53  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:247" *) \$55 ;
-  assign \$5  = \$1  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *) \$3 ;
+  assign \$57  = \$53  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280" *) \$55 ;
+  assign \$5  = \$1  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *) \$3 ;
   assign \$59  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__dtr_uart_0__dtr__i;
-  assign \$63  = \$59  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:250" *) \$61 ;
+  assign \$63  = \$59  & (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283" *) \$61 ;
   assign \$65  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$trigger$sync$1 ;
   assign \$67  = \$65  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) trigger;
   assign \$69  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) \$sample$s$reset$sync$1 ;
   assign \$71  = \$69  & (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/ast.py:1369" *) reset;
   assign \$7  = ~ (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/rec.py:258" *) pin_uart_0__dtr_uart_0__dtr__i;
   always @(posedge clk)
-    \$sample$s$reset$sync$1  <= pin_button_right_0_button_right_0__i;
+    \$sample$s$reset$sync$1  <= reset;
   always @(posedge clk)
     pin_led_7_led_7__o <= \pin_led_7_led_7__o$next ;
   always @(posedge clk)
-    sim_test_io__reset <= \sim_test_io__reset$next ;
+    ui__reset <= \ui__reset$next ;
   always @(posedge clk)
-    sim_test_io__trigger <= \sim_test_io__trigger$next ;
+    reset <= \reset$next ;
   always @(posedge clk)
-    tb_dut_test_io__reset <= \tb_dut_test_io__reset$next ;
+    ui__trigger <= \ui__trigger$next ;
   always @(posedge clk)
-    sim_test_io__done <= \sim_test_io__done$next ;
+    trigger <= \trigger$next ;
   always @(posedge clk)
-    tb_dut_test_io__trigger <= \tb_dut_test_io__trigger$next ;
+    tb_ui__reset <= \tb_ui__reset$next ;
   always @(posedge clk)
-    \$sample$s$trigger$sync$1  <= pin_button_left_0_button_left_0__i;
+    ui__done <= \ui__done$next ;
+  always @(posedge clk)
+    tb_ui__trigger <= \tb_ui__trigger$next ;
+  always @(posedge clk)
+    pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o <= \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next ;
+  always @(posedge clk)
+    pin_esp32_spi_0__en_esp32_spi_0__en__o <= \pin_esp32_spi_0__en_esp32_spi_0__en__o$next ;
+  always @(posedge clk)
+    \$sample$s$trigger$sync$1  <= trigger;
+  always @(posedge clk)
+    pin_uart_0__tx_uart_0__tx__o <= \pin_uart_0__tx_uart_0__tx__o$next ;
+  always @(posedge clk)
+    pin_esp32_spi_0__tx_esp32_spi_0__tx__o <= \pin_esp32_spi_0__tx_esp32_spi_0__tx__o$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__right <= \i_button_ffsync_i_unsync_buttons__right$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__left <= \i_button_ffsync_i_unsync_buttons__left$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__down <= \i_button_ffsync_i_unsync_buttons__down$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__up <= \i_button_ffsync_i_unsync_buttons__up$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__fireB <= \i_button_ffsync_i_unsync_buttons__fireB$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__fireA <= \i_button_ffsync_i_unsync_buttons__fireA$next ;
+  always @(posedge clk)
+    i_button_ffsync_i_unsync_buttons__pwr <= \i_button_ffsync_i_unsync_buttons__pwr$next ;
   always @(posedge clk)
     pin_led_0_led_0__o <= \pin_led_0_led_0__o$next ;
   always @(posedge clk)
@@ -1015,13 +1301,30 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
     pin_led_5_led_5__o <= \pin_led_5_led_5__o$next ;
   always @(posedge clk)
     pin_led_6_led_6__o <= \pin_led_6_led_6__o$next ;
+  i_button_ffsync i_button_ffsync (
+    .clk(clk),
+    .i_buttons__left(i_button_ffsync_i_buttons__left),
+    .i_buttons__pwr(i_button_ffsync_i_buttons__pwr),
+    .i_buttons__right(i_button_ffsync_i_buttons__right),
+    .i_unsync_buttons__down(i_button_ffsync_i_unsync_buttons__down),
+    .i_unsync_buttons__fireA(i_button_ffsync_i_unsync_buttons__fireA),
+    .i_unsync_buttons__fireB(i_button_ffsync_i_unsync_buttons__fireB),
+    .i_unsync_buttons__left(i_button_ffsync_i_unsync_buttons__left),
+    .i_unsync_buttons__pwr(i_button_ffsync_i_unsync_buttons__pwr),
+    .i_unsync_buttons__right(i_button_ffsync_i_unsync_buttons__right),
+    .i_unsync_buttons__up(i_button_ffsync_i_unsync_buttons__up),
+    .rst(rst)
+  );
   pin_button_down_0 pin_button_down_0 (
+    .button_down_0__i(pin_button_down_0_button_down_0__i),
     .button_down_0__io(button_down_0__io)
   );
   pin_button_fire_0 pin_button_fire_0 (
+    .button_fire_0__i(pin_button_fire_0_button_fire_0__i),
     .button_fire_0__io(button_fire_0__io)
   );
   pin_button_fire_1 pin_button_fire_1 (
+    .button_fire_1__i(pin_button_fire_1_button_fire_1__i),
     .button_fire_1__io(button_fire_1__io)
   );
   pin_button_left_0 pin_button_left_0 (
@@ -1037,10 +1340,11 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
     .button_right_0__io(button_right_0__io)
   );
   pin_button_up_0 pin_button_up_0 (
+    .button_up_0__i(pin_button_up_0_button_up_0__i),
     .button_up_0__io(button_up_0__io)
   );
   pin_clk25_0 pin_clk25_0 (
-    .clk25_0__i(pin_clk25_0_clk25_0__i),
+    .clk25_0__i(tb_clk25_0__i),
     .clk25_0__io(clk25_0__io)
   );
   pin_esp32_spi_0__en pin_esp32_spi_0__en (
@@ -1121,32 +1425,120 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
   );
   tb tb (
     .clk(clk),
-    .dut_test_io__done(tb_dut_test_io__done),
-    .dut_test_io__reset(tb_dut_test_io__reset),
-    .dut_test_io__trigger(tb_dut_test_io__trigger),
+    .clk25_0__i(tb_clk25_0__i),
     .leds(tb_leds),
-    .rst(1'h0)
+    .rst(rst),
+    .ui__done(tb_ui__done),
+    .ui__reset(tb_ui__reset),
+    .ui__trigger(tb_ui__trigger)
   );
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    \sim_test_io__trigger$next  = \$67 ;
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__pwr$next  = pin_button_pwr_0_button_pwr_0__i;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
     casez (rst)
       1'h1:
-          \sim_test_io__trigger$next  = 1'h0;
+          \i_button_ffsync_i_unsync_buttons__pwr$next  = 1'h0;
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    \sim_test_io__reset$next  = \$71 ;
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__fireA$next  = pin_button_fire_0_button_fire_0__i;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
     casez (rst)
       1'h1:
-          \sim_test_io__reset$next  = 1'h0;
+          \i_button_ffsync_i_unsync_buttons__fireA$next  = 1'h0;
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next  = pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o;
+    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
+    casez ({ \$63 , \$57 , \$51 , \$45  })
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" */
+      4'b???1:
+          \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next  = 1'h1;
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277" */
+      4'b??1?:
+          \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next  = 1'h1;
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280" */
+      4'b?1??:
+          \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next  = 1'h1;
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283" */
+      4'b1???:
+          \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next  = 1'h0;
+    endcase
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \tb_ui__trigger$next  = ui__trigger;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \tb_ui__trigger$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \ui__done$next  = tb_ui__done;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \ui__done$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \tb_ui__reset$next  = ui__reset;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \tb_ui__reset$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \trigger$next  = i_button_ffsync_i_buttons__left;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \trigger$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \ui__trigger$next  = \$67 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \ui__trigger$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \reset$next  = i_button_ffsync_i_buttons__right;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \reset$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \ui__reset$next  = \$71 ;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \ui__reset$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
     { \pin_led_7_led_7__o$next , \pin_led_6_led_6__o$next , \pin_led_5_led_5__o$next , \pin_led_4_led_4__o$next , \pin_led_3_led_3__o$next , \pin_led_2_led_2__o$next , \pin_led_1_led_1__o$next , \pin_led_0_led_0__o$next  } = tb_leds;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
     casez (rst)
@@ -1164,78 +1556,94 @@ module top(led_0__io, led_1__io, led_2__io, led_3__io, led_4__io, led_5__io, led
     endcase
   end
   always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    pin_esp32_spi_0__en_esp32_spi_0__en__o = 1'h0;
-    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__fireB$next  = pin_button_fire_1_button_fire_1__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \i_button_ffsync_i_unsync_buttons__fireB$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__up$next  = pin_button_up_0_button_up_0__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \i_button_ffsync_i_unsync_buttons__up$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__down$next  = pin_button_down_0_button_down_0__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \i_button_ffsync_i_unsync_buttons__down$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__left$next  = pin_button_left_0_button_left_0__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \i_button_ffsync_i_unsync_buttons__left$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \i_button_ffsync_i_unsync_buttons__right$next  = pin_button_right_0_button_right_0__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \i_button_ffsync_i_unsync_buttons__right$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \pin_esp32_spi_0__tx_esp32_spi_0__tx__o$next  = pin_uart_0__rx_uart_0__rx__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \pin_esp32_spi_0__tx_esp32_spi_0__tx__o$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \pin_uart_0__tx_uart_0__tx__o$next  = pin_esp32_spi_0__rx_esp32_spi_0__rx__i;
+    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
+    casez (rst)
+      1'h1:
+          \pin_uart_0__tx_uart_0__tx__o$next  = 1'h0;
+    endcase
+  end
+  always @* begin
+    if (\$auto$verilog_backend.cc:2083:dump_module$53 ) begin end
+    \pin_esp32_spi_0__en_esp32_spi_0__en__o$next  = pin_esp32_spi_0__en_esp32_spi_0__en__o;
+    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" *)
     casez ({ \$23 , \$17 , \$11 , \$5  })
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" */
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:274" */
       4'b???1:
-          pin_esp32_spi_0__en_esp32_spi_0__en__o = \$27 ;
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:244" */
+          \pin_esp32_spi_0__en_esp32_spi_0__en__o$next  = \$27 ;
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:277" */
       4'b??1?:
-          pin_esp32_spi_0__en_esp32_spi_0__en__o = \$31 ;
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:247" */
+          \pin_esp32_spi_0__en_esp32_spi_0__en__o$next  = \$31 ;
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:280" */
       4'b?1??:
-          pin_esp32_spi_0__en_esp32_spi_0__en__o = \$35 ;
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:250" */
+          \pin_esp32_spi_0__en_esp32_spi_0__en__o$next  = \$35 ;
+      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:283" */
       4'b1???:
-          pin_esp32_spi_0__en_esp32_spi_0__en__o = \$39 ;
+          \pin_esp32_spi_0__en_esp32_spi_0__en__o$next  = \$39 ;
     endcase
-  end
-  always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o = 1'h0;
-    (* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" *)
-    casez ({ \$63 , \$57 , \$51 , \$45  })
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:241" */
-      4'b???1:
-          pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o = 1'h1;
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:244" */
-      4'b??1?:
-          pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o = 1'h1;
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:247" */
-      4'b?1??:
-          pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o = 1'h1;
-      /* src = "tests/ulx3s_gui_test/fpga_gateware/feb17_restructure_tests/test1_amlib_timers.py:250" */
-      4'b1???:
-          pin_esp32_spi_0__gpio0_esp32_spi_0__gpio0__o = 1'h0;
-    endcase
-  end
-  always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    \tb_dut_test_io__trigger$next  = sim_test_io__trigger;
     (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
     casez (rst)
       1'h1:
-          \tb_dut_test_io__trigger$next  = 1'h0;
+          \pin_esp32_spi_0__en_esp32_spi_0__en__o$next  = 1'h0;
     endcase
   end
-  always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    \sim_test_io__done$next  = tb_dut_test_io__done;
-    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
-    casez (rst)
-      1'h1:
-          \sim_test_io__done$next  = 1'h0;
-    endcase
-  end
-  always @* begin
-    if (\$auto$verilog_backend.cc:2083:dump_module$28 ) begin end
-    \tb_dut_test_io__reset$next  = sim_test_io__reset;
-    (* src = "/home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/hdl/xfrm.py:519" *)
-    casez (rst)
-      1'h1:
-          \tb_dut_test_io__reset$next  = 1'h0;
-    endcase
-  end
-  assign rst = 1'h0;
   assign \$sample$s$reset$sync$1$next  = reset;
   assign \$sample$s$trigger$sync$1$next  = trigger;
-  assign reset = pin_button_right_0_button_right_0__i;
-  assign trigger = pin_button_left_0_button_left_0__i;
-  assign pin_uart_0__tx_uart_0__tx__o = pin_esp32_spi_0__rx_esp32_spi_0__rx__i;
-  assign pin_esp32_spi_0__tx_esp32_spi_0__tx__o = pin_uart_0__rx_uart_0__rx__i;
-  assign clk = pin_clk25_0_clk25_0__i;
   assign \$1  = pin_uart_0__dtr_uart_0__dtr__i;
   assign \$3  = pin_uart_0__rts_uart_0__rts__i;
   assign \$13  = pin_uart_0__dtr_uart_0__dtr__i;

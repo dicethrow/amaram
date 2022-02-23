@@ -6,19 +6,19 @@ Currently, only a n-async-FIFO interface for SDRAM is implemented.
 
 ## status
 
+- As of 23 Feb 2022, split part of this project into `amtest`, so the code is more concise and reusable.
+
 - As of 15 Feb 2022, moving from `test5_modified_ila_with_fifo_backend.py`, where the backend of the ila is implemented with a conventional fifo, to `test6_modified_ila_with_sdram_fifo.py`, where the backend of the ila is implemented with the sdram fifo. This is the big test, perhaps it could be broken down a bit more.
 
 - As of 10 Feb 2022, we can now debug using the LUNA ILA (integrated logic analyser) library, via the amlib library! This records and displays on-FPGA signals.
-
-	To use, in the gui go to the `function interface` tab, then press `start` on the fifo test. That will trigger a logic analyser recording, which once it is sent back over wifi, will open a gtkwave viewer with the data. here's an early result! More usage details will be detailed later.
-	![demonstration of logic analyser recording in gtkwave viewer](tests/ulx3s_gui_test/other_files/gtkwave_viewer_works_as_an_on-fpga_logic_analyser!.png)
 
 - As of early Feb 2022, the ram-fifo interface passes simulation tests, but hardware tests are not yet implemented/working.
 
 
 Test performance:
 
-- On a ULX3S board: [test not yet implemented]
+- On a ULX3S board: [test failed: too slow. Achieved 57 MHz but require 143 MHz]
+	- so currently rewriting to rigorously solve this
 - On a spartan6 board: [test not yet implemented]
 
 ## next steps

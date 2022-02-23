@@ -1,6 +1,6 @@
 import argparse, os, importlib, glob, shutil
 from termcolor import cprint
-import pandown, lxdev
+import lxdev
 	
 def main():
 	parser = argparse.ArgumentParser()

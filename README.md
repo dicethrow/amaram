@@ -6,7 +6,9 @@ Currently, only a n-async-FIFO interface for SDRAM is implemented.
 
 ## status
 
-- As of 23 Feb 2022, split part of this project into `amtest`, so the code is more concise and reusable.
+- As of 2 Mar 2022, after a week or so of restructuring how testing is approached, I have arrived on a structure I like; see amaram/amaram/common/Delayer.py. This enables the most straightforward, concise and conventional way to implement formal verification, simulations and uploadable tests.
+
+- As of 23 Feb 2022, split part of this project into a new `amtest` repo, so the code is more concise and reusable.
 
 - As of 15 Feb 2022, moving from `test5_modified_ila_with_fifo_backend.py`, where the backend of the ila is implemented with a conventional fifo, to `test6_modified_ila_with_sdram_fifo.py`, where the backend of the ila is implemented with the sdram fifo. This is the big test, perhaps it could be broken down a bit more.
 

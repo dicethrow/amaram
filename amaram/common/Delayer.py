@@ -77,25 +77,37 @@ class Delayer(Elaboratable):
 		# 	Delayer.ui_layout.append(("load", self._get_counter_bitwidth(), DIR_FANOUT))
 
 		self.ui = Record(Delayer.ui_layout)
+		self.set_m_and_ui_to_use(None, None) # initialises to an invalid state, ensuring it is set properly before use
 		# self.debug = Record(Delayer.debug_layout)
 
 
 	def _get_counter_bitwidth(self):
 		return bits_for(int(np.ceil(self.longest_period * self.clk_freq)))
 	
-	def delay_for_time(self, m, _ui, duration_sec):
+	def set_m_and_ui_to_use(self, m, _ui):
+		# this allows this class to manage using a ui that might be
+		# in a different module. This is used in the 'delay_for_time' and 'delay_for_clks' functions.
+		self.remote_ui = _ui
+		self.remote_m = m
+
+	def delay_for_time(self, duration_sec):
 		if isinstance(duration_sec, enum.Enum):
 			duration_sec = duration_sec.value
 
 		clks = int(np.ceil(duration_sec * self.clk_freq))
 
-		return self.delay_for_clks(m, _ui, clks)
+		return self.delay_for_clks(clks)
 	
-	def delay_for_clks(self, m, _ui, clks):
+	def delay_for_clks(self, clks):
 		# note: This is designed as an interface, to be used by other modules.
 		# This means that .sync here will probably not 
 		# recognise the use of DomainRenamer() if used.
 		# That's why self.domain is passed as an init argument, so we can access it like this:
+		assert not isinstance(self.remote_m, type(None)), "self.remote_m is not initialised yet, call delayer.set_m_and_ui_to_use()"
+		assert not isinstance(self.remote_ui, type(None)), "self.remote_ui is not initialised yet, call delayer.set_m_and_ui_to_use()"
+		m = self.remote_m
+		_ui = self.remote_ui
+
 		print("Clks is ", clks)
 
 		if clks > 8:
@@ -195,7 +207,8 @@ if __name__=="__main__":
 				self.ui.connect(_ui),
 				_ui.connect(delayer.ui, exclude=["tb_fanin_flags", "tb_fanout_flags"])
 			]
-				
+
+			delayer.set_m_and_ui_to_use(m, _ui)
 
 			if isinstance(self.utest, FHDLTestCase):
 				add_clock(m, "sync")
@@ -221,7 +234,7 @@ if __name__=="__main__":
 							m.next = "START"
 
 						with m.State("START"):
-							with m.If(delayer.delay_for_time(m, _ui, self.utest.test_period)):
+							with m.If(delayer.delay_for_time(self.utest.test_period)):
 								m.next = "DONE"
 						
 						with m.State("DONE"):
@@ -234,7 +247,7 @@ if __name__=="__main__":
 					timer_ought_to_finish = Signal()
 
 					m.d.comb += [
-						timer_done.eq(delayer.delay_for_time(m, _ui, self.utest.test_period)),
+						timer_done.eq(delayer.delay_for_time(self.utest.test_period)),
 						timer_ought_to_finish.eq(Past(Initial(), clocks=self.utest.expected_clks)),
 					]
 
@@ -264,7 +277,7 @@ if __name__=="__main__":
 							m.next = "START"
 					
 					with m.State("START"):
-						with m.If(delayer.delay_for_time(m, _ui, 100e-6)): # although still too short to see
+						with m.If(delayer.delay_for_time(100e-6)): # although still too short to see
 							m.next = "DONE"
 					
 					with m.State("DONE"):

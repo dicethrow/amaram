@@ -9,7 +9,7 @@ class rw_cmds(enum.Enum):
 	RW_READ_16W		= 1
 	RW_WRITE_16W	= 2
 
-class cmd_to_dram_ic(enum.Enum):
+class cmd_to_ic(enum.Enum):
 	# based on p.9 of datasheet
 	CMDO_DESL 		= 0 # device deselect
 	CMDO_NOP 		= 1 # no operation
@@ -25,7 +25,7 @@ class cmd_to_dram_ic(enum.Enum):
 	CMDO_SELF 		= 11 # self-refresh
 	CMDO_MRS 		= 12 # mode register set
 
-class dram_ic_timing(enum.Enum): # minimums
+class ic_timing(enum.Enum): # minimums
 	T_STARTUP = 2e-6 # 100e-6 # for now, make it shorter, for simulation 
 	# T_STARTUP = 100e-6 # for now, make it shorter, for simulation 
 	T_RP	= 15e-9

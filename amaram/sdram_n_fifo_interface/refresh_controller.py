@@ -18,6 +18,7 @@ import struct, enum
 import numpy as np
 
 # from .base import dram_ic_timing, cmd_to_dram_ic, sdram_base, sdram_quad_timer
+from .ic_parameters import ic_timing, cmd_to_ic
 from .pin_controller import pin_controller
 from ..common import Delayer
 
@@ -55,7 +56,7 @@ class refresh_controller(Elaboratable):
 	so the refresh requirements are never exceeded
 	"""
 	ui_layout = [
-		("uninitialised",	1,			DIR_FANIN),	# high until set low later on
+		# ("uninitialised",	1,			DIR_FANIN),	# high until set low later on
 		("request_to_refresh_soon",	1,	DIR_FANIN),	# 
 		("trigger_refresh",	1,			DIR_FANOUT),
 		("refresh_in_progress",	1,		DIR_FANIN),
@@ -76,146 +77,126 @@ class refresh_controller(Elaboratable):
 
 	def elaborate(self, platform = None):
 
-		refreshes_to_do = Signal(shape=bits_for(5-1), reset=5) #Const(5)
-		refresh_level = Signal(shape=bits_for(self.clks_per_period), reset=self.clks_per_period) # is it valid to assume it starts 'full'..??
-		
+		m = Module()
+
+		# these four lines allow the concise delayer. ...() structure below
+		m.submodules.delayer = delayer = Delayer(clk_freq=self.core.clk_freq)
+		delayer_ui = Record.like(delayer.ui)
+		m.d.sync += delayer_ui.connect(delayer.ui)
+		delayer.set_m_and_ui_to_use(m, delayer_ui)
+
 		_ui = Record.like(self.ui)
+
 		m.d.sync += [
 			self.ui.connect(_ui, exclude=["ios"]),
-			_ui.ios.connect(self.ui.ios) # so 'fanout' signals go the right way etc
-		]
-		
-		self.m.d.sdram += [
-			refresh_level.eq(Mux(refresh_level > 0, refresh_level - 1, 0))
+			_ui.ios.connect(self.ui.ios), # so 'fanout' signals go the right way etc
 		]
 
-		# default to this always being true....?
-		self.m.d.comb += _ui.ios.o_clk_en.eq(1)
-
-		m.submodules.delayer = delayer = Delayer(clk_freq=self.core.clk_freq)
-		_ui = Record.like(delayer.ui)
-
+		# default io values
 		m.d.sync += [
-			_ui.connect(delayer.ui)
+			_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_NOP),
+			_ui.ios.o_clk_en.eq(1)
 		]
-		# with m.If(delayer.delay_for_time(m, _ui, self.utest.test_period)):
 
-		super().elaborate(platform)
-		with self.m.FSM(domain="sdram", name="refresh_controller_fsm"):
-			with self.m.State("AFTER_RESET"):
-				with self.m.If(self.initialise_and_load_mode_register(trigger = self.initialised == 0)):
-					self.m.next = "INITIAL_SETUP"
+		with m.FSM(domain="sdram", name="refresh_controller_fsm"):
 
-			with self.m.State("INITIAL_SETUP"):
-				with self.m.If(delayer.delay_for_time(m, _ui, 100e-6)):#4e-6)): # should it be 100us, but 4us for now to speed simulation up? define this elsewhere?
-					self.m.next = "REQUEST_REFRESH_SOON"
+			refreshes_to_do = Signal(shape=bits_for(5-1), reset=5) #Const(5)
+			refresh_level = Signal(shape=bits_for(self.clks_per_period), reset=self.clks_per_period) # is it valid to assume it starts 'full'..??
+		
+			m.d.sync += refresh_level.eq(Mux(refresh_level > 0, refresh_level - 1, 0))
 
-			with self.m.State("READY_FOR_NORMAL_OPERATION"):
+			with m.State("AFTER_RESET"):
+				with m.If(self.initialise_and_load_mode_register()):
+					m.next = "REQUEST_REFRESH_SOON"
+
+			with m.State("READY_FOR_NORMAL_OPERATION"):
 				# at this point, the sdram chip is available for normal read/write operation
-				with self.m.If(delayer.delay_for_clks(m, _ui, self.increment_per_refresh - (self.clks_per_period-refresh_level))):
-					self.m.d.sdram += refreshes_to_do.eq(1)
-					self.m.next = "REQUEST_REFRESH_SOON"
+				with m.If(delayer.delay_for_clks(self.increment_per_refresh - (self.clks_per_period-refresh_level))):
+					m.d.sync += refreshes_to_do.eq(1)
+					m.next = "REQUEST_REFRESH_SOON"
 
-			with self.m.State("REQUEST_REFRESH_SOON"):
-				self.m.d.sdram += self.request_to_refresh_soon.eq(1)
-				with self.m.If(self.trigger_refresh):
-					self.m.d.sdram += self.refresh_in_progress.eq(1)
-					self.m.next = "DO_ANOTHER_REFRESH?"
+			with m.State("REQUEST_REFRESH_SOON"):
+				m.d.sync += _ui.request_to_refresh_soon.eq(1)
+				with m.If(_ui.trigger_refresh):
+					m.d.sync += _ui.refresh_in_progress.eq(1)
+					m.next = "DO_ANOTHER_REFRESH?"
 
-			with self.m.State("DO_ANOTHER_REFRESH?"):
-				self.m.d.sdram += self.request_to_refresh_soon.eq(0)
-				with self.m.If(refreshes_to_do > 0):
-					self.m.d.sdram += [
-						refreshes_to_do.eq(refreshes_to_do - 1) # so we only do one refresh normally
-					]
-					self.m.next = "AUTO_REFRESH"
+			with m.State("DO_ANOTHER_REFRESH?"):
+				m.d.sync += _ui.request_to_refresh_soon.eq(0)
+				with m.If(refreshes_to_do > 0):
+					m.d.sync += refreshes_to_do.eq(refreshes_to_do - 1) # so we only do one refresh normally
+					m.next = "AUTO_REFRESH"
 
-				with self.m.Else():
+				with m.Else():
 					# finish up here
-					self.m.d.sdram += [
-						self.refresh_in_progress.eq(0),
-					]
-					self.m.next = "READY_FOR_NORMAL_OPERATION"
+					m.d.sync += _ui.refresh_in_progress.eq(0)
+					m.next = "READY_FOR_NORMAL_OPERATION"
 			
-			with self.m.State("AUTO_REFRESH"):
-				self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
-				self.m.d.sdram += [
+			with m.State("AUTO_REFRESH"):
+				m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
+				m.d.sync += [
 					refresh_level.eq(Mux(
 							refresh_level < (self.clks_per_period - self.increment_per_refresh),
 							refresh_level + self.increment_per_refresh,
 							self.clks_per_period))					
 					]
 					
-				self.m.next = "AUTO_REFRESH_WAITING"
-			with self.m.State("AUTO_REFRESH_WAITING"):
-				with self.m.If(delayer.delay_for_time(m, _ui, dram_ic_timing.T_RC)):
-					self.m.next = "DO_ANOTHER_REFRESH?"
+				m.next = "AUTO_REFRESH_WAITING"
+			with m.State("AUTO_REFRESH_WAITING"):
+				with m.If(delayer.delay_for_time(dram_ic_timing.T_RC)):
+					m.next = "DO_ANOTHER_REFRESH?"
 		
-		return self.m
+		return m
 	
-	def initialise_and_load_mode_register(self, trigger):
+	def initialise_and_load_mode_register(self):
 		# replicating p. 22 of datasheet
 		complete = Signal()
-		with self.m.If(trigger):
-			with self.m.FSM(domain="sdram", name="initialise_and_load_mode_register_fsm"):
+		with m.FSM(domain="sync", name="initialise_and_load_mode_register_fsm") as fsm:
 
-				with self.m.State("POWERUP"):
-					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += [
-							_ui.ios.o_clk_en.eq(1),
-							_ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-						]
-						self.set_timer_delay(dram_ic_timing.T_STARTUP)
-					with self.m.Else():
-						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-					with self.m.If(self.shared_timer_done):
-						self.m.next = "PRECH_BANKS"
+			m.d.sync += complete.eq(fsm.ongoing("DONE"))
 
-				with self.m.State("PRECH_BANKS"):
-					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_PALL)
-						self.set_timer_delay(dram_ic_timing.T_RP)
-					with self.m.Else():
-						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-					with self.m.If(self.shared_timer_done):
-						self.m.next = "AUTO_REFRESH_1"
+			with m.State("POWERUP"):
+				m.next = "POWERUP_WAITING"
+			with m.State("POWERUP_WAITING"):
+				with m.If(delayer.delay_for_time(ic_timing.T_STARTUP)):
+					m.next = "PRECH_BANKS"
 
-				with self.m.State("AUTO_REFRESH_1"):
-					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
-						self.set_timer_delay(dram_ic_timing.T_RC)
-					with self.m.Else():
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-					with self.m.If(self.shared_timer_done):
-						self.m.next = "AUTO_REFRESH_2"
+			with m.State("PRECH_BANKS"):
+				m.d.sync += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_PALL)
+				m.next = "PRECH_BANKS_WAITING"
+			with m.State("PRECH_BANKS_WAITING"):
+				with m.If(delayer.delay_for_time(T_RP)):
+					m.next = "AUTO_REFRESH_1"
 
-				with self.m.State("AUTO_REFRESH_2"):
-					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
-						self.set_timer_delay(dram_ic_timing.T_RC)
-					with self.m.Else():
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-					with self.m.If(self.shared_timer_done):
-						self.m.next = "LOAD_MODE_REG"
+			with m.State("AUTO_REFRESH_1"):
+				m.d.sync += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
+				m.next = "AUTO_REFRESH_1_WAITING"
+			with m.State("AUTO_REFRESH_1_WAITING"):
+				with m.If(delayer.delay_for_time(ic_timing.T_RC)):
+					m.next = "AUTO_REFRESH_2"
+			
+			with m.State("AUTO_REFRESH_2"):
+				m.d.sync += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
+				m.next = "AUTO_REFRESH_2_WAITING"
+			with m.State("AUTO_REFRESH_2_WAITING"):
+				with m.If(delayer.delay_for_time(ic_timing.T_RC)):
+					m.next = "LOAD_MODE_REG"
 
-				with self.m.State("LOAD_MODE_REG"):
-					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += [
-							self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_MRS),
-							self.ios.o_a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
-							# self.ios.o_a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
-							# self.ios.o_a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
-						]
-						self.set_timer_delay(dram_ic_timing.T_MRD)
-					with self.m.Else():
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-					with self.m.If(self.shared_timer_done):
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-						self.m.next = "DONE"
+			with m.State("LOAD_MODE_REG"):
+				m.d.sync += [
+					_ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_MRS),
+					_ui.ios.o_a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
+					# _ui.ios.o_a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
+					# _ui.ios.o_a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
+				]
+				m.next = "LOAD_MODE_REG_WAITING"
+			with m.State("LOAD_MODE_REG_WAITING"):
+				with m.If(delayer.delay_for_time(ic_timing.T_MRD)):
+					m.next = "DONE"
 
-				with self.m.State("DONE"):
-					self.m.d.comb += complete.eq(1)
-					self.m.d.sdram += self.initialised.eq(1)
+			with m.State("DONE"):
+				# m.d.sync += _ui.uninitialised.eq(0)
+				...
 		
 		return complete
 
@@ -254,7 +235,7 @@ class refresh_controller_tests(Elaboratable):
 			with m.State("AFTER_RESET"):
 				with m.If(refresher.done):
 					# to prevent the refresher from doing stuff
-					m.d.sdram += refresher.disable.eq(1) 
+					m.d.sync += refresher.disable.eq(1) 
 					m.next = "DO_USER_TASK"
 
 			with m.State("DO_USER_TASK"):
@@ -262,13 +243,13 @@ class refresh_controller_tests(Elaboratable):
 				# let's just wait until a refresh is requested
 				with m.If(refresher.do_soon):
 					# and immediately let it do it
-					m.d.sdram += refresher.disable.eq(0)
+					m.d.sync += refresher.disable.eq(0)
 					m.next = "WAIT_FOR_REFRESH"
 			
 			with m.State("WAIT_FOR_REFRESH"):
 				with m.If(refresher.done):
 					# to prevent the refresher from doing stuff
-					m.d.sdram += refresher.disable.eq(1) 
+					m.d.sync += refresher.disable.eq(1) 
 					m.next = "DO_USER_TASK"
 
 		return m

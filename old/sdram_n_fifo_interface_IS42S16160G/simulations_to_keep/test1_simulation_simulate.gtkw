@@ -1,0 +1,510 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Thu Feb 17 10:23:16 2022
+[*]
+[dumpfile] "/test1_simulation_simulate.vcd"
+[dumpfile_mtime] "Thu Feb 17 08:10:14 2022"
+[dumpfile_size] 2078908
+[savefile] "/test1_simulation_simulate.gtkw"
+[timestart] 1970700
+[size] 1497 1171
+[pos] 809 37
+*-14.779326 2025200 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] bench.
+[treeopen] bench.top.
+[treeopen] bench.top.m_sdram_controller.
+[sst_width] 233
+[signals_width] 489
+[sst_expanded] 1
+[sst_vpaned_height] 213
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.$signal
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.$signal$1
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.$signal$2
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.$signal$3
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.burst_index[2:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.dstfifo_w_space_enough
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.fifo_0_router_fsm_state
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.fifo_1_router_fsm_state
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.fifo_2_router_fsm_state
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.fifo_3_router_fsm_state
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.fifo_controller_fsm_state
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.fifo_index[1:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.in_progress
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.initialised
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.next_dstfifo_index[1:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.next_dstfifo_writeable_from_sdram
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.next_srcfifo_index[1:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.next_srcfifo_readable_to_sdram
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.numburst_index
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_data$1[15:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_data$2[15:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_data$3[15:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_data[15:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_en
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_en$1
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_en$2
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_en$3
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$1[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$2[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$3[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$4[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$5[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$6[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level$7[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_level[6:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_next_addr$1[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_next_addr$2[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_next_addr$3[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_next_addr[19:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$1
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$2
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$3
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$4
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$5
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$6
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.r_rdy$7
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.ram_wont_overfill
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.ram_wont_overread
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_addr[21:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_buf_addr[19:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_fifo_id[1:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_phase[2:0]
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_sdram_addr[21:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_sdram_data[15:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.readback_sdram_pipeline_active
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.refresh_in_progress
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.request_to_refresh_soon
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.request_to_store_data_in_ram
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.request_to_store_data_in_ram$1
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.request_to_store_data_in_ram$2
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.request_to_store_data_in_ram$3
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.sdram_addr[21:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.sdram_clk
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.sdram_data[15:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.sdram_rst
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.srcfifo_r_level_enough
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.task_request
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.trigger_refresh
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.using_ram
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_data$1[15:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_data$2[15:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_data$3[15:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_data[15:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_en
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_en$1
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_en$2
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_en$3
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_next_addr$1[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_next_addr$2[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_next_addr$3[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_next_addr[19:0]
+@28
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$1
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$2
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$3
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$4
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$5
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$6
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.w_rdy$7
+@22
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.words_stored_in_ram$1[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.words_stored_in_ram$2[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.words_stored_in_ram$3[19:0]
+[color] 2
+bench.top.m_sdram_controller.fifo_controller.words_stored_in_ram[19:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.i_dq[15:0]
+@28
+[color] 3
+bench.top.m_sdram_controller.pin_controller.initialised
+@22
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__i_dq$1[15:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__i_dq[15:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_a$1[12:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_a[12:0]
+@28
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_ba$1[1:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_ba[1:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_clk_en
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_clk_en$1
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_cmd
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_cmd$1
+@22
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_dq$1[15:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_dq[15:0]
+@28
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_dqm
+[color] 3
+bench.top.m_sdram_controller.pin_controller.ios__o_dqm$1
+@22
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_a[12:0]
+@28
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_ba[1:0]
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_cas
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_clk_en
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_cs
+@22
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_dq[15:0]
+@28
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_dqm
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_ras
+[color] 3
+bench.top.m_sdram_controller.pin_controller.o_we
+[color] 3
+bench.top.m_sdram_controller.pin_controller.pin_controller_fsm_state
+[color] 3
+bench.top.m_sdram_controller.pin_controller.refresh_in_progress
+[color] 3
+bench.top.m_sdram_controller.pin_controller.sdram_clk
+[color] 3
+bench.top.m_sdram_controller.pin_controller.sdram_rst
+[color] 3
+bench.top.m_sdram_controller.pin_controller.selected_index
+[color] 3
+bench.top.m_sdram_controller.pin_controller.trigger_refresh
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$o_bank$sdram$1[1:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$o_bank$sdram$2[1:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$o_bank$sdram$3[1:0]
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$o_col$sdram$1[8:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$o_col$sdram$2[8:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$o_col$sdram$3[8:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$sdram_addr$sdram$1[21:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$sdram_addr$sdram$2[21:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$sdram_addr$sdram$3[21:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$sdram_addr$sdram$4[21:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$sdram_addr$sdram$5[21:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$sdram_addr$sdram$6[21:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$task_request$sdram$1
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$task_request$sdram$2
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$w_data$sdram$1[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$w_data$sdram$2[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.$sample$s$w_data$sdram$3[15:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.IN_PROGRESS
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.IN_PROGRESS$1
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.IN_PROGRESS$2
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.IN_PROGRESS$3
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.R_DATA$1[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.R_DATA$2[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.R_DATA$3[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.R_DATA[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.W_DATA$1[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.W_DATA$2[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.W_DATA$3[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.W_DATA[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.addr_temp[21:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.burst_index[2:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.in_progress
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__i_dq[15:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__o_a[12:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__o_ba[1:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__o_clk_en
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__o_cmd
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__o_dq[15:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.ios__o_dqm
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.o_bank[1:0]
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.o_col[8:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.o_row[10:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.readback_sdram_addr[21:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.readback_sdram_data[15:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.readback_sdram_pipeline_active
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.rw_bank_0_fsm_state
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.rw_bank_1_fsm_state
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.rw_bank_2_fsm_state
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.rw_bank_3_fsm_state
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.sdram_addr[21:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.sdram_clk
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.sdram_data[15:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.sdram_rst
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer[24:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_1[24:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_2[24:0]
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_3[24:0]
+@28
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_done
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_done_1
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_done_2
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_done_3
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_inactive
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_inactive_1
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_inactive_2
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.shared_timer_inactive_3
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.task_request
+@22
+[color] 5
+bench.top.m_sdram_controller.read_write_controller.w_data[15:0]
+@29
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.complete
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.initialise_and_load_mode_register_fsm_state
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.initialised
+@23
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.ios__o_a[12:0]
+@29
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.ios__o_clk_en
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.ios__o_cmd
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.refresh_controller_fsm_state
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.refresh_in_progress
+@23
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.refresh_level[22:0]
+@29
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.refreshes_to_do[2:0]
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.request_to_refresh_soon
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.sdram_clk
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.sdram_rst
+@23
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer[24:0]
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_1[24:0]
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_2[24:0]
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_3[24:0]
+@29
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_done
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_done_1
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_done_2
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_done_3
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_inactive
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_inactive_1
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_inactive_2
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.shared_timer_inactive_3
+[color] 7
+bench.top.m_sdram_controller.refresh_controller.trigger_refresh
+[pattern_trace] 1
+[pattern_trace] 0

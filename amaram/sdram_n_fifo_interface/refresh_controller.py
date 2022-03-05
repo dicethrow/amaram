@@ -17,7 +17,8 @@ from amaranth.sim import Simulator, Delay, Tick, Passive, Active
 import struct, enum
 import numpy as np
 
-from .base import dram_ic_timing, cmd_to_dram_ic, sdram_base, sdram_quad_timer
+# from .base import dram_ic_timing, cmd_to_dram_ic, sdram_base, sdram_quad_timer
+from .pin_controller import pin_controller
 from ..common import Delayer
 
 """ 
@@ -37,13 +38,6 @@ Goals
 
 
 
-
-
-# class refresh_controller(Elaboratable):
-
-
-#####################################
-
 refresh_controller_interface_layout = [
 	# ("initialised", 	1, DIR_FANOUT), # is this the right dir? so initialised will flow out to subordinates.. sounds right
 	("do_soon",	1, DIR_FANOUT), # oh this is elegant
@@ -51,7 +45,7 @@ refresh_controller_interface_layout = [
 	("done",			1, DIR_FANOUT)	# this is how other modules know they can do their thing
 ]
 
-class refresh_controller(sdram_quad_timer):
+class refresh_controller(Elaboratable):
 	""" 
 	ah! make this controller do
 	- initial power up, mode register set
@@ -60,40 +54,43 @@ class refresh_controller(sdram_quad_timer):
 	todo 15nov2021 - make this handle delayed refreshes, 
 	so the refresh requirements are never exceeded
 	"""
-	def __init__(self, core):
+	ui_layout = [
+		("uninitialised",	1,			DIR_FANIN),	# high until set low later on
+		("request_to_refresh_soon",	1,	DIR_FANIN),	# 
+		("trigger_refresh",	1,			DIR_FANOUT),
+		("refresh_in_progress",	1,		DIR_FANIN),
+		("ios", pin_controller.ui)
+	]
+
+	def __init__(self, clk_freq, utest: FHDLTestCase = None):
 		super().__init__()
-		self.core = core
-		self.initialised = Signal(reset=0)
+		self.utest = utest
+		self.clk_freq = clk_freq
 
-		self.request_to_refresh_soon = Signal()
-		self.trigger_refresh = Signal()
-		self.refresh_in_progress = Signal()
-
-		self.refreshes_to_do = Signal(shape=bits_for(5-1), reset=5) #Const(5)
-		self.refreshes_done_so_far = Signal(shape=self.refreshes_to_do.shape())
+		self.ui = Record(refresh_controller.ui_layout)
 
 		period_s = 32e-3 # todo - make these defined elsewhere, not magic numbers
 		refreshes_per_period = 8192
-		self.clks_per_period = int((period_s * self.core.clk_freq) + 0.5)
+		self.clks_per_period = int((period_s * self.clk_freq) + 0.5)
 		self.increment_per_refresh = int(self.clks_per_period / refreshes_per_period)
-		self.refresh_level = Signal(shape=bits_for(self.clks_per_period), reset=self.clks_per_period) # is it valid to assume it starts 'full'..??
-
-		# io signals that may or may not be propaated to the real pins,
-		# at the control of the pin controller
-		# self.cmd = Signal(shape=cmd_to_dram_ic)
-		# self.o_clk_en = Signal(reset=0)
-		# self.o_a = Signal(13)
-		# self.o_ba = Signal(2)
-		self.ios = Record(core.pin_controller.ios_layout)
 
 	def elaborate(self, platform = None):
 
+		refreshes_to_do = Signal(shape=bits_for(5-1), reset=5) #Const(5)
+		refresh_level = Signal(shape=bits_for(self.clks_per_period), reset=self.clks_per_period) # is it valid to assume it starts 'full'..??
+		
+		_ui = Record.like(self.ui)
+		m.d.sync += [
+			self.ui.connect(_ui, exclude=["ios"]),
+			_ui.ios.connect(self.ui.ios) # so 'fanout' signals go the right way etc
+		]
+		
 		self.m.d.sdram += [
-			self.refresh_level.eq(Mux(self.refresh_level > 0, self.refresh_level - 1, 0))
+			refresh_level.eq(Mux(refresh_level > 0, refresh_level - 1, 0))
 		]
 
 		# default to this always being true....?
-		self.m.d.comb += self.ios.o_clk_en.eq(1)
+		self.m.d.comb += _ui.ios.o_clk_en.eq(1)
 
 		m.submodules.delayer = delayer = Delayer(clk_freq=self.core.clk_freq)
 		_ui = Record.like(delayer.ui)
@@ -115,8 +112,8 @@ class refresh_controller(sdram_quad_timer):
 
 			with self.m.State("READY_FOR_NORMAL_OPERATION"):
 				# at this point, the sdram chip is available for normal read/write operation
-				with self.m.If(delayer.delay_for_clks(m, _ui, self.increment_per_refresh - (self.clks_per_period-self.refresh_level))):
-					self.m.d.sdram += self.refreshes_to_do.eq(1)
+				with self.m.If(delayer.delay_for_clks(m, _ui, self.increment_per_refresh - (self.clks_per_period-refresh_level))):
+					self.m.d.sdram += refreshes_to_do.eq(1)
 					self.m.next = "REQUEST_REFRESH_SOON"
 
 			with self.m.State("REQUEST_REFRESH_SOON"):
@@ -127,9 +124,9 @@ class refresh_controller(sdram_quad_timer):
 
 			with self.m.State("DO_ANOTHER_REFRESH?"):
 				self.m.d.sdram += self.request_to_refresh_soon.eq(0)
-				with self.m.If(self.refreshes_to_do > 0):
+				with self.m.If(refreshes_to_do > 0):
 					self.m.d.sdram += [
-						self.refreshes_to_do.eq(self.refreshes_to_do - 1) # so we only do one refresh normally
+						refreshes_to_do.eq(refreshes_to_do - 1) # so we only do one refresh normally
 					]
 					self.m.next = "AUTO_REFRESH"
 
@@ -141,11 +138,11 @@ class refresh_controller(sdram_quad_timer):
 					self.m.next = "READY_FOR_NORMAL_OPERATION"
 			
 			with self.m.State("AUTO_REFRESH"):
-				self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
+				self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
 				self.m.d.sdram += [
-					self.refresh_level.eq(Mux(
-							self.refresh_level < (self.clks_per_period - self.increment_per_refresh),
-							self.refresh_level + self.increment_per_refresh,
+					refresh_level.eq(Mux(
+							refresh_level < (self.clks_per_period - self.increment_per_refresh),
+							refresh_level + self.increment_per_refresh,
 							self.clks_per_period))					
 					]
 					
@@ -165,27 +162,27 @@ class refresh_controller(sdram_quad_timer):
 				with self.m.State("POWERUP"):
 					with self.m.If(self.shared_timer_inactive):
 						self.m.d.comb += [
-							self.ios.o_clk_en.eq(1),
-							self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
+							_ui.ios.o_clk_en.eq(1),
+							_ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
 						]
 						self.set_timer_delay(dram_ic_timing.T_STARTUP)
 					with self.m.Else():
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
+						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
 					with self.m.If(self.shared_timer_done):
 						self.m.next = "PRECH_BANKS"
 
 				with self.m.State("PRECH_BANKS"):
 					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_PALL)
+						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_PALL)
 						self.set_timer_delay(dram_ic_timing.T_RP)
 					with self.m.Else():
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
+						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
 					with self.m.If(self.shared_timer_done):
 						self.m.next = "AUTO_REFRESH_1"
 
 				with self.m.State("AUTO_REFRESH_1"):
 					with self.m.If(self.shared_timer_inactive):
-						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
+						self.m.d.comb += _ui.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
 						self.set_timer_delay(dram_ic_timing.T_RC)
 					with self.m.Else():
 						self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
@@ -281,7 +278,7 @@ class refresh_controller_tests(Elaboratable):
 
 if __name__ == "__main__":
 	""" 
-	17feb2022
+	17feb2022, 5mar2022
 
 	Adding tests to each file, so I can more easily make 
 	changes in order to improve timing performance.
@@ -293,58 +290,18 @@ if __name__ == "__main__":
 	parser = main_parser()
 	args = parser.parse_args()
 
-	m = Module()
+	class Testbench(Elaboratable):
+		ui_layout = [
 
-	# if args.action in ["generate", "simulate"]:
-	# 	m.submodules.dram_testdriver = dram_testdriver = dram_testdriver()
+		]
 
-	if args.action == "generate":
-		pass
-
-	elif args.action == "simulate":
-
-		# sdram_freq = int(143e6)
-		# sim = Simulator(m)
-
-		# sim.add_clock(1/sdram_freq, domain="sdram")
+		def __init__(self, clk_freq = 24e6, utest: FHDLTestCase = None):
+			super().__init__()
+			self.ui = Record(Testbench.Testbench_ui_layout)
+			self.clk_freq = clk_freq
+			self.utest = utest
 		
-		# num_fifos = 4
-		# for i in range(num_fifos):
-		# 	r_domain = f"read_{i}"
-		# 	w_domain = f"write_{i}"
-		# 	self.sim.add_clock(1/80e6, domain=r_domain)	# represents spi reads
-		# 	# self.sim.add_clock(1/24e6, domain=w_domain)	# represents pclk writes
-		# 	self.sim.add_clock(1/40e6, domain=w_domain)
+		def elaborate(self, platform = None):
+			m = Module()
 
-		# 	fifo_id_identifier = 0xA + i
-
-		# 	# to represent an image sensor filling a fifo
-		# 	sim.add_sync_process(
-		# 		self.write_into_fifo(self.dut.fifos[i], w_domain, id=fifo_id_identifier), 
-		# 		domain=w_domain
-		# 	)
-
-		# 	# to represent reading back the fifos with spi
-		# 	sim.add_sync_process(
-		# 		self.read_from_fifo(self.dut.fifos[i], r_domain, id=fifo_id_identifier), 
-		# 		domain=r_domain
-		# 	)
-
-
-		# def delay_more():
-		# 	yield Active()
-		# 	yield Delay(dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
-		# 	yield Delay(21e-6) # needed?
-		
-		# sim.add_process(delay_more)
-		
-
-		with sim.write_vcd(
-			f"{current_filename}_simulate.vcd",
-			f"{current_filename}_simulate.gtkw", 
-			traces=[]): # todo - how to add clk, reset signals?
-
-			sim.run()
-
-	else: # upload - is there a test we could upload and do on the ulx3s? 
-		pass
+			m.submodules.refresh_ctrl = refresh_ctrl = refresh_controller(core)

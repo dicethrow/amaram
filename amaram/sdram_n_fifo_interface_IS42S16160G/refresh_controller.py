@@ -18,7 +18,7 @@ import struct, enum
 import numpy as np
 
 from .base import dram_ic_timing, cmd_to_dram_ic, sdram_base, sdram_quad_timer
-
+from ..common import Delayer
 
 """ 
 Refresh controller
@@ -95,6 +95,14 @@ class refresh_controller(sdram_quad_timer):
 		# default to this always being true....?
 		self.m.d.comb += self.ios.o_clk_en.eq(1)
 
+		m.submodules.delayer = delayer = Delayer(clk_freq=self.core.clk_freq)
+		_ui = Record.like(delayer.ui)
+
+		m.d.sync += [
+			_ui.connect(delayer.ui)
+		]
+		# with m.If(delayer.delay_for_time(m, _ui, self.utest.test_period)):
+
 		super().elaborate(platform)
 		with self.m.FSM(domain="sdram", name="refresh_controller_fsm"):
 			with self.m.State("AFTER_RESET"):
@@ -102,22 +110,12 @@ class refresh_controller(sdram_quad_timer):
 					self.m.next = "INITIAL_SETUP"
 
 			with self.m.State("INITIAL_SETUP"):
-				with self.m.If(self.shared_timer_inactive_1):
-					# self.set_timer_delay(1e-4, timer_id=1) # 100 us?
-					self.set_timer_delay(4e-6, timer_id=1) # 100 us?
-				with self.m.Else():
-					pass
-				with self.m.If(self.shared_timer_done_1):
+				with self.m.If(delayer.delay_for_time(m, _ui, 100e-6)):#4e-6)): # should it be 100us, but 4us for now to speed simulation up? define this elsewhere?
 					self.m.next = "REQUEST_REFRESH_SOON"
-			
+
 			with self.m.State("READY_FOR_NORMAL_OPERATION"):
-				with self.m.If(self.shared_timer_inactive_1):
-					# self.set_timer_delay(1e-4, timer_id=1) # 100 us?
-					# self.set_timer_delay(4e-6, timer_id=1) # 100 us?
-					self.set_timer_clocks(self.increment_per_refresh - (self.clks_per_period-self.refresh_level), timer_id=1)
-				with self.m.Else():
-					pass
-				with self.m.If(self.shared_timer_done_1):
+				# at this point, the sdram chip is available for normal read/write operation
+				with self.m.If(delayer.delay_for_clks(m, _ui, self.increment_per_refresh - (self.clks_per_period-self.refresh_level))):
 					self.m.d.sdram += self.refreshes_to_do.eq(1)
 					self.m.next = "REQUEST_REFRESH_SOON"
 
@@ -130,7 +128,9 @@ class refresh_controller(sdram_quad_timer):
 			with self.m.State("DO_ANOTHER_REFRESH?"):
 				self.m.d.sdram += self.request_to_refresh_soon.eq(0)
 				with self.m.If(self.refreshes_to_do > 0):
-					self.m.d.sdram += self.refreshes_to_do.eq(self.refreshes_to_do - 1) # so we only do one refresh normally
+					self.m.d.sdram += [
+						self.refreshes_to_do.eq(self.refreshes_to_do - 1) # so we only do one refresh normally
+					]
 					self.m.next = "AUTO_REFRESH"
 
 				with self.m.Else():
@@ -141,17 +141,17 @@ class refresh_controller(sdram_quad_timer):
 					self.m.next = "READY_FOR_NORMAL_OPERATION"
 			
 			with self.m.State("AUTO_REFRESH"):
-				with self.m.If(self.shared_timer_inactive):
-					self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
-					self.set_timer_delay(dram_ic_timing.T_RC)
-
-					self.m.d.sdram += [
-						self.refresh_level.eq(Mux(self.refresh_level < (self.clks_per_period - self.increment_per_refresh), self.refresh_level + self.increment_per_refresh, self.clks_per_period))
+				self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_REF)
+				self.m.d.sdram += [
+					self.refresh_level.eq(Mux(
+							self.refresh_level < (self.clks_per_period - self.increment_per_refresh),
+							self.refresh_level + self.increment_per_refresh,
+							self.clks_per_period))					
 					]
 					
-				with self.m.Else():
-					self.m.d.comb += self.ios.o_cmd.eq(cmd_to_dram_ic.CMDO_NOP)
-				with self.m.If(self.shared_timer_done):
+				self.m.next = "AUTO_REFRESH_WAITING"
+			with self.m.State("AUTO_REFRESH_WAITING"):
+				with self.m.If(delayer.delay_for_time(m, _ui, dram_ic_timing.T_RC)):
 					self.m.next = "DO_ANOTHER_REFRESH?"
 		
 		return self.m

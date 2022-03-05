@@ -1,6 +1,7 @@
 import argparse, os, importlib, glob, shutil
 from termcolor import cprint
 import lxdev
+import amtest # for convenience, this needs to be available on both the host and container
 	
 def main():
 	parser = argparse.ArgumentParser()
@@ -11,17 +12,9 @@ def main():
 
 	if args.topic == "gui":
 		if args.task == "start-gui":
-			assert 0, "Neither of these ways work. Use a different approach."
-			if False:
-				# hacky - import the file we want, which is in the same place as where the rshell source is
-				path = os.path.join(os.path.dirname(__file__), "gui_software/source/gui.py")
-				spec = importlib.util.spec_from_file_location("pyboard", path)
-				gui = importlib.util.module_from_spec(spec)
-				spec.loader.exec_module(gui)
-				# now it's as if we ran 'import main', which wouldn't be possible in a less hacky way
-				gui.start_gui()
-			if False:
-				lxdev.run_local_cmd("~/Documents/venv_ge/bin/python3.9 gui_software/source/main.py")
+			from amtest.boards.ulx3s.gui_ui.gui_software.source import gui
+			gui.start_gui()
+			
 		else:
 			cprint("Invalid task given, aborting", "red")
 			return
@@ -68,8 +61,10 @@ class fpga_interface(lxdev.RemoteClient):
 		if task == "upload-uart-passthrough-binary":
 			# self2.run_communication_test()
 			self.rsync_to_container()
-			self.upload_binary("./tests/ulx3s_gui_test/fpga_gateware/compiled_binaries/ulx3s_85f_passthru.bit")
-		
+			from amtest.boards.ulx3s.gui_ui.fpga_gateware import compiled_binaries
+			passthrough_binary_filedir = os.path.join(os.path.dirname(compiled_binaries.__file__), "ulx3s_85f_passthru.bit")
+			self.upload_binary(os.path.relpath(passthrough_binary_filedir))
+
 		elif task == "simulate-current-file":
 			sim_manager = fpga_interface.simulate_manager(
 				fpga_interface=self, local_filename = local_filename)
@@ -78,23 +73,24 @@ class fpga_interface(lxdev.RemoteClient):
 			self.check_python_venv()
 			sim_manager.simulate_file()
 			self.rsync_from_container()
-			sim_manager.view_simulation_results(on_host_pc=True)
-			sim_manager.remove_simulation_results()
+			# sim_manager.view_simulation_results(on_host_pc=True)
+			# sim_manager.remove_simulation_results()
 		
 		elif task == "generate-current-file":
 			gen_manager = fpga_interface.generate_manager(
 				fpga_interface=self, local_filename = local_filename)
 
+
 			self.rsync_to_container()
 			self.check_python_venv()
 			gen_manager.generate_file()
-			gen_manager.run_through_symbyosis()
+			# gen_manager.run_through_symbyosis()
 			self.rsync_from_container()
-			sby_success, local_sby_trace_file = gen_manager.inspect_symbyosis_results()
-			if local_sby_trace_file != None:
-				gen_manager.show_sby_vcd_file(local_sby_trace_file, on_host_pc=True)
-			gen_manager.remove_generate_results()
-		
+			# sby_success, local_sby_trace_file = gen_manager.inspect_symbyosis_results()
+			# if local_sby_trace_file != None:
+			# 	gen_manager.show_sby_vcd_file(local_sby_trace_file, on_host_pc=True)
+			# gen_manager.remove_generate_results()
+	
 		elif task == "upload-current-file":
 			upl_manager = fpga_interface.upload_manager(
 				fpga_interface=self, local_filename=local_filename)
@@ -237,12 +233,18 @@ class fpga_interface(lxdev.RemoteClient):
 
 		def generate_file(self):			
 			cprint(f"Running 'generate' on {self.no_dir_filename}...", "yellow", flush=True)
-			
+			self.il_filename = self.no_dir_filename.replace('.py', '_toplevel.il')
 			cmd = f"cd {os.path.join(self.fpga_interface.remote_working_directory, self.rel_remote_dirname)} && "
-			cmd += f"python3 {self.no_dir_filename} generate -t il > toplevel.il"
+			try_new_approach = True
+			if try_new_approach:
+				cmd += f"python3 {self.no_dir_filename} generate" # for testing unittest stuff
+			else:
+				cmd += f"python3 {self.no_dir_filename} generate -t il > {self.il_filename}"
+
 			result, error = self.fpga_interface.execute_commands(cmd, get_stderr=True)	
 			# print("Result and error are: ", result, error)
-			assert not any("Traceback" in line for line in error), f"Failed generate with error of {result},{error}"
+			if not try_new_approach:
+				assert not any("Traceback" in line for line in error), f"Failed generate with error of {result},{error}"
 			cprint(" OK", "green", flush=True)
 
 		def run_through_symbyosis(self):
@@ -262,23 +264,26 @@ class fpga_interface(lxdev.RemoteClient):
 			success = True
 			found_tracefiles = []
 			last_location = []
+			# last_check_type = None
 			for line in lines:
 				line = line.replace("\n", "")
 				line = line[13:] # get rid of unneeded time info
 
-				if not success:
-					break
+				# if not success:
+				# 	break
 
 				### look for errors firstly
 				if ("ERROR" in line) or ("FAIL" in line):
 					content_colour = "red"
 					success = False # so open gtkwave viewer now				
 
-				### for the 'it worked here's an example' thing
-				elif ("Reached" in line):
+				### for the 'it broke/worked here's an example/counterexample' thing
+				elif ("Reached" in line) or ("Assert failed in " in line):
 					for segment in line.split(" "):
 						if ".py" in segment:
 							last_location.append(segment)
+
+				###### for cover/assert
 				elif ("trace" in line) and (".vcd" in line) and ("summary" in line) and ("starting" not in line):
 					content_colour = "yellow"
 					found_tracefiles.append({
@@ -287,11 +292,7 @@ class fpga_interface(lxdev.RemoteClient):
 					})
 					last_location = last_location[1:]
 
-				### for the 'it broke here's a counterexample' one
-				elif ("Assert failed in " in line):
-					for segment in line.split(" "):
-						if ".py" in segment:
-							last_location.append(segment)
+				###### for BMC
 				elif ("counterexample trace" in line):
 					content_colour = "yellow"
 					found_tracefiles.append({
@@ -323,6 +324,7 @@ class fpga_interface(lxdev.RemoteClient):
 					chosen_file = None
 				else:
 					chosen_file = found_tracefiles[int(chosen_index)-1]["filename"]
+					# cho
 			else:
 				chosen_file = None
 
@@ -348,11 +350,14 @@ class fpga_interface(lxdev.RemoteClient):
 			# so remove everything that has the same start as the filename in question,
 			# plus the toplevel.il file.
 			files_and_dirs_to_delete = glob.glob(self.local_filename.replace(".py", "*"))
-			files_and_dirs_to_delete += [f"{os.path.dirname(self.local_filename)}/toplevel.il"]
 
-			# important - prevent the source file from being removed
-			files_and_dirs_to_delete.remove(self.local_filename)
-
+			for dont_delete in [
+				self.local_filename, 	# important - prevent the source file from being removed
+				self.local_filename.replace(".py", "_build") # and prevent build dirs from being removed
+			]:
+				if dont_delete in files_and_dirs_to_delete:
+					files_and_dirs_to_delete.remove(dont_delete)
+		
 			print(files_and_dirs_to_delete)
 			for file in files_and_dirs_to_delete:
 				if os.path.isdir(file):
@@ -387,8 +392,8 @@ class mcu_interface(lxdev.RemoteClient):
 		elif task == "update-firmware":
 			self.select_serial_port()
 			self.rsync_to_container()
-			self.rsync_micropython_files_between(from_dir = "tests/ulx3s_gui_test/mcu_firmware/source/", to_dir = "/pyboard/")
-			self.rsync_micropython_files_between(from_dir = "tests/ulx3s_gui_test/common/test_common/", to_dir = "/pyboard/test_common/") # new!
+			self.rsync_micropython_files_between(from_dir = "amtest/boards/ulx3s/gui_ui/mcu_firmware/source/", to_dir = "/pyboard/")
+			self.rsync_micropython_files_between(from_dir = "amtest/boards/ulx3s/gui_ui/common/test_common/", to_dir = "/pyboard/test_common/") # new!
 			self.connect_over_rshell_repl()
 
 		elif task == "enter-repl":
@@ -402,13 +407,16 @@ class mcu_interface(lxdev.RemoteClient):
 	def ensure_we_have_compiled_binary(self, desired_compiled_binary_filename):
 		self.desired_compiled_binary_filename = desired_compiled_binary_filename
 		# have we got a copy of the file, locally on the host?
-		if not os.path.isfile(f"./mcu_firmware/compiled_binaries/{self.desired_compiled_binary_filename}"):
+		# if not os.path.isfile(f"./mcu_firmware/compiled_binaries/{self.desired_compiled_binary_filename}"):
+		from amtest.boards.ulx3s.gui_ui.mcu_firmware import compiled_binaries
+		compiled_binary_folder = os.path.dirname(compiled_binaries.__file__)
+		if not os.path.isfile(os.path.join(compiled_binary_folder, self.desired_compiled_binary_filename)):
 			if self.desired_compiled_binary_filename == "esp32-20220117-v1.18.bin":
 				cprint("Downloading compiled binary file", "yellow")
-				lxdev.run_local_cmd("wget https://micropython.org/resources/firmware/esp32-20220117-v1.18.bin --directory-prefix ./mcu_firmware/compiled_binaries/")
+				lxdev.run_local_cmd(f"wget https://micropython.org/resources/firmware/esp32-20220117-v1.18.bin --directory-prefix {compiled_binary_folder}/")
 			else:
 				assert 0, "specified binary unavailable"
-			assert os.path.isfile(f"./mcu_firmware/compiled_binaries/{self.desired_compiled_binary_filename}")
+			assert os.path.isfile(os.path.join(compiled_binary_folder, self.desired_compiled_binary_filename))
 		# cprint("binary file available", "yellow")
 	
 	# what port shall we use?

@@ -26,8 +26,8 @@ class cmd_to_ic(enum.Enum):
 	CMDO_MRS 		= 12 # mode register set
 
 class ic_timing(enum.Enum): # minimums
-	T_STARTUP = 2e-6 # 100e-6 # for now, make it shorter, for simulation 
-	# T_STARTUP = 100e-6 # for now, make it shorter, for simulation 
+	#T_STARTUP = 2e-6 # 100e-6 # for now, make it shorter, for simulation 
+	T_STARTUP = 100e-6 # for now, make it shorter, for simulation 
 	T_RP	= 15e-9
 	T_RC	= 60e-9
 	T_RCD	= 15e-9
@@ -35,3 +35,8 @@ class ic_timing(enum.Enum): # minimums
 	T_RAS	= 37e-9 # max is 100e-6
 	T_XSR	= 70e-9
 	# T_RAS 	= 0 # for precharge ?
+
+class ic_refresh_timing(enum.Enum):
+	T_REF	= 32e-3
+	NUM_REF	= 8192
+	

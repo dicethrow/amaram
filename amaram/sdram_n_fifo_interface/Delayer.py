@@ -6,7 +6,7 @@ import numpy as np
 import enum
 
 from amaranth import Elaboratable, Module, Signal, Mux, ClockSignal, ClockDomain, ResetSignal, Cat, Const
-from amaranth.hdl.ast import Rose, Stable, Fell, Past, Initial
+from amaranth.hdl.ast import Rose, Stable, Fell, Past, Initial, Value
 from amaranth.hdl.rec import DIR_NONE, DIR_FANOUT, DIR_FANIN, Layout, Record
 from amaranth.hdl.mem import Memory
 from amaranth.hdl.xfrm import DomainRenamer
@@ -28,7 +28,7 @@ from amlib.utils import Timer
 
 from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
-from amtest.utils import FHDLTestCase
+from amtest.utils import FHDLTestCase, Params
 
 
 class Delayer(Elaboratable):
@@ -58,8 +58,10 @@ class Delayer(Elaboratable):
 
 	ui_layout = [
 		("done",		1,	DIR_FANIN),
-		("inactive",	1,	DIR_FANIN),
-		("load",		12, DIR_FANOUT) # should be dynamic but doesn't work. Assume it's 12bits wide
+		# ("inactive",	1,	DIR_FANIN),
+		# ("load",		14, DIR_FANOUT) 
+		("load",		24, DIR_FANOUT)
+
 	]
 
 	debug_layout = [
@@ -68,11 +70,14 @@ class Delayer(Elaboratable):
 
 	def __init__(self, clk_freq, utest: FHDLTestCase = None):
 		super().__init__()
-		self.utest = utest
+		self.utest = utest # so unit tests can be run on this class itself
 		self.clk_freq = clk_freq
 		self.longest_period = 1.1 * 100e-6 # is this an OK assumption?
 
-		assert self._get_counter_bitwidth() == 12, f"Not sure how to make this dynamic, so update this if it fails. It is: {self._get_counter_bitwidth()}"
+		def get_current_load_bitwidth():
+			L = Delayer.ui_layout
+			return [L[i][1] for i in range(len(L)) if L[i][0] == "load"][0]
+		assert self._get_counter_bitwidth() <= get_current_load_bitwidth(), f"Not sure how to make this dynamic, so update this if it fails. It is: {self._get_counter_bitwidth()}"
 		# if "load" not in [field for field, _, _ in Delayer.ui_layout]:
 		# 	Delayer.ui_layout.append(("load", self._get_counter_bitwidth(), DIR_FANOUT))
 
@@ -100,9 +105,9 @@ class Delayer(Elaboratable):
 	
 	def delay_for_clks(self, clks):
 		# note: This is designed as an interface, to be used by other modules.
-		# This means that .sync here will probably not 
+		# This also means that .sync here will probably not 
 		# recognise the use of DomainRenamer() if used.
-		# That's why self.domain is passed as an init argument, so we can access it like this:
+		# We get around this by using a remote m and ui
 		assert not isinstance(self.remote_m, type(None)), "self.remote_m is not initialised yet, call delayer.set_m_and_ui_to_use()"
 		assert not isinstance(self.remote_ui, type(None)), "self.remote_ui is not initialised yet, call delayer.set_m_and_ui_to_use()"
 		m = self.remote_m
@@ -110,31 +115,52 @@ class Delayer(Elaboratable):
 
 		print("Clks is ", clks)
 
-		if clks > 8:
-			clks -= 8 # this compensates for delays etc in the implementation
-			assert self._get_counter_bitwidth() >= bits_for(clks), f"""The desired delay of {clks} clks 
-				requires {bits_for(clks)} bits, but this timer assumes {self.longest_period}
-				sec with {self._get_counter_bitwidth()} as the max"""
-			# assert clks > 0, "Not enough clocks to delay in this way. todo: correct threshold"
-			
+		def constant_shift_timer(clks):
+			print("Using smaller shifter")
+			clks -= 1
+			shift_timer = Signal(reset=-1, shape=clks)
+			m.d.sync += shift_timer.eq(shift_timer[1:])
+			with m.If(shift_timer == 1):
+				m.d.sync += shift_timer.eq(shift_timer.reset) # reset when done, so it can be reused
+			return shift_timer == 1
+		
+		def normal_timer(clks):
 			with m.FSM(name="delay_fsm"):#, domain=self.domain):
-				with m.State("INIT"):
-					m.d.sync += _ui.load.eq(clks)
+				with m.State("IDLE"):
+					m.d.sync += _ui.load.eq(clks-8) # to account for measured 8-cycle user delay
 					m.next = "LOADED"
 				with m.State("LOADED"):
 					m.d.sync += _ui.load.eq(0)
 					m.next = "DONE"
 				with m.State("DONE"): # is this extra state needed? to avoid driving ui.load?
-					...
+					with m.If(_ui.done):
+						m.next = "IDLE"
+					# assume that this fsm will stop when the containing fsm exits it?
 
 			return _ui.done
+
+		# for variable delays,
+		if isinstance(clks, Value):
+			# with m.If(clks > 8):
+			return normal_timer(clks)
+			# with m.Else():
+			# 	# somewhow make short timer work?
+
+
+		# now handle the case for constant delays
+		elif (clks > 8):
+			# handle large constant delays, or variable delays
+			# clks -= 8 # this compensates for delays etc in the implementation
+			new_clks = clks-8
+			assert self._get_counter_bitwidth() >= bits_for(new_clks), f"""The desired delay of {new_clks} clks 
+				requires {bits_for(new_clks)} bits, but this timer assumes {self.longest_period}
+				sec with {self._get_counter_bitwidth()} as the max"""
+			# assert clks > 0, "Not enough clocks to delay in this way. todo: correct threshold"
+				
+			return normal_timer(clks)
 		
 		elif (clks <= 8) and (clks > 1): # "this technique may not work efficiently for larger clks"
-			print("Using smaller shifter")
-			clks -= 1
-			shift_timer = Signal(reset=-1, shape=clks)
-			m.d.sync += shift_timer.eq(shift_timer[1:])
-			return shift_timer == 1
+			return constant_shift_timer(clks)
 		
 		elif clks == 1:
 			return True
@@ -159,7 +185,7 @@ class Delayer(Elaboratable):
 			m.d.sync += [
 				countdown.eq(Mux(countdown>0, countdown-1, countdown)),
 				_ui.done.eq(countdown==1), # so a single pulse will occur as it reaches 0
-				_ui.inactive.eq( (countdown==0) )#& ~_ui.done )
+				# _ui.inactive.eq( (countdown==0) )#& ~_ui.done )
 			]
 		
 		def add_reload_behaviour():
@@ -214,6 +240,7 @@ if __name__=="__main__":
 				add_clock(m, "sync")
 				# add_clock(m, "sync_1e6")
 				test_id = self.utest.get_test_id()
+				params = self.utest.params
 
 				# note that this workaround is needed because the simulation
 				# can't work with ResetSignal() directly for some reason
@@ -221,7 +248,7 @@ if __name__=="__main__":
 				# m.d.sync += ResetSignal("sync").eq(reset_sync)
 
 				if test_id == "testDesiredInterface_withExpectedBehaviour":
-					assert platform == None, f"Unexpected platform status of {platform}"
+					assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
 
 					with m.FSM(name="testbench_fsm") as fsm:
 						# m.d.sync += _ui.tb_done.eq(fsm.ongoing("DONE"))
@@ -234,7 +261,7 @@ if __name__=="__main__":
 							m.next = "START"
 
 						with m.State("START"):
-							with m.If(delayer.delay_for_time(self.utest.test_period)):
+							with m.If(delayer.delay_for_time(params.test_period)):
 								m.next = "DONE"
 						
 						with m.State("DONE"):
@@ -247,19 +274,22 @@ if __name__=="__main__":
 					timer_ought_to_finish = Signal()
 
 					m.d.comb += [
-						timer_done.eq(delayer.delay_for_time(self.utest.test_period)),
-						timer_ought_to_finish.eq(Past(Initial(), clocks=self.utest.expected_clks)),
+						timer_done.eq(delayer.delay_for_time(params.test_period)),
+						timer_ought_to_finish.eq(Past(Initial(), clocks=params.expected_clks)),
 					]
 
-					# agh! how to handle reset properly?
+					with m.FSM(name="testbench_fsm"):
 
-					# when not in reset
-					with m.If(~ResetSignal("sync")):
-						# Only permit load to be used when inactive
-						m.d.sync += Assume(delayer.ui.inactive.implies(delayer.ui.load == 0)) # although this won't work with the fast clock..?
-
-						m.d.sync += Assert(timer_done == timer_ought_to_finish)
-
+						with m.State("INITIAL"):
+							delayer.delay_for_time(params.test_period)
+							m.next = "WAITING"
+						with m.State("WAITING"):
+							m.d.sync += [
+								Assume(_ui.load == 0),
+								Assume(~ResetSignal("sync")),
+								# Assert(timer_done == timer_ought_to_finish)
+								# Cover(_ui.done == 1)
+							]
 
 
 			elif isinstance(platform, ULX3S_85F_Platform): 
@@ -292,17 +322,24 @@ if __name__=="__main__":
 		class formalTests_thatDelayWorks(FHDLTestCase):
 			def test_formal(self):
 				def test(period):
-					self.test_period = period
-					self.clk_freq = 24e6
+					params = Params()
+					params.test_period = period
+					params.clk_freq = 24e6
 
 					def min_num_of_clk_cycles(freq_hz, period_sec):
 						return int(np.ceil(period_sec * freq_hz))
-
-					self.expected_clks = min_num_of_clk_cycles(self.clk_freq, self.test_period)
-					dut = Testbench(clk_freq=self.clk_freq, utest=self)
-					self.assertFormal(dut, mode="bmc", depth=self.expected_clks*2) # or cover/hybrid?
+					params.expected_clks = min_num_of_clk_cycles(params.clk_freq, params.test_period)
+					self.params = params
+					dut = Testbench(clk_freq=params.clk_freq, utest=self)
+					self.assertFormal(dut, mode="bmc", depth=params.expected_clks*2) # or cover/hybrid?
 				[test(period) for period in [1e-6, 100e-9, 50e-9, 10e-9, 1e-9] ]
 
+		# class formalTests_thatDelayCanBeReused_forConstAndSignal(FHDLTestCase):
+		# 	def test_formal(self):
+		# 		prams.clk_freq = 24e6
+		# 		dut = Testbench(clk_freq=prams.clk_freq, utest=self)
+
+		
 		...
 		# class tryToTest_timerTest(FHDLTestCase):
 		# 	def test_formal(self):
@@ -328,14 +365,16 @@ if __name__=="__main__":
 		class testDesiredInterface_withExpectedBehaviour(FHDLTestCase):
 			def test_sim(self):
 				def test(period):
-					self.test_period = period
-					self.clk_freq = 24e6
-					dut = Testbench(clk_freq=self.clk_freq, utest=self)
+					params = Params()
+					params.test_period = period
+					params.clk_freq = 24e6
+					self.params = params
+					dut = Testbench(clk_freq=params.clk_freq, utest=self)
 
 					def min_num_of_clk_cycles(freq_hz, period_sec):
 						return int(np.ceil(period_sec * freq_hz))
 
-					expected_clks = min_num_of_clk_cycles(self.clk_freq, self.test_period)
+					expected_clks = min_num_of_clk_cycles(params.clk_freq, params.test_period)
 					
 					def process():
 						# elapsed_clks = 0
@@ -366,7 +405,7 @@ if __name__=="__main__":
 						# self.assertEqual(expected_clks, measured_clks, f"The timer took with {measured_clks} cycles, but should have taken {expected_clks}")
 					
 					sim = Simulator(dut)
-					sim.add_clock(period=1/self.clk_freq, domain="sync")
+					sim.add_clock(period=1/params.clk_freq, domain="sync")
 					sim.add_sync_process(process)
 
 					with sim.write_vcd(

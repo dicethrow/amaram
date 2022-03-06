@@ -30,7 +30,7 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-from ic_parameters import ic_timing, cmd_to_ic, ic_refresh_timing
+from ic_IS42S16160G.parameters import ic_timing, cmd_to_ic, ic_refresh_timing
 from pin_controller import pin_controller
 from Delayer import Delayer
 

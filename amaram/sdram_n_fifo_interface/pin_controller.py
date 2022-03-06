@@ -14,7 +14,7 @@ from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active
 
 
-from ic_parameters import cmd_to_ic
+from ic_IS42S16160G.parameters import cmd_to_ic
 
 class pin_controller(Elaboratable):
 	ui = [

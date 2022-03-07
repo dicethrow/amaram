@@ -30,9 +30,10 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-from ic_IS42S16160G.parameters import ic_timing, cmd_to_ic, ic_refresh_timing
 from pin_controller import pin_controller
 from Delayer import Delayer
+
+from standard_sdram_parameters import cmd_to_ic
 
 """ 
 Refresh controller
@@ -75,24 +76,28 @@ class refresh_controller(Elaboratable):
 		("refresh_lapsed",	1,			DIR_FANIN) # to indicate whether data loss from a lack of refreshing has occurred
 	]
 
-	def __init__(self, clk_freq, utest: FHDLTestCase = None):
+	def __init__(self, config_params, test_params = None, utest: FHDLTestCase = None):
 		super().__init__()
-		self.utest = utest
-		self.clk_freq = clk_freq
-
-		self.ui = Record(refresh_controller.ui_layout)
 		self.pin_controller_ui = Record(pin_controller.ui)
+		self.ui = Record(refresh_controller.ui_layout)
 
-		# period_s = 32e-3 # todo - make these defined elsewhere, not magic numbers
-		self.clks_per_period = int(np.ceil(ic_refresh_timing.T_REF.value * self.clk_freq))
-		self.increment_per_refresh = int(self.clks_per_period / ic_refresh_timing.NUM_REF.value)
+		self.config_params = config_params
+		self.test_params = test_params
+		self.utest = utest
+		
+		self.clks_per_period = int(np.ceil(self.config_params.ic_refresh_timing.T_REF.value * self.config_params.clk_freq))
+		self.increment_per_refresh = int(self.clks_per_period / self.config_params.ic_refresh_timing.NUM_REF.value)
+		
 
 	def elaborate(self, platform = None):
 		
 		m = Module()
 
+		ic_timing = self.config_params.ic_timing
+		ic_refresh_timing = self.config_params.ic_refresh_timing
+
 		# these four lines allow the concise delayer. ...() structure below
-		m.submodules.delayer = delayer = Delayer(clk_freq=self.clk_freq)
+		m.submodules.delayer = delayer = Delayer(clk_freq=self.config_params.clk_freq)
 		delayer_ui = Record.like(delayer.ui)
 		m.d.sync += delayer_ui.connect(delayer.ui)
 		delayer.set_m_and_ui_to_use(m, delayer_ui)
@@ -286,7 +291,7 @@ class refresh_controller(Elaboratable):
 
 if __name__ == "__main__":
 	""" 
-	17feb2022, 5mar2022
+	17feb2022, 5mar2022, 7mar2022
 
 	Adding tests to each file, so I can more easily make 
 	changes in order to improve timing performance.
@@ -309,16 +314,18 @@ if __name__ == "__main__":
 			])
 		] + refresh_controller.ui_layout
 
-		def __init__(self, clk_freq, utest: FHDLTestCase = None):
+		def __init__(self, config_params, test_params = None, utest: FHDLTestCase = None):
 			super().__init__()
 			self.ui = Record(Testbench.ui_layout)
-			self.clk_freq = clk_freq
+
+			self.config_params = config_params
+			self.test_params = test_params
 			self.utest = utest
-		
+			
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.refresher = refresher = refresh_controller(clk_freq=self.clk_freq)
+			m.submodules.refresher = refresher = refresh_controller(config_params)
 			refresher_ui = Record.like(refresher.ui)
 			m.d.sync += refresher_ui.connect(refresher.ui)
 
@@ -329,9 +336,8 @@ if __name__ == "__main__":
 				add_clock(m, "sync")
 				# add_clock(m, "sync_1e6")
 				test_id = self.utest.get_test_id()
-				params = self.utest.params
 				
-				if test_id == "testDesiredInterface_withExpectedBehaviour":
+				if test_id == "RefreshCtrl_sim_withBlockingTask_staysRefreshed":
 					assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
 
 					with m.FSM(name="testbench_fsm") as fsm:
@@ -369,15 +375,23 @@ if __name__ == "__main__":
 
 	elif args.action == "simulate": # time-domain testing
 		
-		class test_refresh_control_expected_behaviour(FHDLTestCase):
+		class RefreshCtrl_sim_withBlockingTask_staysRefreshed(FHDLTestCase):
 			def test_sim(self):
-				params = Params()
 				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
-				params.clk_freq = 143e6
-				self.params = params
-				dut = refresh_controller(clk_freq=params.clk_freq, utest=self)
+
+				from ic_IS42S16160G.parameters import ic_timing, ic_refresh_timing
+
+				config_params = Params()
+				config_params.clk_freq = 143e6
+				config_params.ic_timing = ic_timing
+				config_params.ic_refresh_timing = ic_refresh_timing
+
+				test_params = Params()
+
+				dut = refresh_controller(config_params, test_params, utest=self)
+				
 				sim = Simulator(dut)
-				sim.add_clock(period=1/params.clk_freq, domain="sync")
+				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
 				# def wait_for_200us():
 				# 	yield Delay(200e-6)
@@ -402,12 +416,12 @@ if __name__ == "__main__":
 							# wait for it to fall
 							while (yield dut.ui.request_to_refresh_soon):
 								yield 
-								self.timeout_runtime -= 1/params.clk_freq
+								self.timeout_runtime -= 1/config_params.clk_freq
 							yield dut.ui.enable_refresh.eq(0) 
 							refresh_count += 1								
 						
 						yield 
-						self.timeout_runtime -= 1/params.clk_freq
+						self.timeout_runtime -= 1/config_params.clk_freq
 
 						if refresh_count > 3:
 							return

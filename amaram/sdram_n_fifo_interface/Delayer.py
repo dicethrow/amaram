@@ -216,16 +216,18 @@ if __name__=="__main__":
 			])
 		] + Delayer.ui_layout # todo - how to make the sharedTimer.ui layout be nested?
 
-		def __init__(self, clk_freq = 24e6, utest: FHDLTestCase = None):
+		def __init__(self, config_params, test_params = None, utest: FHDLTestCase = None):
 			super().__init__()
 			self.ui = Record(Testbench.Testbench_ui_layout)
-			self.clk_freq = clk_freq
+
+			self.config_params = config_params
+			self.test_params = test_params
 			self.utest = utest
 
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.delayer = delayer = Delayer(clk_freq=self.clk_freq)
+			m.submodules.delayer = delayer = Delayer(clk_freq=self.config_params.clk_freq)
 
 			_ui = Record(Testbench.Testbench_ui_layout) #.like(self.ui)
 			# m.d.sync_1e6 += [
@@ -240,14 +242,13 @@ if __name__=="__main__":
 				add_clock(m, "sync")
 				# add_clock(m, "sync_1e6")
 				test_id = self.utest.get_test_id()
-				params = self.utest.params
 
 				# note that this workaround is needed because the simulation
 				# can't work with ResetSignal() directly for some reason
 				# reset_sync = Signal(reset_less=True)
 				# m.d.sync += ResetSignal("sync").eq(reset_sync)
 
-				if test_id == "testDesiredInterface_withExpectedBehaviour":
+				if test_id == "DelayerTestbench_sim_ThatSpecifiedDelay_TakesExpectedDuration":
 					assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
 
 					with m.FSM(name="testbench_fsm") as fsm:
@@ -261,35 +262,45 @@ if __name__=="__main__":
 							m.next = "START"
 
 						with m.State("START"):
-							with m.If(delayer.delay_for_time(params.test_period)):
+							with m.If(delayer.delay_for_time(self.test_params.test_period)):
 								m.next = "DONE"
 						
 						with m.State("DONE"):
 							...
 
-				elif test_id == "formalTests_thatDelayWorks":
+				elif test_id == "DelayerTestbench_bmc_ThatSpecifiedDelay_TakesExpectedDuration":
 					assert platform == "formal", "This test can only run in formal mode"
 
 					timer_done = Signal()
 					timer_ought_to_finish = Signal()
 
-					m.d.comb += [
-						timer_done.eq(delayer.delay_for_time(params.test_period)),
-						timer_ought_to_finish.eq(Past(Initial(), clocks=params.expected_clks)),
-					]
+					# print(f"Using test period of {self.test_params.test_period}, expected clks of {self.test_params.expected_clks}")
 
-					with m.FSM(name="testbench_fsm"):
+					with m.If(~ResetSignal("sync")): # todo - how to deal with reset signals? I recall something like this used to work last year
 
-						with m.State("INITIAL"):
-							delayer.delay_for_time(params.test_period)
-							m.next = "WAITING"
-						with m.State("WAITING"):
+						m.d.comb += [
+							timer_ought_to_finish.eq(Past(Initial(), clocks=self.test_params.expected_clks-1)),
+						]
+
+						with m.If(~Initial()):
 							m.d.sync += [
 								Assume(_ui.load == 0),
-								Assume(~ResetSignal("sync")),
-								# Assert(timer_done == timer_ought_to_finish)
-								# Cover(_ui.done == 1)
+								# Assume(~ResetSignal("sync")), # causes 'assumptions are unsatisfiable' error
 							]
+
+					
+						with m.FSM(name="testbench_fsm"):
+							with m.State("RUNNING"): 
+								with m.If(delayer.delay_for_time(self.test_params.test_period)):
+									m.next = "DONE"
+							with m.State("DONE"):
+								m.d.sync += [								
+									Assert(timer_ought_to_finish) # note! fails at small values
+									# Cover(_ui.done == 1)
+								]
+								m.next = "IDLE"
+							with m.State("IDLE"):
+								...
 
 
 			elif isinstance(platform, ULX3S_85F_Platform): 
@@ -319,19 +330,22 @@ if __name__=="__main__":
 
 	if args.action == "generate": # formal testing
 
-		class formalTests_thatDelayWorks(FHDLTestCase):
+		class DelayerTestbench_bmc_ThatSpecifiedDelay_TakesExpectedDuration(FHDLTestCase):
 			def test_formal(self):
 				def test(period):
-					params = Params()
-					params.test_period = period
-					params.clk_freq = 24e6
+					config_params = Params()
+					config_params.clk_freq = 24e6
+
+					test_params = Params()
+					test_params.test_period = period
 
 					def min_num_of_clk_cycles(freq_hz, period_sec):
 						return int(np.ceil(period_sec * freq_hz))
-					params.expected_clks = min_num_of_clk_cycles(params.clk_freq, params.test_period)
-					self.params = params
-					dut = Testbench(clk_freq=params.clk_freq, utest=self)
-					self.assertFormal(dut, mode="bmc", depth=params.expected_clks*2) # or cover/hybrid?
+					test_params.expected_clks = min_num_of_clk_cycles(config_params.clk_freq, test_params.test_period)
+					
+					dut = Testbench(config_params, test_params, utest=self)
+					
+					self.assertFormal(dut, mode="bmc", depth=test_params.expected_clks*2) # or cover/hybrid?
 				[test(period) for period in [1e-6, 100e-9, 50e-9, 10e-9, 1e-9] ]
 
 		# class formalTests_thatDelayCanBeReused_forConstAndSignal(FHDLTestCase):
@@ -362,19 +376,21 @@ if __name__=="__main__":
 	
 	elif args.action == "simulate":
 		
-		class testDesiredInterface_withExpectedBehaviour(FHDLTestCase):
+		class DelayerTestbench_sim_ThatSpecifiedDelay_TakesExpectedDuration(FHDLTestCase):
 			def test_sim(self):
 				def test(period):
-					params = Params()
-					params.test_period = period
-					params.clk_freq = 24e6
-					self.params = params
-					dut = Testbench(clk_freq=params.clk_freq, utest=self)
+					config_params = Params()
+					config_params.clk_freq = 24e6
+
+					test_params = Params()
+					test_params.test_period = period
+					
+					dut = Testbench(config_params, test_params, utest=self)
 
 					def min_num_of_clk_cycles(freq_hz, period_sec):
 						return int(np.ceil(period_sec * freq_hz))
 
-					expected_clks = min_num_of_clk_cycles(params.clk_freq, params.test_period)
+					expected_clks = min_num_of_clk_cycles(config_params.clk_freq, test_params.test_period)
 					
 					def process():
 						# elapsed_clks = 0
@@ -401,11 +417,11 @@ if __name__=="__main__":
 						
 
 						
-						print( f"The timer took with {measured_clks} cycles, but should have taken {expected_clks}")
+						print( f"The timer took with {measured_clks} cycles, and should have taken {expected_clks}")
 						# self.assertEqual(expected_clks, measured_clks, f"The timer took with {measured_clks} cycles, but should have taken {expected_clks}")
 					
 					sim = Simulator(dut)
-					sim.add_clock(period=1/params.clk_freq, domain="sync")
+					sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 					sim.add_sync_process(process)
 
 					with sim.write_vcd(
@@ -428,7 +444,10 @@ if __name__=="__main__":
 			def elaborate(self, platform = None):
 				m = super().elaborate(platform)
 
-				m.submodules.tb = tb = Testbench()	
+				config_params = Params()
+				config_params.clk_freq = 24e6
+
+				m.submodules.tb = tb = Testbench(config_params)	
 
 				ui = Record.like(tb.ui)
 				m.d.sync += ui.connect(tb.ui)

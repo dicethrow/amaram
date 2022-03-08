@@ -1,17 +1,4 @@
 
-# This file last worked on around November 2021
-# Setting up for reuse on 6mar2022
-
-""" 
-todo:
-- replace all references to self.dut within the sim_model class with a Record() in order to interface with pins
-- deal with the assumption that self.dut.fifos is an array of fifos... I think this was so the simulation model
-  could model both the external usage (i.e. fifos to add data to/remove data from the sdram), and internal usage 
-  (the chip internals)
-	- It would make sense to split this into separate classes
-
-
-"""
 
 from amaranth.hdl import (Memory, ClockDomain, ResetSignal,
 	ClockSignal, Elaboratable, Module, Signal, Mux, Cat,
@@ -30,10 +17,21 @@ from amaranth.sim import Simulator, Delay, Tick, Passive, Active, Settle
 import struct, enum
 import numpy as np
 
+import os, sys
+print(os.getcwd())
+
 # from sdram16_chip_model_IS42S16160G import dram_chip_model_IS42S16160G
 # from sdram16_testdriver import sdram_controller #dram_testdriver
+# sys.path.append(os.path.join(os.getcwd(), "tests/ulx3s_gui_test/common"))
 
-from dprint import dprint
+import amaram
+# from . import amaram
+print(dir(amaram))
+
+from amaram.sdram_n_fifo_interface_IS42S16160G import sdram_controller
+
+import sys, os
+from termcolor import cprint
 
 class sdram_utils:
 	"""
@@ -42,6 +40,7 @@ class sdram_utils:
 	class dram_ic_timing(enum.Enum): # minimums
 		# assuming we have a -7 speed device? see p.18 of datasheet
 		T_STARTUP = 2e-6 # 100e-6 # for now, make it shorter, for simulation 
+		# T_STARTUP = 100e-6
 		T_RP	= 15e-9
 		T_RC	= 60e-9
 		T_RCD	= 15e-9
@@ -229,6 +228,10 @@ class sdram_tests:
 			i = 0
 			yield Passive()
 			# yield Delay(initial_delay)
+			
+			# wait a little bit longer... in case a refresh needs to happen?
+			yield Delay(1.1 * dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+
 			yield
 			while (yield fifo_ui.w_rdy) & (write_counter <= 0x100):
 				write_counter += 1
@@ -298,7 +301,11 @@ class sdram_tests:
 			i = 0
 			past_r_rdy = False
 			# yield Passive()
-			# yield Active()
+			yield Active()
+
+			# wait a little bit longer... in case a refresh needs to happen?
+			yield Delay(1.1 * dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+
 			yield Delay(13e-6)# + read_offset*1e-7)
 
 
@@ -357,7 +364,8 @@ class sdram_tests:
 
 		def delay_more():
 			yield Active()
-			yield Delay(21e-6)
+			yield Delay(dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value) # 15feb2022
+			yield Delay(21e-6) # needed?
 		self.sim.add_process(delay_more)
 
 
@@ -524,7 +532,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 		sdram_tests.add_rtl(self)
 
 	
-	def add_simulations_to(self, sim : Simulator):
+	def add_simulations_to(self, sim : Simulator, do_fifo_simulations = False):
 		self.sim = sim
 
 		# def second_func():
@@ -537,7 +545,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 
 		def initial_delay():
 			yield Active()
-			period = 5e-6 #20e-6
+			period = dram_sim_model_IS42S16160G.dram_ic_timing.T_STARTUP.value + 5e-6
 			sections = 100
 			for t in range(sections):
 				# yield self.nflagA.eq(~self.nflagA)
@@ -545,7 +553,8 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 				yield Delay((1/sections) * period)
 			# yield Delay(5e-6)
 
-		sdram_tests.add_simulations_to(self)
+		if do_fifo_simulations:
+			sdram_tests.add_simulations_to(self)
 
 		self.sim.add_process(initial_delay)		
 		self.sim.add_sync_process(self.cmd_monitor, domain="clki")
@@ -733,16 +742,20 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 			clks_at_last_write = None
 			clks_at_last_read = None
 
-			print_bank_debug_statements = False#True
+			print_bank_debug_statements = True
 			
 			yield Passive()
+			
 			while True:
 
-				def bprint(*args, **kwargs):
+				def bprint(*args):
 					if print_bank_debug_statements:
-						colours = ["Red", "Green", "Yellow", "Light_blue"]
-						dprint(f"Bank {bank_id}, {bank_state} : ", *args,
-							colour=colours[bank_id], **kwargs)
+						colors = ["red", "green", "yellow", "blue"]
+						outstr = f"Bank {bank_id}, {bank_state} : "
+						for arg in args:
+							outstr += str(arg)
+						cprint(outstr, colors[bank_id])
+
 
 				def inspect_bank_memory():
 					for row_id, row_data in bank_memory.items():
@@ -813,7 +826,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 						bank_state = bank_states.ROW_ACTIVATED
 
 						if new_cmd != cmd:
-							bprint("xxx", new_cmd, cmd)
+							bprint(f"New command recieved: {new_cmd}, (last command was {cmd}")
 							# yield self.flagB.eq(1)
 							continue
 						yield self.flagA.eq(0)
@@ -988,6 +1001,7 @@ class dram_sim_model_IS42S16160G(Elaboratable, sdram_tests, sdram_utils):
 				
 				clks_since_active = clks_since_active + 1 if (clks_since_active != None) else None
 				yield
+				# print(",")
 
 			# assert the bank state is inactive
 
@@ -1013,6 +1027,8 @@ if __name__ == "__main__":
 		# PLL - 143MHz for sdram 
 		sdram_freq = int(143e6)
 
+		# from simulation_test import dram_sim_model_IS42S16160G
+
 		#m.submodules.dram_testdriver = dram_testdriver = dram_testdriver()
 		m.submodules.m_sdram_controller = m_sdram_controller = sdram_controller()
 		m.submodules.m_dram_model = m_dram_model = dram_sim_model_IS42S16160G(m_sdram_controller, sdram_freq)		
@@ -1021,11 +1037,9 @@ if __name__ == "__main__":
 
 		sim.add_clock(1/sdram_freq, domain="sdram")
 		# m_sdram_controller.setup_for_simulation(sim) # used?
-		m_dram_model.add_simulations_to(sim)
+		m_dram_model.add_simulations_to(sim, do_fifo_simulations=True)
 
 		# dram_model = dram_sim_model_IS42S16160G(dram_testdriver, sim)
-
-		
 
 		# def initial_delay():
 		# 	yield Active()
@@ -1041,9 +1055,9 @@ if __name__ == "__main__":
 		with sim.write_vcd(
 			f"{current_filename}_simulate.vcd",
 			f"{current_filename}_simulate.gtkw", 
-			traces=[] + sdram_base.traces_to_plot): # todo - how to add clk, reset signals?
+			traces=[]): # todo - how to add clk, reset signals?
 
 			sim.run()
 
-	else: # upload
+	else: # upload - is there a test we could upload and do on the ulx3s? 
 		pass

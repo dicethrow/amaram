@@ -114,7 +114,7 @@ class refresh_controller(Elaboratable):
 
 		# default io values
 		m.d.sync += [
-			_pin_controller_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_NOP),
+			_pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_NOP),
 			_pin_controller_ui.ios.o_clk_en.eq(1)
 		]
 
@@ -156,21 +156,21 @@ class refresh_controller(Elaboratable):
 								m.next = "PRECH_BANKS"
 
 						with m.State("PRECH_BANKS"):
-							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_PALL)
+							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_PALL)
 							m.next = "PRECH_BANKS_WAITING"
 						with m.State("PRECH_BANKS_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RP)):
 								m.next = "AUTO_REFRESH_1"
 
 						with m.State("AUTO_REFRESH_1"):
-							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_REF)
+							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_REF)
 							m.next = "AUTO_REFRESH_1_WAITING"
 						with m.State("AUTO_REFRESH_1_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RC)):
 								m.next = "AUTO_REFRESH_2"
 						
 						with m.State("AUTO_REFRESH_2"):
-							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_REF)
+							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_REF)
 							m.next = "AUTO_REFRESH_2_WAITING"
 						with m.State("AUTO_REFRESH_2_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RC)):
@@ -178,7 +178,7 @@ class refresh_controller(Elaboratable):
 
 						with m.State("LOAD_MODE_REG"):
 							m.d.sync += [
-								_pin_controller_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_MRS),
+								_pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_MRS),
 								_pin_controller_ui.ios.o_a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
 								# _pin_controller_ui.ios.o_a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
 								# _pin_controller_ui.ios.o_a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
@@ -239,7 +239,7 @@ class refresh_controller(Elaboratable):
 			
 			with m.State("AUTO_REFRESH"):
 				m.d.sync += [
-					_pin_controller_ui.ios.o_cmd.eq(cmd_to_ic.CMDO_REF),
+					_pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_REF),
 					refresh_level.eq(Mux(
 							refresh_level < (self.clks_per_period - self.increment_per_refresh),
 							refresh_level + self.increment_per_refresh,
@@ -252,20 +252,19 @@ class refresh_controller(Elaboratable):
 					m.next = "DO_ANOTHER_REFRESH?"
 
 
-		###### testing
 		if isinstance(self.utest, FHDLTestCase):
 			add_clock(m, "sync")
 			# add_clock(m, "sync_1e6")
 			test_id = self.utest.get_test_id()
 			
-			if test_id == "test_refresh_control_expected_behaviour":
+			if test_id == "RefreshCtrl_sim_withBlockingTask_staysRefreshed":
 				assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
 
 				with m.FSM(name="testbench_fsm") as fsm:
-					# m.d.sync += [
-					# 	_ui.tb_fanin_flags.in_start.eq(fsm.ongoing("START")),
-					# 	_ui.tb_fanin_flags.in_done.eq(fsm.ongoing("DONE"))
-					# ]
+					m.d.sync += [
+						_ui.tb_fanin_flags.in_start.eq(fsm.ongoing("START")),
+						_ui.tb_fanin_flags.in_done.eq(fsm.ongoing("DONE"))
+					]
 
 					with m.State("INITIAL"):
 						m.next = "START"
@@ -278,12 +277,16 @@ class refresh_controller(Elaboratable):
 
 					with m.State("DONE"):
 						...
+			
+			elif test_id == "RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
+				...
+
 
 		elif isinstance(platform, ULX3S_85F_Platform): 
 			...
 		
 		else:
-			... # In this case, this means that a test is occuring and this is not the top-level module.
+			... # This case means that a test is occuring and this is not the top-level module.
 
 		
 		return m
@@ -337,29 +340,9 @@ if __name__ == "__main__":
 				# add_clock(m, "sync_1e6")
 				test_id = self.utest.get_test_id()
 				
-				if test_id == "RefreshCtrl_sim_withBlockingTask_staysRefreshed":
-					assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
+				# if test_id == "RefreshTestbench_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
+				# 	...
 
-					with m.FSM(name="testbench_fsm") as fsm:
-						m.d.sync += [
-							_ui.tb_fanin_flags.in_start.eq(fsm.ongoing("START")),
-							_ui.tb_fanin_flags.in_done.eq(fsm.ongoing("DONE"))
-						]
-
-						with m.State("INITIAL"):
-							m.next = "START"
-						
-						with m.State("START"):
-							# m.d.sync += _ui.tb_fanout_flags.
-							# with m.If(refresher_ui)
-							...
-							# just hang here for now, and look at the traces
-
-						with m.State("DONE"):
-							...
-				elif test_id == "test_refresh_control_expected_behaviour":
-					assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
-					...
 
 			elif isinstance(platform, ULX3S_85F_Platform): 
 				...
@@ -374,12 +357,47 @@ if __name__ == "__main__":
 		...
 
 	elif args.action == "simulate": # time-domain testing
+
+		class RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed(FHDLTestCase):
+			def test_sim(self):
+				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
+
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
+				from sdram_sim_model import refresh_monitor_process
+
+				config_params = Params()
+				config_params.clk_freq = 143e6
+				config_params.ic_timing = ic_timing
+				config_params.ic_refresh_timing = ic_refresh_timing
+
+				test_params = Params()
+
+				dut = refresh_controller(config_params, test_params, utest=self)
+				
+				sim = Simulator(dut)
+				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+
+				# note! this needs
+				#	- to be connected to the dut somehow
+				# 	- to use the right clock
+				# dut_pins = None # todo: make this be a record that is the state of the pins to share with this test?
+					# aha! It doesn't need to be dut_pins just yet... it could be a sdram_cmds value
+					# which already exists as dut.pin_controller_ui.ios.o_cmd
+				dut_pins = dut.pin_controller_ui.ios # can I assign it to a variable like this?
+
+				assert 0, "address the above first"
+				sim.add_sync_process(refresh_monitor_process(config_params, test_params, dut_pins))
+
+				with sim.write_vcd(
+					f"{current_filename}_{self.get_test_id()}.vcd"):
+					sim.run()
+
 		
 		class RefreshCtrl_sim_withBlockingTask_staysRefreshed(FHDLTestCase):
 			def test_sim(self):
 				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
 
-				from ic_IS42S16160G.parameters import ic_timing, ic_refresh_timing
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
 
 				config_params = Params()
 				config_params.clk_freq = 143e6
@@ -443,5 +461,46 @@ if __name__ == "__main__":
 
 
 	else: # upload
-		...
+		class Upload(UploadBase):
+			def __init__(self):
+				super().__init__()
+				
+			def elaborate(self, platform = None):
+				m = super().elaborate(platform)
+
+				config_params = Params()
+				config_params.clk_freq = 24e6
+
+				m.submodules.tb = tb = Testbench(config_params)	
+
+				ui = Record.like(tb.ui)
+				m.d.sync += ui.connect(tb.ui)
+
+				# def start_on_left_button():
+				# 	start = Signal.like(self.i_buttons.left)
+				# 	m.d.sync += [
+				# 		start.eq(self.i_buttons.left),
+				# 		ui.tb_fanout_flags.trigger.eq(Rose(start))
+				# 	]
+
+				# def reset_on_right_button():
+				# 	# don't manually route the reset - do this, 
+				# 	# otherwise, if Records are used, they will oscillate, as can't be reset_less
+				# 	m.d.sync += ResetSignal("sync").eq(self.i_buttons.right) 
+
+				# def display_on_leds():
+				# 	m.d.comb += self.leds.eq(Cat([
+				# 		ui.tb_fanin_flags.in_start,	# this should very briefly flash on after pressing start
+				# 		ui.tb_fanin_flags.in_done,	# this should stay on when pressing start, and off after reset
+				# 		self.i_buttons.right,  		# led indicates that the start button was pressed
+				# 		self.i_buttons.left			# led indicates that the reset button was pressed
+				# 	]))
+
+				# start_on_left_button()
+				# reset_on_right_button()
+				# display_on_leds()
+
+				return m
+		
+		platform.build(Upload(), do_program=False, build_dir=f"{current_filename}_build")
 

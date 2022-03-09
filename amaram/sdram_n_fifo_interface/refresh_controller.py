@@ -33,7 +33,7 @@ from amtest.utils import FHDLTestCase, Params
 from pin_controller import pin_controller
 from Delayer import Delayer
 
-from standard_sdram_parameters import cmd_to_ic
+from parameters_standard_sdram import sdram_cmds
 
 """ 
 Refresh controller
@@ -114,8 +114,8 @@ class refresh_controller(Elaboratable):
 
 		# default io values
 		m.d.sync += [
-			_pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_NOP),
-			_pin_controller_ui.ios.o_clk_en.eq(1)
+			_pin_controller_ui.ios.cmd.eq(sdram_cmds.CMD_NOP),
+			_pin_controller_ui.ios.clk_en.eq(1)
 		]
 
 		with m.FSM(domain="sync", name="refresh_controller_fsm") as fsm:
@@ -156,21 +156,21 @@ class refresh_controller(Elaboratable):
 								m.next = "PRECH_BANKS"
 
 						with m.State("PRECH_BANKS"):
-							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_PALL)
+							m.d.sync += _pin_controller_ui.ios.cmd.eq(sdram_cmds.CMD_PALL)
 							m.next = "PRECH_BANKS_WAITING"
 						with m.State("PRECH_BANKS_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RP)):
 								m.next = "AUTO_REFRESH_1"
 
 						with m.State("AUTO_REFRESH_1"):
-							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_REF)
+							m.d.sync += _pin_controller_ui.ios.cmd.eq(sdram_cmds.CMD_REF)
 							m.next = "AUTO_REFRESH_1_WAITING"
 						with m.State("AUTO_REFRESH_1_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RC)):
 								m.next = "AUTO_REFRESH_2"
 						
 						with m.State("AUTO_REFRESH_2"):
-							m.d.sync += _pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_REF)
+							m.d.sync += _pin_controller_ui.ios.cmd.eq(sdram_cmds.CMD_REF)
 							m.next = "AUTO_REFRESH_2_WAITING"
 						with m.State("AUTO_REFRESH_2_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RC)):
@@ -178,10 +178,10 @@ class refresh_controller(Elaboratable):
 
 						with m.State("LOAD_MODE_REG"):
 							m.d.sync += [
-								_pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_MRS),
-								_pin_controller_ui.ios.o_a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
-								# _pin_controller_ui.ios.o_a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
-								# _pin_controller_ui.ios.o_a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
+								_pin_controller_ui.ios.cmd.eq(sdram_cmds.CMD_MRS),
+								_pin_controller_ui.ios.a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
+								# _pin_controller_ui.ios.a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
+								# _pin_controller_ui.ios.a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
 							]
 							m.next = "LOAD_MODE_REG_WAITING"
 						with m.State("LOAD_MODE_REG_WAITING"):
@@ -239,7 +239,7 @@ class refresh_controller(Elaboratable):
 			
 			with m.State("AUTO_REFRESH"):
 				m.d.sync += [
-					_pin_controller_ui.ios.o_cmd.eq(sdram_cmds.CMD_REF),
+					_pin_controller_ui.ios.cmd.eq(sdram_cmds.CMD_REF),
 					refresh_level.eq(Mux(
 							refresh_level < (self.clks_per_period - self.increment_per_refresh),
 							refresh_level + self.increment_per_refresh,
@@ -363,7 +363,7 @@ if __name__ == "__main__":
 				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
 
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
-				from sdram_sim_model import refresh_monitor_process
+				from sdram_sim_model import sdram_sim_model
 
 				config_params = Params()
 				config_params.clk_freq = 143e6
@@ -377,46 +377,10 @@ if __name__ == "__main__":
 				sim = Simulator(dut)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
-				# note! this needs
-				#	- to be connected to the dut somehow
-				# 	- to use the right clock
-				# dut_pins = None # todo: make this be a record that is the state of the pins to share with this test?
-					# aha! It doesn't need to be dut_pins just yet... it could be a sdram_cmds value
-					# which already exists as dut.pin_controller_ui.ios.o_cmd
-				dut_pins = dut.pin_controller_ui.ios # can I assign it to a variable like this?
-
-				assert 0, "address the above first"
-				sim.add_sync_process(refresh_monitor_process(config_params, test_params, dut_pins))
-
-				with sim.write_vcd(
-					f"{current_filename}_{self.get_test_id()}.vcd"):
-					sim.run()
-
-		
-		class RefreshCtrl_sim_withBlockingTask_staysRefreshed(FHDLTestCase):
-			def test_sim(self):
-				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
-
-				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
-
-				config_params = Params()
-				config_params.clk_freq = 143e6
-				config_params.ic_timing = ic_timing
-				config_params.ic_refresh_timing = ic_refresh_timing
-
-				test_params = Params()
-
-				dut = refresh_controller(config_params, test_params, utest=self)
-				
-				sim = Simulator(dut)
-				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-
-				# def wait_for_200us():
-				# 	yield Delay(200e-6)
-				# sim.add_process(wait_for_200us)
+				sdram_model = sdram_sim_model(config_params, test_params)
+				sim.add_sync_process(sdram_model.get_refresh_monitor_process(dut_ios=dut.pin_controller_ui.ios))
 
 				def use_refresher_with_resource_blocking_task():
-
 					def resource_blocking_task():
 						# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
 						period = 200e-6
@@ -447,11 +411,71 @@ if __name__ == "__main__":
 					if self.timeout_runtime <= 0:
 						print("Timeout error!")
 				sim.add_sync_process(use_refresher_with_resource_blocking_task)
-				
 
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
 					sim.run()
+
+		
+		# class RefreshCtrl_sim_withBlockingTask_staysRefreshed(FHDLTestCase):
+		# 	def test_sim(self):
+		# 		self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
+
+		# 		from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
+
+		# 		config_params = Params()
+		# 		config_params.clk_freq = 143e6
+		# 		config_params.ic_timing = ic_timing
+		# 		config_params.ic_refresh_timing = ic_refresh_timing
+
+		# 		test_params = Params()
+
+		# 		dut = refresh_controller(config_params, test_params, utest=self)
+				
+		# 		sim = Simulator(dut)
+		# 		sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+
+		# 		# def wait_for_200us():
+		# 		# 	yield Delay(200e-6)
+		# 		# sim.add_process(wait_for_200us)
+
+		# 		def use_refresher_with_resource_blocking_task():
+
+		# 			def resource_blocking_task():
+		# 				# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
+		# 				period = 200e-6
+		# 				yield Delay(period) # how long could this be? make a test for that?
+		# 				self.timeout_runtime -= period
+
+		# 			refresh_count = 0
+		# 			yield Active()
+		# 			while self.timeout_runtime > 0:
+		# 				if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
+		# 					yield from resource_blocking_task()
+
+		# 				if (yield dut.ui.request_to_refresh_soon):
+		# 					yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
+		# 					# wait for it to fall
+		# 					while (yield dut.ui.request_to_refresh_soon):
+		# 						yield 
+		# 						self.timeout_runtime -= 1/config_params.clk_freq
+		# 					yield dut.ui.enable_refresh.eq(0) 
+		# 					refresh_count += 1								
+						
+		# 				yield 
+		# 				self.timeout_runtime -= 1/config_params.clk_freq
+
+		# 				if refresh_count > 3:
+		# 					return
+					
+		# 			if self.timeout_runtime <= 0:
+		# 				print("Timeout error!")
+		# 		sim.add_sync_process(use_refresher_with_resource_blocking_task)
+				
+
+		# 		with sim.write_vcd(
+		# 			f"{current_filename}_{self.get_test_id()}.vcd"):
+		# 			sim.run()
 
 	if args.action in ["generate", "simulate"]:
 		# now run each FHDLTestCase above 

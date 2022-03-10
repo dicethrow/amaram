@@ -6,6 +6,9 @@ Currently, only a n-async-FIFO interface for SDRAM is implemented.
 
 ## status
 
+- As of 9 Mar 2022, the refresh controller tests good; both by looking at the waveforms, and by the (newly restructured) sdram chip model. According to the .tim timing analysis file, for an uploadable test, the timing performance is `Info: Max frequency for clock '$glbnet$ecp5pll_sdram_clk': 167.08 MHz (PASS at 143.00 MHz)` - very encouraging! It looks like the 24(?) bit wide counter is the slowest path. Could we split that into a low-resolution and a high-resolution counter to speed things up? Now to move on to the other controllers.
+![](doc/refresh_model_works.png)
+
 - As of 2 Mar 2022, after a week or so of restructuring how testing is approached, I have arrived on a structure I like; see amaram/amaram/common/Delayer.py. This enables the most straightforward, concise and conventional way to implement formal verification, simulations and uploadable tests.
 
 - As of 23 Feb 2022, split part of this project into a new `amtest` repo, so the code is more concise and reusable.

@@ -36,8 +36,8 @@ class read_write_controller(sdram_quad_timer):
 		[	ACTIVE	]						 [	WRITE	]
 		[	bank	]						 [	bank	]
 		[	row		]							
-												[	col		]
-												[	data 0	][	data 1	][	data 2	][	data 3	][	data 4	][	data 5	][	data 6	][	data 7	]
+											 [	col		]
+											 [	data 0	][	data 1	][	data 2	][	data 3	][	data 4	][	data 5	][	data 6	][	data 7	]
 
 		[	dqm=1	][	dqm=1	][	dqm=1	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	]		dqm=1 defult
 
@@ -57,7 +57,7 @@ class read_write_controller(sdram_quad_timer):
 		[	ACTIVE	]						 [	READ	]
 		[	bank	]						 [	bank	]
 		[	row		]							
-												[	col		]
+											 [	col		]
 																				[	data 0	][	data 1	][	data 2	][	data 3	][	data 4	][	data 5	][	data 6	][	data 7	]
 					dqm=1 defult						 [	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	]
 															^--2clks before dq-----^	

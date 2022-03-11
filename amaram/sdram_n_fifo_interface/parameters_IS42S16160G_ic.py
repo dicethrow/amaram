@@ -22,4 +22,8 @@ class rw_params(Enum):
 	ROW_BITS 	= 11
 	COL_BITS 	= 9
 	DATA_BITS 	= 16
+	
+	@classmethod
+	def get_ADDR_BITS(cls):
+		return rw_params.ROW_BITS.value + rw_params.COL_BITS.value + rw_params.BANK_BITS.value
 

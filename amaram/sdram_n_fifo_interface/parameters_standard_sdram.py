@@ -2,9 +2,9 @@
 import enum
 
 class rw_cmds(enum.Enum):
-	RW_IDLE			= 0
-	RW_READ_16W		= 1
-	RW_WRITE_16W	= 2
+	RW_IDLE		= 0
+	RW_READ		= 1
+	RW_WRITE	= 2
 
 class sdram_cmds(enum.Enum):
 	# based on p.9 of datasheet of IS42S16160G

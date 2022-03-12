@@ -29,6 +29,7 @@ Test performance:
 ## next steps
 - add a demo use app, perhaps implementing the backend of a logic analyser using the LUNA interfaces
 - Then, replace the backend of the LUNA interface
+- speed up the Delayer() by following the ideas here https://web.archive.org/web/20170819093127/http://hamsterworks.co.nz/mediawiki/index.php/High_Speed_Frequency_Counter
 
 ## later steps
 - add quality documentation, and perhaps a video of how it works

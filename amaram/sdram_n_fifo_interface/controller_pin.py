@@ -16,10 +16,12 @@ from amaranth.sim import Simulator, Delay, Tick, Passive, Active
 
 from parameters_standard_sdram import sdram_cmds
 
+# todo - make these dynamic from the chosen ic, e.g. bitwidth
+
 class controller_pin(Elaboratable):
 	ui = [
 		("ios", [ # this is the interface for control signals recieved from other modules
-			("cmd", sdram_cmds, 	DIR_FANOUT), 
+			("cmd", sdram_cmds, 	DIR_FANOUT), # a high-level representation of the desired cmd
 
 			("clk_en", 		1,		DIR_FANOUT),
 			("dqm",			1, 		DIR_FANOUT),
@@ -29,10 +31,11 @@ class controller_pin(Elaboratable):
 
 			("a", 			13, 	DIR_FANOUT),
 			("ba", 			2, 		DIR_FANOUT),
-			# ("cs"),
-			# ("we"),
-			# ("ras"),
-			# ("cas")
+
+			("cs",			1,		DIR_FANOUT),
+			("we",			1,		DIR_FANOUT),
+			("ras",			1,		DIR_FANOUT),
+			("cas",			1,		DIR_FANOUT)
 		])
 		
 	]

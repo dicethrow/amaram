@@ -21,26 +21,16 @@ from amaranth.utils import bits_for
 
 from parameters_standard_sdram import sdram_cmds
 
-""" 
-8mar2022
-todo
-- pass 'dram_ic_timing' from an external file, so we can work with faster/slower chips
-- does using the negedge of the clock for flags etc slow things down?
-	- no, because this model is not used in the upload mode
-		- so don't worry about wide use of comb() too
-- rather than use self.dut... to access ic pins, use a Record()
-
-- think about how this file should look like (compared to the old file, amaram/old/sdram.../model_sdram.py)
-	- works with 'config_params' and 'utest_params'
-	- load externally define
-	- allows testing smaller parts (e.g. just the refresh stuff)
-
-"""
-
 class sdram_sim_utils:
 	def __init__(self, config_params, utest_params):
 		self.config_params = config_params
 		self.utest_params = utest_params
+
+		# to enable the readback mechanism
+		self.reads_to_return = [
+			# {"bank_src" : 3, "data" : 0},	# for example
+			# {"bank_src" : None}
+		]
 
 	def num_clk_cycles(self, delay):
 		if isinstance(delay, enum.Enum):
@@ -89,6 +79,11 @@ class sdram_sim_utils:
 class model_sdram(sdram_sim_utils):
 	def __init__(self, config_params, utest_params):
 		super().__init__(config_params, utest_params)
+	
+	""" 
+	todo:
+	- add startup monitor (i.e. the thing that monitors what the set burstlen is)
+	"""
 
 	def get_refresh_monitor_process(self, dut_ios):
 		"""
@@ -141,7 +136,7 @@ class model_sdram(sdram_sim_utils):
 					# print("Only gets here if a refresh was done succesfully, ", counter)
 					counter = (counter + increment_per_refresh) if ((counter + increment_per_refresh) < counter_max) else counter
 					
-					# yield from self.assert_cmd_then_delay(cmdi_states.CMD_REF,		min_duration = dram_ic_timing.T_RC)
+					# yield from self.assert_cmd_then_delay(sdram_cmds.CMD_REF,		min_duration = self.config_params.ic_timing.T_RC)
 				except AssertionError as e:
 					# A refresh either was not attempted or failed
 					pass
@@ -169,4 +164,336 @@ class model_sdram(sdram_sim_utils):
 
 				yield
 				# print(counter)
+		return func
+
+	def get_readwrite_process_for_bank(self, bank_id, dut_ios):
+		""" 
+		This should be called once for each bank, to make a separate bank monitor process
+		"""
+		def func():
+
+
+			num_banks = 1<<self.config_params.rw_params.BANK_BITS.value
+			# sdram_cmds
+			# ##################3
+
+
+			# sdram_cmds = dram_sim_model_IS42S16160G.sdram_cmds
+			# self.config_params.ic_timing = dram_sim_model_IS42S16160G.self.config_params.ic_timing
+
+			# woohoo! finally here
+			class bank_states(enum.Enum):
+				IDLE			= 0,
+				ROW_ACTIVATED	= 1,
+				READ 			= 2,
+				WRITE 			= 3,
+				PRECHARGE 		= 4,
+				ERROR 			= 5
+
+			bank_state = bank_states.IDLE
+
+			bank_memory = {}
+			activated_row = None
+			column = None
+
+			writes_remaining = None
+			reads_remaining = None
+			cas_latency_elapsed = False
+
+			auto_precharge = False
+
+			clks_since_active = None
+			clks_at_read_cmd = None
+			clks_at_last_write = None
+			clks_at_last_read = None
+
+			print_bank_debug_statements = True
+			
+			yield Passive()
+			
+			while True:
+
+				def bprint(*args):
+					if print_bank_debug_statements:
+						colors = ["red", "green", "yellow", "blue"]
+						outstr = f"Bank {bank_id}, {bank_state} : "
+						for arg in args:
+							outstr += str(arg)
+						cprint(outstr, colors[bank_id])
+
+
+				def inspect_bank_memory():
+					for row_id, row_data in bank_memory.items():
+						data_str = f"from bank {bank_id}, row {hex(row_id)}:"
+						for i, (col_id, col_data) in enumerate(row_data.items()):
+							if i == 0:
+								data_str += f"col {hex(col_id)}:"
+								bprint(data_str)
+								data_str = ""
+							data_str += f"[{hex(col_data)}]"
+							if (i+1)%self.config_params.burstlen==0:
+								bprint(data_str)
+								data_str = ""
+						if data_str != "":
+							bprint(data_str)
+				
+				def inspect_reads_to_return():
+					data_str = ""
+					for r in self.reads_to_return:
+						if r["bank_src"] == None:
+							# print(r["data"])
+							# bprint(None)
+							# data_str += 
+							data_str += f"[]"
+						else:
+							value = r["data"]
+							data_str += f"[{hex(value)}]"
+					bprint("reads to return: ", data_str)
+						
+
+					# print(f"Bank {bank_id}, {bank_state} : {[a for a in args]}")
+				if bank_id == (yield dut_ios.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
+					cmd = sdram_cmds((yield dut_ios.cmd)) 
+				else:
+					cmd = sdram_cmds.CMD_NOP
+				
+				# self.dq_write_en = False # reset the default here
+
+				# if bank_id == 1:
+				if cmd not in [
+						sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL,
+						sdram_cmds.CMD_PRE, sdram_cmds.CMD_PALL,
+						sdram_cmds.CMD_REF, sdram_cmds.CMD_SELF,
+						sdram_cmds.CMD_MRS
+					]:
+					# in general, ignore these cmds for bank operation...? so no need to print them in general
+					pass
+
+					bprint("cmd: ", cmd, ", clks since active: ", clks_since_active)
+				# --------------------------------------------------------
+				if bank_state == bank_states.IDLE:
+					if cmd == sdram_cmds.CMD_ACT:
+						yield from self.assert_cmd_is(dut_ios, sdram_cmds.CMD_ACT)
+						temp_row = (yield dut_ios.a)
+						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(dut_ios, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
+						# try:
+						# except:
+						# 	# yield self.flagC.eq(1)
+						# 	return 
+
+						activated_row = temp_row
+						bprint("Activated row: ", hex(activated_row))
+						clks_since_active = waited_for_clks
+						
+
+						if activated_row not in bank_memory:
+							bank_memory[activated_row] = {} #[None] * 512 # is this right?
+
+						bank_state = bank_states.ROW_ACTIVATED
+
+						if new_cmd != cmd:
+							bprint(f"New command recieved: {new_cmd}, (last command was {cmd}")
+							# yield self.flagB.eq(1)
+							continue
+						# yield self.flagA.eq(0)
+					else:
+						# print("Error! cmd is ",cmd)
+						# print(".", end="")
+						# yield self.flagA.eq(1)
+						# assert cmd in [
+						if cmd not in [
+							sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL,
+							sdram_cmds.CMD_PRE, sdram_cmds.CMD_PALL,
+							sdram_cmds.CMD_REF, sdram_cmds.CMD_SELF,
+							sdram_cmds.CMD_MRS
+						]:
+							bprint("Error! cmd  is ",cmd)
+							# yield self.flagA.eq(1)
+							return
+
+				elif bank_state == bank_states.ROW_ACTIVATED:
+					# yield self.flagD.eq(1)
+					# print("woohoo! ", bank_id, cmd)
+					if cmd in [sdram_cmds.CMD_WRITE, sdram_cmds.CMD_WRITE_AP]:
+						inspect_bank_memory()
+
+						if cmd == sdram_cmds.CMD_WRITE_AP:
+							auto_precharge = True
+						else:
+							auto_precharge = False
+						column = (yield dut_ios.a) & 0x1FF
+						bank_memory[activated_row][column] = (yield dut_ios.copi_dq)
+						writes_remaining = self.config_params.burstlen - 1
+						if writes_remaining > 0: # this deals with the case of a burst length of 1
+							bank_state = bank_states.WRITE
+					
+					elif cmd in [sdram_cmds.CMD_READ, sdram_cmds.CMD_READ_AP]:
+						inspect_bank_memory()
+						if cmd == sdram_cmds.CMD_READ_AP:
+							auto_precharge = True
+						else:
+							auto_precharge = False
+						column = (yield dut_ios.a) & 0x1FF
+						reads_remaining = self.config_params.burstlen
+
+						clks_until_latency_elapsed = self.config_params.latency - 1
+
+						# this bank is now controlling reads in <latency> cycles,
+						if len(self.reads_to_return) > clks_until_latency_elapsed:
+							# so remove any reads other banks may have scheduled
+							self.reads_to_return = self.reads_to_return[:clks_until_latency_elapsed]
+						else:
+							# or pad the duration before <latency> with blanks, if needed
+							while len(self.reads_to_return) < clks_until_latency_elapsed:
+								self.reads_to_return.append({"bank_src" : None})
+
+						# now schedule in writes from this bank, do one for
+						# each clock after read, because that's when dqm is sampled
+						# note: these writes will appear on the dqm bus <latency> clocks later
+						if ~(yield dut_ios.dqm):
+							# print(hex(activated_row), hex(column)) 
+							# print(activated_row, column)
+							# print(bank_memory)
+							# print(bank_memory[activated_row])
+							# print("Appending to reads_to_return: ", hex(bank_memory[activated_row][column])) # so the issue is before here
+							self.reads_to_return.append({"bank_src" : bank_id, "data" : bank_memory[activated_row].pop(column)}) # as reads on the sdram chip are destructive I think? test this!
+
+						else:
+							self.reads_to_return.append({"bank_src" : None})
+
+						# bprint("zzzz")
+						# bprint(self.reads_to_return)
+						column += 1
+						reads_remaining -= 1
+
+						# todo - do reads of length 1 exist? or need to be implemented?
+						# clks_at_read_cmd = clks_since_active
+						bank_state = bank_states.READ
+						# inspect_bank_memory()
+
+				# --------------------------------------------------------
+				elif bank_state == bank_states.READ:
+					# note! due to using an additional buf latch (so the output is stable on rising edge),
+					# the delay is 1 there, so we reduce the delay here
+					# latency_to_use = self.mode["latency"].value - 1
+
+					# cas_latency_elapsed = True if (clks_since_active - clks_at_read_cmd) >= latency_to_use else False
+
+					if reads_remaining != None:
+						if reads_remaining > 0:
+							if ~(yield dut_ios.dqm):
+								self.reads_to_return.append({"bank_src" : bank_id, "data" : bank_memory[activated_row].pop(column)})
+							else:
+								self.reads_to_return.append({"bank_src" : None})
+
+							# bprint(self.reads_to_return)
+							
+							column += 1
+							reads_remaining -= 1
+
+						if reads_remaining == 0:
+							reads_remaining = None
+						
+						inspect_reads_to_return()
+					
+					if (reads_remaining == None):
+						if not auto_precharge:
+							assert 0, "not implemented yet"
+							bprint("-", end="")
+							# timing...? or do that in row_activated?
+							bank_state = bank_states.ROW_ACTIVATED
+						else:
+							bank_state = bank_states.IDLE # oh my fucking god
+							
+
+
+
+				# --------------------------------------------------------
+				elif bank_state == bank_states.WRITE: #[sdram_cmds.CMD_WRITE, sdram_cmds.CMD_WRITE_AP]:
+					
+					if cmd in [sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL]:
+						# yield self.flagB.eq(~(yield self.flagB))
+						# then continue an existing burst write
+						# todo: exit early if another read/write command happens? p.50 of datasheet
+						if writes_remaining != None:
+							if writes_remaining > 0:
+								writes_remaining -= 1
+								column += 1
+								bank_memory[activated_row][column] = (yield dut_ios.copi_dq)
+							
+							if writes_remaining == 0:
+								writes_remaining = None
+								clks_at_last_write = clks_since_active
+								# how about timing?
+								inspect_bank_memory()
+
+						bprint(f"clks since active: {clks_since_active}")
+
+					if writes_remaining == None:
+						if auto_precharge:
+							if cmd in [sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL, sdram_cmds.CMD_ACT]:
+								if clks_at_last_write != None:
+									# we need T_dpl + T_rp between the last write and the next active cmd
+									timing_passed = True
+									timing_passed = clks_since_active >= self.num_clk_cycles(self.config_params.ic_timing.T_RAS) if timing_passed else False
+									
+									if not auto_precharge:
+										timing_passed = (clks_since_active-clks_at_last_write) >= self.num_clk_cycles(self.config_params.ic_timing.T_DPL.value + self.config_params.ic_timing.T_RP.value) if timing_passed else False
+									else:
+										timing_passed = (clks_since_active-clks_at_last_write) >= self.num_clk_cycles(self.config_params.ic_timing.T_DAL) if timing_passed else False
+									
+									if timing_passed:
+										bank_state = bank_states.IDLE
+										clks_since_active = None
+										clks_at_last_write = None
+										
+										bprint("passed")
+										continue
+									else:
+										bprint("Waiting")
+						elif not auto_precharge:
+							# then we need a discreet state for 'precharge', T_dpl after the last write
+							# or just return to active?
+							assert 0, "not implemented yet"
+							bank_state = bank_states.ROW_ACTIVATED
+
+				# --------------------------------------------------------
+				elif bank_state == bank_states.PRECHARGE:
+					pass
+
+				# --------------------------------------------------------
+				elif bank_state == bank_states.ERROR:
+					pass
+
+				# yield from self.assert_cmd_is(sdram_cmds.CMD_ACT)
+				# print(bank_memory)
+				
+				clks_since_active = clks_since_active + 1 if (clks_since_active != None) else None
+				yield
+				# print(",")
+
+			# assert the bank state is inactive
+
+		return func
+
+	def propagate_i_dq_reads(self, dut_ios):
+		def func():
+			""" 
+			This will only use the dq bus if a valid write occured <latency> clocks ago
+			"""
+			yield Passive()
+			while True:
+				if len(self.reads_to_return) > 0:
+					next_write = self.reads_to_return.pop(0) # {"bank_src" : x, "data" : y}
+
+					if next_write["bank_src"] != None:
+						# print("next write is ", next_write["bank_src"], hex(next_write["data"]))
+						yield dut_ios.cipo_dq.eq(next_write["data"])
+						# yield self.nflagA.eq(1)
+					# else:
+						# yield self.nflagA.eq(0)
+
+				# else:
+					# yield self.nflagA.eq(0)
+				yield
 		return func

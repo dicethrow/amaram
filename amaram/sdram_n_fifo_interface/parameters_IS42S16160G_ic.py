@@ -10,7 +10,9 @@ class ic_timing(Enum): # minimums
 	T_RCD	= 15e-9
 	T_MRD	= 14e-9 # this is very slightly over 2 clock cycles, so we use 3 clock cycles
 	T_RAS	= 37e-9 # max is 100e-6
+	T_DAL	= 30e-9 # input data to active / refresh command delay time, during auto precharge
 	T_XSR	= 70e-9
+	T_DPL 	= 14e-9
 	# T_RAS 	= 0 # for precharge ?
 
 class ic_refresh_timing(Enum):

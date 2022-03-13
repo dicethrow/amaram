@@ -54,15 +54,86 @@ Goals:
 
 Ideas:
 - ah! so burst ID (i.e. which of the two 8-word bursts we're in) is entirely a concept for the fifo controller, not the rw controller! let's remove it from here then
+
+
+based on the datasheet on p.35 and p.45  
+note that this only does 16-word burst reads and writes, of 8 writes each with a numbursts of 2
+
+When the fifo controller's outputs follow this structure
+
+...][	fifo a	]								 													 [	fifo a	]					 																 [	fifo b	][...	
+...][read/write	]			 					 													 [read/write]					 													 			 [read/write][...
+...][	addr a0	]								 													 [	addr a8	]					 																 [	addr b0	][...
+...][	data a0	][	data a1	][	data a2	][	data a3	][	data a4	][	data a5	][	data a6	][	data a7	][	data a8	][	data a9	][	data a10][	data a11][	data a12][	data a13][	data a14][	data a15][	data b0	][...
+
+for writes, this class needs to do:
+
+	[	ACTIVE	]						 [	WRITE	]
+	[	bank	]						 [	bank	]
+	[	row		]							
+											[	col		]
+											[	data 0	][	data 1	][	data 2	][	data 3	][	data 4	][	data 5	][	data 6	][	data 7	]
+
+	[	dqm=1	][	dqm=1	][	dqm=1	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	]		dqm=1 defult
+
+	^--this dqm only needed after read--^
+		to prevent possible bus contention?
+		default dqm to 1 so it should fulfil this by defualt?
+
+	|<---t_ra ?------------------------>|	
+			(assume t_ra_clks = 3)
+										col from Past(..., clocks=t_ra_clks)
+										data from col from Past(..., clocks=t_ra_clks, t_ra_clks+1)
+
+
+for reads, similar but with a 'pipeline' thing to send data back to the fifo controller
+in a way that lets its fsm focus on what to do next, and handle the read data in the background
+
+	[	ACTIVE	]						 [	READ	]
+	[	bank	]						 [	bank	]
+	[	row		]							
+											[	col		]
+																			[	data 0	][	data 1	][	data 2	][	data 3	][	data 4	][	data 5	][	data 6	][	data 7	]
+				dqm=1 defult						 [	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	][	dqm=0	]
+														^--2clks before dq-----^	
+
+	|<---t_ra ?------------------------>|<---------------t_cas_clks-------->|
+			(assume t_ra_clks = 3)				(assume t_cas_clks = 3)
+
+dqm should be high 2 clocks before data is to be read...?
+
+dqm: from datasheet
+	- for normal operation, dqm should be low
+		- in read mode, dqm controls the output buffer, and functions like OEn; when low, the buffer is enabled; when high, the pins are high-z
+			- DQ's read data is subject to the state of DQM 2 clock cycles earlier. if DQM is high, the DQs will be high-z 2 clock cycles later
+		- in write mode, dqm controls the input buffer; when low, data can be written to the device; when high, data is ignored
+			- DQ's write data is subject to the state of DQM at the same time instant as the DQ data.
+	- to switch from read to write,
+		- DQM must be asserted high at least three clock cycles before the WRITE command to supress data-out from read.
+		- DQM must be deasserted low synchronous with the read command, so it is not masked
+	- to switch from write to read,
+		- 
+	
+
+
+
+then, imagine these commands, but interlaced, so the sdram has near 100% uptime!
+note that there is a bit of 'wasted' clock cycles when transitioning from read to writes, but writes commands (from the fifo controller) can transition to reads in the next clock cycle..
+
+
 """
+
 def min_num_of_clk_cycles(freq_hz, period_sec):
 	return int(np.ceil(period_sec * freq_hz))
 
 class controller_readwrite(Elaboratable):
 	ui_layout = [
 		("task",	rw_cmds,	DIR_FANOUT),
-		("addr",			None,		None), # added dynamically below
-		("data",			None,		None), # added dynamically below
+		("addr",			None,		None), # the ones with None are added dynamically below
+		("data",			None,		None),
+		("readback_active",	1,		DIR_FANIN),
+		("readback_addr",	None,		None),
+		("readback_data",	None,		None),
 
 	]
 
@@ -74,6 +145,12 @@ class controller_readwrite(Elaboratable):
 
 				elif (controller_readwrite.ui_layout[i][0] == "data") and (controller_readwrite.ui_layout[i][1]) == None:
 					controller_readwrite.ui_layout[i] = ("data", self.config_params.rw_params.DATA_BITS.value, DIR_FANOUT)
+				
+				elif (controller_readwrite.ui_layout[i][0] == "readback_addr") and (controller_readwrite.ui_layout[i][1]) == None:
+					controller_readwrite.ui_layout[i] = ("readback_addr", self.config_params.rw_params.get_ADDR_BITS(), DIR_FANIN)
+				
+				elif (controller_readwrite.ui_layout[i][0] == "readback_data") and (controller_readwrite.ui_layout[i][1]) == None:
+					controller_readwrite.ui_layout[i] = ("readback_data", self.config_params.rw_params.DATA_BITS.value, DIR_FANIN)
 
 		super().__init__()
 
@@ -110,7 +187,7 @@ class controller_readwrite(Elaboratable):
 			_controller_pin_ui.ios.clk_en.eq(1), # best done here or elsewhere?
 			_controller_pin_ui.ios.dqm.eq(1), 
 			_controller_pin_ui.ios.copi_dq.eq(0),
-			_controller_pin_ui.ios.cipo_dq.eq(0),
+			# _controller_pin_ui.ios.cipo_dq.eq(0),
 			_controller_pin_ui.ios.a.eq(0),
 			_controller_pin_ui.ios.ba.eq(0),
 		]
@@ -139,8 +216,11 @@ class controller_readwrite(Elaboratable):
 		t_cas_clks = 3
 
 		# main logic, per bank
-		bank_idle_array = Array(Signal(name=f"bank_idle_{i}") for i in range(num_banks))
-		for bank_id, bank_idle in enumerate(bank_idle_array):
+		bank_using_array = Array(Record([
+			("cmd_and_addr_bus",	1),
+			("data_bus",			1)
+		]) for i in range(num_banks)) # for debuging, so we can see bus contention etc
+		for bank_id, bank_using in enumerate(bank_using_array):
 			with m.FSM(name=f"rw_bank_{bank_id}_fsm") as fsm:
 				""" 
 				todo:
@@ -148,11 +228,16 @@ class controller_readwrite(Elaboratable):
 				  here .sync's are used everywhere instead
 				
 				"""
-				m.d.sync += bank_idle.eq(fsm.ongoing("IDLE"))
+				# default to not using resources
+				m.d.sync += [
+					bank_using.cmd_and_addr_bus.eq(0),
+					bank_using.data_bus.eq(0),
+				]
 
 				with m.State("IDLE"):
 					with m.If((bank == bank_id) & (burst_index == 0) & (Past(_ui.task) != rw_cmds.RW_IDLE)):
 						m.d.sync += [
+							bank_using.cmd_and_addr_bus.eq(1),
 							_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_ACT),
 							_controller_pin_ui.ios.ba.eq(Past(bank_id)),	
 							_controller_pin_ui.ios.a.eq(Past(row)),
@@ -176,18 +261,25 @@ class controller_readwrite(Elaboratable):
 
 				with m.State("WRITE_0"):
 					m.d.sync += [
+						bank_using.cmd_and_addr_bus.eq(1),
+						bank_using.data_bus.eq(1),
 						_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_WRITE_AP),
 						_controller_pin_ui.ios.ba.eq(bank_id), # constant for this bank
+
+						# 13mar2022 note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
+						# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
 						_controller_pin_ui.ios.a.eq(Past(col, clocks=t_ra_clks)),
 						_controller_pin_ui.ios.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+
 						_controller_pin_ui.ios.dqm.eq(0),  # dqm low synchronous with write data
 					]
 					m.next = "WRITE_1"
 				
-				for i in range(self.config_params.burstlen):
+				for i in range(self.config_params.burstlen-1): # is the -1 needed?
 					byte_id = i+1
 					with m.State(f"WRITE_{byte_id}"):
 						m.d.sync += [
+							bank_using.data_bus.eq(1),
 							_controller_pin_ui.ios.copi_dq.eq(Past(data, clocks=t_ra_clks)),
 							_controller_pin_ui.ios.dqm.eq(0),  # dqm low synchronous with write data
 						]
@@ -200,8 +292,45 @@ class controller_readwrite(Elaboratable):
 				##################### read ###############################
 
 				with m.State("READ_-3"):
-					m.next = "ERROR"
+					# do a check to see if the dqm condition was met
+					# with self.m.If(Cat([Past(self.ios.o_dqm, clocks=1+j, domain="sdram") for j in range(3)]) != 0b111):
+					# 	self.m.next = "ERROR"
 
+					m.d.sync += [
+						bank_using.cmd_and_addr_bus.eq(1),
+						_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_READ_AP),
+						_controller_pin_ui.ios.ba.eq(bank_id), # constant for this bank
+						_controller_pin_ui.ios.a.eq(Past(col, clocks=t_ra_clks)),
+						_controller_pin_ui.ios.dqm.eq(0),
+					]
+					m.next = "READ_-2"
+				
+				for i in range(self.config_params.burstlen+2):
+					byte_id = i-2
+					with m.State(f"READ_{byte_id}"):
+						if byte_id in [b-2 for b in range(self.config_params.burstlen-1)]:
+							m.d.sync += _controller_pin_ui.ios.dqm.eq(0) # assuming this is 2 clks before a read
+						
+						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
+							m.d.sync += [
+								bank_using.data_bus.eq(1),
+								_ui.readback_active.eq(1),
+								_ui.readback_addr.eq(Past(_ui.addr, clocks=t_ra_clks + t_cas_clks + 3)), # is this right? todo: make this in a better/more robust way
+								_ui.readback_data.eq(_controller_pin_ui.ios.cipo_dq)
+								# _controller_pin_ui.ios.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+								# _controller_pin_ui.ios.dqm.eq(0),  # dqm low synchronous with write data
+							]
+						# else:
+						# 	m.d.sync += [
+						# 		_ui.readback_active.eq(0),
+						# 		_ui.readback_addr.eq(0),
+						# 		_ui.readback_data.eq(0)
+						# 	]
+
+						if byte_id < (self.config_params.burstlen)-1:
+							m.next = f"READ_{byte_id+1}"
+						else:
+							m.next = "IDLE" #"IDLE_END"
 
 				with m.State("ERROR"):
 					...
@@ -248,48 +377,100 @@ if __name__ == "__main__":
 		...
 
 	elif args.action == "simulate": # time-domain testing
-		# class readwriteCtrl_sim_thatGivenAddress_generatesCorrectBankColumnAndRowValues(FHDLTestCase):
-		# 	def test_sim(self):
-		# 		from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-		# 		from model_sdram import model_sdram
+		if False:
+			class readwriteCtrl_sim_thatGivenAddress_generatesCorrectBankColumnAndRowValues(FHDLTestCase):
+				def test_sim(self):
+					from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
 
-		# 		config_params = Params()
-		# 		config_params.clk_freq = 143e6
-		# 		config_params.ic_timing = ic_timing
-		# 		config_params.ic_refresh_timing = ic_refresh_timing
-		# 		config_params.rw_params = rw_params
+					config_params = Params()
+					config_params.clk_freq = 143e6
+					config_params.ic_timing = ic_timing
+					config_params.ic_refresh_timing = ic_refresh_timing
+					config_params.rw_params = rw_params
 
-		# 		utest_params = Params()
+					utest_params = Params()
 
-		# 		dut = controller_readwrite(config_params, utest_params, utest=self)
+					dut = controller_readwrite(config_params, utest_params, utest=self)
 
-		# 		sim = Simulator(dut)
-		# 		sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+					sim = Simulator(dut)
+					sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
-		# 		def pass_address_and_inspect_row_col_and_bank():
-		# 			for i in range(100):
-		# 				yield dut.ui.addr.eq(i)
-		# 				yield
+					def pass_address_and_inspect_row_col_and_bank():
+						for i in range(100):
+							yield dut.ui.addr.eq(i)
+							yield
+						
+						for i in [0b0, 0b111, 0b11000, 0b11111100111, 0b1111111111100000000000]:
+							yield dut.ui.addr.eq(i)
+							yield
+
+						for i in range(22):
+							yield dut.ui.addr.eq(1<<i)
+							yield
+						
+						for _ in range(10):
+							yield
+
+					sim.add_sync_process(pass_address_and_inspect_row_col_and_bank)
+
+
+					with sim.write_vcd(
+						f"{current_filename}_{self.get_test_id()}.vcd"):
+						sim.run()
+
+			class readwriteCtrl_sim_thatBurstIncrementingAddress_generatesInspectableWriteAndReadSequences(FHDLTestCase):
+				def test_sim(self):
+					from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
+
+					config_params = Params()
+					config_params.ic_timing = ic_timing
+					config_params.ic_refresh_timing = ic_refresh_timing
+					config_params.rw_params = rw_params
+					config_params.clk_freq = 143e6
+					config_params.burstlen = 8
+					# config_params.numbursts = 2 # only used in the fifo controller, not in rw controller
+
+					utest_params = Params()
+
+					dut = controller_readwrite(config_params, utest_params, utest=self)
+
+					sim = Simulator(dut)
+					sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+
+					def use_ui_and_see_if_correct_rw_behaviour():
+						num_full_bursts = 5 # e.g.
+						addr_offset = 0xABCDE
+						for action in [rw_cmds.RW_WRITE, rw_cmds.RW_READ]:
+							for i in range(config_params.burstlen * num_full_bursts):
+								i += addr_offset
+
+								if action == rw_cmds.RW_WRITE:
+									yield dut.ui.data.eq(i)
+								elif action == rw_cmds.RW_READ:
+									# yield dut.controller_pin_ui.ios.cipo_dq.eq(i) # is this right? reading data from the chip?
+									... # no: use the chip model for this
+
+								yield dut.ui.addr.eq(i)
+
+								if ((i % config_params.burstlen) == 0):
+									yield dut.ui.task.eq(action)
+								else:
+									yield dut.ui.task.eq(action)
+
+								yield
+							
+							# a few extra clocks at the end
+							for _ in range(10):
+								yield
+
+					sim.add_sync_process(use_ui_and_see_if_correct_rw_behaviour)
+
 					
-		# 			for i in [0b0, 0b111, 0b11000, 0b11111100111, 0b1111111111100000000000]:
-		# 				yield dut.ui.addr.eq(i)
-		# 				yield
-
-		# 			for i in range(22):
-		# 				yield dut.ui.addr.eq(1<<i)
-		# 				yield
-					
-		# 			for _ in range(10):
-		# 				yield
-
-		# 		sim.add_sync_process(pass_address_and_inspect_row_col_and_bank)
-
-
-		# 		with sim.write_vcd(
-		# 			f"{current_filename}_{self.get_test_id()}.vcd"):
-		# 			sim.run()
-
-		class readwriteCtrl_sim_thatBurstIncrementingAddress_generatesCorrectWriteSequences(FHDLTestCase):
+					with sim.write_vcd(
+						f"{current_filename}_{self.get_test_id()}.vcd"):
+						sim.run()
+				
+		class readwriteCtrl_sim_thatWritingThenReadingBack_readsCorrectValues(FHDLTestCase):
 			def test_sim(self):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
 				from model_sdram import model_sdram
@@ -300,6 +481,7 @@ if __name__ == "__main__":
 				config_params.rw_params = rw_params
 				config_params.clk_freq = 143e6
 				config_params.burstlen = 8
+				config_params.latency = 3
 				# config_params.numbursts = 2 # only used in the fifo controller, not in rw controller
 
 				utest_params = Params()
@@ -309,32 +491,40 @@ if __name__ == "__main__":
 				sim = Simulator(dut)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
+				sdram_model = model_sdram(config_params, utest_params)
+				for i in range(4): # num of banks
+					sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, dut_ios=dut.controller_pin_ui.ios))
+				sim.add_sync_process(sdram_model.propagate_i_dq_reads(dut_ios=dut.controller_pin_ui.ios))
+
 				def use_ui_and_see_if_correct_rw_behaviour():
-					num_full_bursts = 5 # e.g.
-					addr_offset = 0xABCDE
-					for i in range(config_params.burstlen * num_full_bursts):
-						i += addr_offset
-						yield dut.ui.data.eq(i)
-						yield dut.ui.addr.eq(i)
+					num_full_bursts = 8 # e.g.
 
-						if ((i % config_params.burstlen) == 0):
-							yield dut.ui.task.eq(rw_cmds.RW_WRITE)
-						else:
-							yield dut.ui.task.eq(rw_cmds.RW_IDLE)
+					# note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
+					# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
+					addr_offset = 0x0000
 
-						yield
-					
-					# for i in [0b0, 0b111, 0b11000, 0b11111100111, 0b1111111111100000000000]:
-					# 	yield dut.ui.addr.eq(i)
-					# 	yield
+					for action in [rw_cmds.RW_WRITE, rw_cmds.RW_READ]:
+						for i in range(config_params.burstlen * num_full_bursts):
+							i += addr_offset
 
-					# for i in range(22):
-					# 	yield dut.ui.addr.eq(1<<i)
-					# 	yield
-					
-					# a few extra clocks at the end
-					for _ in range(10):
-						yield
+							if action == rw_cmds.RW_WRITE:
+								yield dut.ui.data.eq(i)
+							elif action == rw_cmds.RW_READ:
+								# yield dut.controller_pin_ui.ios.cipo_dq.eq(i) # is this right? reading data from the chip?
+								... # no: use the chip model for this
+
+							yield dut.ui.addr.eq(i)
+
+							if ((i % config_params.burstlen) == 0):
+								yield dut.ui.task.eq(action)
+							else:
+								yield dut.ui.task.eq(action)
+
+							yield
+						
+						# a few extra clocks at the end
+						for _ in range(10):
+							yield
 
 				sim.add_sync_process(use_ui_and_see_if_correct_rw_behaviour)
 
@@ -342,7 +532,6 @@ if __name__ == "__main__":
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
 					sim.run()
-				
 
 	if args.action in ["generate", "simulate"]:
 		# now run each FHDLTestCase above 

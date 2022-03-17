@@ -69,7 +69,7 @@ class controller_refresh(Elaboratable):
 	so the refresh requirements are never exceeded
 	"""
 	ui_layout = [
-		# ("uninitialised",	1,			DIR_FANIN),	# high until set low later on
+		("initialised",	1,				DIR_FANIN),	# high until set low later on
 		("request_to_refresh_soon",	1,	DIR_FANIN),	# 
 		("enable_refresh",	1,			DIR_FANOUT),
 		("refresh_in_progress",	1,		DIR_FANIN),
@@ -144,10 +144,9 @@ class controller_refresh(Elaboratable):
 			with m.State("AFTER_RESET"):
 				def initialise_and_load_mode_register():
 					# replicating p. 22 of datasheet
-					complete = Signal()
 					with m.FSM(domain="sync", name="initialise_and_load_mode_register_fsm") as fsm:
 
-						m.d.sync += complete.eq(fsm.ongoing("DONE"))
+						m.d.sync += _ui.initialised.eq(fsm.ongoing("DONE"))
 
 						with m.State("POWERUP"):
 							m.next = "POWERUP_WAITING"
@@ -192,7 +191,7 @@ class controller_refresh(Elaboratable):
 							# m.d.sync += _ui.uninitialised.eq(0)
 							...
 					
-					return complete
+					return _ui.initialised
 				with m.If(initialise_and_load_mode_register()):
 					m.next = "REQUEST_REFRESH_SOON"
 
@@ -394,6 +393,7 @@ if __name__ == "__main__":
 				config_params.ic_refresh_timing = ic_refresh_timing
 
 				utest_params = Params()
+				utest_params.skip_cmd_decoding = True
 
 				dut = controller_refresh(config_params, utest_params, utest=self)
 				
@@ -401,7 +401,7 @@ if __name__ == "__main__":
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
 				sdram_model = model_sdram(config_params, utest_params)
-				sim.add_sync_process(sdram_model.get_refresh_monitor_process(dut_ios=dut.controller_pin_ui.ios))
+				sim.add_sync_process(sdram_model.get_refresh_monitor_process(dut_ios=dut.controller_pin_ui))
 
 				def use_refresher_with_resource_blocking_task():
 					def resource_blocking_task():

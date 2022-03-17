@@ -32,6 +32,9 @@ class sdram_sim_utils:
 			# {"bank_src" : None}
 		]
 
+		# add some default parameters. Could this be done better?
+		if not hasattr(self.utest_params, "skip_cmd_decoding"): 	self.utest_params.skip_cmd_decoding = False
+
 	def num_clk_cycles(self, delay):
 		if isinstance(delay, enum.Enum):
 			num_clk_cycles = int(np.ceil(self.config_params.clk_freq * delay.value))
@@ -42,9 +45,18 @@ class sdram_sim_utils:
 		# num_clk_cycles -= 1
 		# print("Num clk cycles: ", num_clk_cycles)
 		return num_clk_cycles
+
+	def get_cmd(self, dut_ios):
+		if self.utest_params.skip_cmd_decoding:
+			decoded_cmd = sdram_cmds((yield dut_ios.cmd))
+			# print(f"cmd is {decoded_cmd}")
+		else:
+			assert 0, "cmd decoding not implemented yet here"
+		return decoded_cmd
 	
 	def assert_cmd_is(self, dut_ios, expected_cmd):
-		assert sdram_cmds((yield dut_ios.cmd)) == expected_cmd
+		# print(f"Asserting {yield from self.get_cmd(dut_ios)} == {expected_cmd}")
+		assert (yield from self.get_cmd(dut_ios)) == expected_cmd
 
 	def assert_idle_cmd_for(self, dut_ios, min_duration, focus_bank = None):
 		""" 
@@ -58,11 +70,11 @@ class sdram_sim_utils:
 		- must wait this much time... but how to catch for if invalid commands etc occur in this time? ...cover / bmc?
 		"""
 		valid_idle_states = [sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL]
-		initial_state = sdram_cmds((yield dut_ios.cmd))
+		initial_state = yield from self.get_cmd(dut_ios)
 		clks = 0
 		while True:
 			# yield Settle() # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
-			cmd = sdram_cmds((yield dut_ios.cmd))
+			cmd = yield from self.get_cmd(dut_ios)
 			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield dut_ios.ba) == focus_bank)):# (cmd == end_state):
 				if not (clks >= self.num_clk_cycles(min_duration)):
 					print("Error: ", clks, self.num_clk_cycles(min_duration))

@@ -32,7 +32,6 @@ from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
-# todo - make these dynamic from the chosen ic, e.g. bitwidth
 
 class controller_pin(Elaboratable):
 	# this represents the inter-module user interface

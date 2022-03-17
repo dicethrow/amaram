@@ -78,7 +78,7 @@ class controller_refresh(Elaboratable):
 
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
-		self.controller_pin_ui = Record(controller_pin.ui)
+		self.controller_pin_ui = Record(controller_pin.ui_layout)
 		self.ui = Record(controller_refresh.ui_layout)
 
 		self.config_params = config_params
@@ -107,15 +107,15 @@ class controller_refresh(Elaboratable):
 
 		m.d.sync += [
 			self.ui.connect(_ui),
-			# self.ui.ios.connect(_ui.ios) # does not cause errors.... hmm
-			# _ui.ios.connect(self.ui.ios), # so 'fanout' signals go the right way etc # note this line causes driver conflict
+			# self.ui.connect(_ui.ios) # does not cause errors.... hmm
+			# _ui.connect(self.ui.ios), # so 'fanout' signals go the right way etc # note this line causes driver conflict
 			_controller_pin_ui.connect(self.controller_pin_ui) # so 'fanout' signals go the right way etc
 		]
 
 		# default io values
 		m.d.sync += [
-			_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_NOP),
-			_controller_pin_ui.ios.clk_en.eq(1)
+			_controller_pin_ui.cmd.eq(sdram_cmds.CMD_NOP),
+			_controller_pin_ui.clk_en.eq(1)
 		]
 
 		with m.FSM(domain="sync", name="controller_refresh_fsm") as fsm:
@@ -156,21 +156,21 @@ class controller_refresh(Elaboratable):
 								m.next = "PRECH_BANKS"
 
 						with m.State("PRECH_BANKS"):
-							m.d.sync += _controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_PALL)
+							m.d.sync += _controller_pin_ui.cmd.eq(sdram_cmds.CMD_PALL)
 							m.next = "PRECH_BANKS_WAITING"
 						with m.State("PRECH_BANKS_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RP)):
 								m.next = "AUTO_REFRESH_1"
 
 						with m.State("AUTO_REFRESH_1"):
-							m.d.sync += _controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_REF)
+							m.d.sync += _controller_pin_ui.cmd.eq(sdram_cmds.CMD_REF)
 							m.next = "AUTO_REFRESH_1_WAITING"
 						with m.State("AUTO_REFRESH_1_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RC)):
 								m.next = "AUTO_REFRESH_2"
 						
 						with m.State("AUTO_REFRESH_2"):
-							m.d.sync += _controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_REF)
+							m.d.sync += _controller_pin_ui.cmd.eq(sdram_cmds.CMD_REF)
 							m.next = "AUTO_REFRESH_2_WAITING"
 						with m.State("AUTO_REFRESH_2_WAITING"):
 							with m.If(delayer.delay_for_time(ic_timing.T_RC)):
@@ -178,10 +178,10 @@ class controller_refresh(Elaboratable):
 
 						with m.State("LOAD_MODE_REG"):
 							m.d.sync += [
-								_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_MRS),
-								_controller_pin_ui.ios.a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
-								# _controller_pin_ui.ios.a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
-								# _controller_pin_ui.ios.a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
+								_controller_pin_ui.cmd.eq(sdram_cmds.CMD_MRS),
+								_controller_pin_ui.a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
+								# _controller_pin_ui.a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
+								# _controller_pin_ui.a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
 							]
 							m.next = "LOAD_MODE_REG_WAITING"
 						with m.State("LOAD_MODE_REG_WAITING"):
@@ -239,7 +239,7 @@ class controller_refresh(Elaboratable):
 			
 			with m.State("AUTO_REFRESH"):
 				m.d.sync += [
-					_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_REF),
+					_controller_pin_ui.cmd.eq(sdram_cmds.CMD_REF),
 					refresh_level.eq(Mux(
 							refresh_level < (self.clks_per_period - self.increment_per_refresh),
 							refresh_level + self.increment_per_refresh,

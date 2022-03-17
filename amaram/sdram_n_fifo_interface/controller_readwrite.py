@@ -161,7 +161,7 @@ class controller_readwrite(Elaboratable):
 		populate_interface_with_configurable_widths()
 
 		self.ui = Record(controller_readwrite.ui_layout)
-		self.controller_pin_ui = Record(controller_pin.ui)
+		self.controller_pin_ui = Record(controller_pin.ui_layout)
 
 		# add some default parameters. Could this be done better?
 		if not hasattr(self.config_params, "burstlen"): 	self.config_params.burstlen = 8
@@ -183,13 +183,13 @@ class controller_readwrite(Elaboratable):
 
 		# default io values
 		m.d.sync += [
-			_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_NOP),
-			_controller_pin_ui.ios.clk_en.eq(1), # best done here or elsewhere?
-			_controller_pin_ui.ios.dqm.eq(1), 
-			_controller_pin_ui.ios.copi_dq.eq(0),
-			# _controller_pin_ui.ios.cipo_dq.eq(0),
-			_controller_pin_ui.ios.a.eq(0),
-			_controller_pin_ui.ios.ba.eq(0),
+			_controller_pin_ui.cmd.eq(sdram_cmds.CMD_NOP),
+			_controller_pin_ui.clk_en.eq(1), # best done here or elsewhere?
+			_controller_pin_ui.dqm.eq(1), 
+			_controller_pin_ui.copi_dq.eq(0),
+			# _controller_pin_ui.cipo_dq.eq(0),
+			_controller_pin_ui.a.eq(0),
+			_controller_pin_ui.ba.eq(0),
 		]
 		
 
@@ -238,9 +238,9 @@ class controller_readwrite(Elaboratable):
 					with m.If((bank == bank_id) & (burst_index == 0) & (Past(_ui.task) != rw_cmds.RW_IDLE)):
 						m.d.sync += [
 							bank_using.cmd_and_addr_bus.eq(1),
-							_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_ACT),
-							_controller_pin_ui.ios.ba.eq(Past(bank_id)),	
-							_controller_pin_ui.ios.a.eq(Past(row)),
+							_controller_pin_ui.cmd.eq(sdram_cmds.CMD_ACT),
+							_controller_pin_ui.ba.eq(Past(bank_id)),	
+							_controller_pin_ui.a.eq(Past(row)),
 						]
 						m.next = "WAS_ACTIVE_NOP1"
 
@@ -263,15 +263,15 @@ class controller_readwrite(Elaboratable):
 					m.d.sync += [
 						bank_using.cmd_and_addr_bus.eq(1),
 						bank_using.data_bus.eq(1),
-						_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_WRITE_AP),
-						_controller_pin_ui.ios.ba.eq(bank_id), # constant for this bank
+						_controller_pin_ui.cmd.eq(sdram_cmds.CMD_WRITE_AP),
+						_controller_pin_ui.ba.eq(bank_id), # constant for this bank
 
 						# 13mar2022 note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
 						# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
-						_controller_pin_ui.ios.a.eq(Past(col, clocks=t_ra_clks)),
-						_controller_pin_ui.ios.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+						_controller_pin_ui.a.eq(Past(col, clocks=t_ra_clks)),
+						_controller_pin_ui.copi_dq.eq(Past(data, clocks=t_ra_clks)),
 
-						_controller_pin_ui.ios.dqm.eq(0),  # dqm low synchronous with write data
+						_controller_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
 					]
 					m.next = "WRITE_1"
 				
@@ -280,8 +280,8 @@ class controller_readwrite(Elaboratable):
 					with m.State(f"WRITE_{byte_id}"):
 						m.d.sync += [
 							bank_using.data_bus.eq(1),
-							_controller_pin_ui.ios.copi_dq.eq(Past(data, clocks=t_ra_clks)),
-							_controller_pin_ui.ios.dqm.eq(0),  # dqm low synchronous with write data
+							_controller_pin_ui.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+							_controller_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
 						]
 
 						if byte_id < (self.config_params.burstlen)-1:
@@ -293,15 +293,15 @@ class controller_readwrite(Elaboratable):
 
 				with m.State("READ_-3"):
 					# do a check to see if the dqm condition was met
-					# with self.m.If(Cat([Past(self.ios.o_dqm, clocks=1+j, domain="sdram") for j in range(3)]) != 0b111):
+					# with self.m.If(Cat([Past(self.o_dqm, clocks=1+j, domain="sdram") for j in range(3)]) != 0b111):
 					# 	self.m.next = "ERROR"
 
 					m.d.sync += [
 						bank_using.cmd_and_addr_bus.eq(1),
-						_controller_pin_ui.ios.cmd.eq(sdram_cmds.CMD_READ_AP),
-						_controller_pin_ui.ios.ba.eq(bank_id), # constant for this bank
-						_controller_pin_ui.ios.a.eq(Past(col, clocks=t_ra_clks)),
-						_controller_pin_ui.ios.dqm.eq(0),
+						_controller_pin_ui.cmd.eq(sdram_cmds.CMD_READ_AP),
+						_controller_pin_ui.ba.eq(bank_id), # constant for this bank
+						_controller_pin_ui.a.eq(Past(col, clocks=t_ra_clks)),
+						_controller_pin_ui.dqm.eq(0),
 					]
 					m.next = "READ_-2"
 				
@@ -309,16 +309,16 @@ class controller_readwrite(Elaboratable):
 					byte_id = i-2
 					with m.State(f"READ_{byte_id}"):
 						if byte_id in [b-2 for b in range(self.config_params.burstlen-1)]:
-							m.d.sync += _controller_pin_ui.ios.dqm.eq(0) # assuming this is 2 clks before a read
+							m.d.sync += _controller_pin_ui.dqm.eq(0) # assuming this is 2 clks before a read
 						
 						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
 							m.d.sync += [
 								bank_using.data_bus.eq(1),
 								_ui.readback_active.eq(1),
 								_ui.readback_addr.eq(Past(_ui.addr, clocks=t_ra_clks + t_cas_clks + 3)), # is this right? todo: make this in a better/more robust way
-								_ui.readback_data.eq(_controller_pin_ui.ios.cipo_dq)
-								# _controller_pin_ui.ios.copi_dq.eq(Past(data, clocks=t_ra_clks)),
-								# _controller_pin_ui.ios.dqm.eq(0),  # dqm low synchronous with write data
+								_ui.readback_data.eq(_controller_pin_ui.cipo_dq)
+								# _controller_pin_ui.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+								# _controller_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
 							]
 						# else:
 						# 	m.d.sync += [
@@ -447,7 +447,7 @@ if __name__ == "__main__":
 								if action == rw_cmds.RW_WRITE:
 									yield dut.ui.data.eq(i)
 								elif action == rw_cmds.RW_READ:
-									# yield dut.controller_pin_ui.ios.cipo_dq.eq(i) # is this right? reading data from the chip?
+									# yield dut.controller_pin_ui.cipo_dq.eq(i) # is this right? reading data from the chip?
 									... # no: use the chip model for this
 
 								yield dut.ui.addr.eq(i)
@@ -510,7 +510,7 @@ if __name__ == "__main__":
 							if action == rw_cmds.RW_WRITE:
 								yield dut.ui.data.eq(i)
 							elif action == rw_cmds.RW_READ:
-								# yield dut.controller_pin_ui.ios.cipo_dq.eq(i) # is this right? reading data from the chip?
+								# yield dut.controller_pin_ui.cipo_dq.eq(i) # is this right? reading data from the chip?
 								... # no: use the chip model for this
 
 							yield dut.ui.addr.eq(i)

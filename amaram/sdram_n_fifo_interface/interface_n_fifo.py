@@ -30,10 +30,11 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-from controller_pin import controller_pin
-from Delayer import Delayer
-
 from parameters_standard_sdram import sdram_cmds
+
+from controller_pin import controller_pin
+from controller_readwrite import controller_readwrite
+
 
 """ 
 This file is intended as the user interface, that will allow access to 
@@ -75,6 +76,12 @@ class sdram_n_fifo(Elaboratable):
 		self.ui = Record(sdram_n_fifo.ui_layout)
 		self.fifos = Array(Record(sdram_n_fifo.fifo_layout) for _ in range(self.config_params.num_fifos))
 
+		# calculate some relations
+		rw_params = self.config_params.rw_params
+		self.config_params.global_word_addr_bits = rw_params.BANK_BITS.value + rw_params.ROW_BITS.value + rw_params.COL_BITS.value
+		self.config_params.fifo_buf_id_bits = bits_for(self.config_params.num_fifos-1)
+		self.config_params.fifo_buf_word_addr_bits = self.config_params.global_word_addr_bits - self.config_params.fifo_buf_id_bits
+
 	def elaborate(self, platform = None):
 		def get_and_set_up_buffer_fifos():
 			# src_fifos[i] is a temporary buffer between data for data going from fpga->sdram
@@ -100,10 +107,11 @@ class sdram_n_fifo(Elaboratable):
 
 			# and make some control signals 
 			fifo_controls = Array(Record([
-				("words_stored_in_ram", 32), # todo: make this be the right width, something like global_word_addr_bits - fifo_id_bits?
-				("request_to_store_data_in_ram", 1),
-				("w_next_addr", 32),
-				("r_next_addr", 32)
+				("words_stored_in_ram", 			self.config_params.fifo_buf_word_addr_bits),
+				("fully_read",						1),
+				("request_to_store_data_in_ram", 	1),
+				("w_next_addr", 					self.config_params.fifo_buf_word_addr_bits),
+				("r_next_addr", 					self.config_params.fifo_buf_word_addr_bits)
 			]) for _ in range(self.config_params.num_fifos))
 
 			# now make a 'virtual' fifo for each pair, made by tying the inputs and outputs together
@@ -139,16 +147,18 @@ class sdram_n_fifo(Elaboratable):
 			
 			return src_fifos, dst_fifos, fifo_controls
 		
-		def route_data_through_sdram_or_bypass(test_override = None):
+		def route_data_through_sdram_or_bypass():
 			# route src_fifo to dst_fifo, until it's full, and if the sdram is not storing fifo data
 			# to start with, stream data straight from src_fifo to dst_fifo
 			for i, (src_fifo, dst_fifo) in enumerate(zip(src_fifos, dst_fifos)):
+
+				m.d.comb += fifo_controls[i].fully_read.eq(src_fifo.w_rdy & ~dst_fifo.r_rdy)
+
 				with m.FSM(name=f"fifo_{i}_router_fsm"):
 
 					with m.State("BYPASS_SDRAM"):
 						with m.If(fifo_controls[i].words_stored_in_ram != 0):
-							if test_override != "force_bypass":
-								m.next = "USE_SDRAM"
+							m.next = "USE_SDRAM"
 
 						with m.Elif(src_fifo.r_rdy):
 							with m.If(dst_fifo.w_rdy):
@@ -166,14 +176,36 @@ class sdram_n_fifo(Elaboratable):
 									src_fifo.r_en.eq(0),
 									dst_fifo.w_data.eq(0), # so the traces look cleaner
 									dst_fifo.w_en.eq(0)
-								]
-
-						...
-						
+								]						
 					
 					with m.State("USE_SDRAM"):
-						...
+						with m.If(fifo_controls[i].words_stored_in_ram == 0):
+							m.next = "BYPASS_SDRAM"
+						
+						# todo: should there be a check done around here that sdram contains at least a burstlen of space?
 
+		def get_interface_and_set_up_readwrite_module():
+			m.submodules.rw_ctrl = rw_ctrl = controller_readwrite(config_params)
+			rw_ui = Record.like(rw_ctrl.ui)
+			rw_pin_ui = Record.like(rw_ctrl.pin_ui)
+
+			m.d.sync += [
+				rw_ctrl.ui.connect(rw_ui),
+				rw_pin_ui.connect(rw_ctrl.pin_ui)
+			]
+
+	
+
+
+			
+		
+		def route_readback_pipeline_to_dstfifos():
+			readback_fifo_id = Signal(shape=bits_for(self.config_params.num_fifos-1))
+			readback_buf_addr = Signal(shape=self.config_params.fifo_buf_word_addr_bits)
+			readback_global_addr = Signal(shape=self.config_params.global_word_addr_bits)
+			# assuming the phase thing is accomplished by checking the low bits of the readback addr are zero
+
+			# todo - finish and test! and add the readwrite controller too
 
 		m = Module()
 
@@ -181,7 +213,10 @@ class sdram_n_fifo(Elaboratable):
 		ic_refresh_timing = self.config_params.ic_refresh_timing
 
 		src_fifos, dst_fifos, fifo_controls = get_and_set_up_buffer_fifos()
-		route_data_through_sdram_or_bypass(test_override = "force_bypass")
+		route_data_through_sdram_or_bypass()
+
+		rw_ui, rw_pin_ui = get_interface_and_set_up_readwrite_module()
+		route_readback_pipeline_to_dstfifos()
 
 		return m
 		
@@ -204,6 +239,7 @@ if __name__ == "__main__":
 		...
 
 	elif args.action == "simulate": # time-domain testing
+
 		class fifoInterface_sim_thatWrittenFifos_canBeReadBack(FHDLTestCase):
 			def test_sim(self):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
@@ -222,8 +258,9 @@ if __name__ == "__main__":
 
 				utest_params = Params()
 				utest_params.timeout_period = 20e-6 # seconds
-				utest_params.read_clk_freqs = [60e6] * config_params.num_fifos
-				utest_params.write_clk_freqs = [40e6] * config_params.num_fifos
+				utest_params.read_clk_freqs = config_params.num_fifos * [4e6]#[60e6] 
+				utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
+				utest_params.num_fifo_writes = 200 # 50
 
 				dut = sdram_n_fifo(config_params, utest_params, utest=self)
 
@@ -268,7 +305,7 @@ if __name__ == "__main__":
 						yield
 					return func
 				
-				def read_counter_values_from_fifo(fifo, num_reads, fifo_id = 0):
+				def read_counter_values_from_fifo(fifo, num_reads, fifo_id):
 					# todo - add asserts that this reads the expected values (i.e. incrementing)
 					def func():
 						yield Active()
@@ -313,14 +350,17 @@ if __name__ == "__main__":
 						for _ in range(10):
 							yield
 
-								
-
-								
 					return func
+					
 
 				for i in range(config_params.num_fifos):
-					sim.add_sync_process(write_counter_values_to_fifo(dut.fifos[i], 10, i), domain=config_params.fifo_write_domains[i])
-					sim.add_sync_process(read_counter_values_from_fifo(dut.fifos[i], 10, i), domain=config_params.fifo_read_domains[i])
+					sim.add_sync_process(write_counter_values_to_fifo(
+						dut.fifos[i], utest_params.num_fifo_writes, i), 
+						domain=config_params.fifo_write_domains[i])
+					
+					sim.add_sync_process(read_counter_values_from_fifo(
+						dut.fifos[i], utest_params.num_fifo_writes, i), 
+						domain=config_params.fifo_read_domains[i])
 					
 				
 				with sim.write_vcd(

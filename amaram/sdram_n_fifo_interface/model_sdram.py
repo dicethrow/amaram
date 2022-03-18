@@ -32,9 +32,6 @@ class sdram_sim_utils:
 			# {"bank_src" : None}
 		]
 
-		# add some default parameters. Could this be done better?
-		if not hasattr(self.utest_params, "skip_cmd_decoding"): 	self.utest_params.skip_cmd_decoding = False
-
 	def num_clk_cycles(self, delay):
 		if isinstance(delay, enum.Enum):
 			num_clk_cycles = int(np.ceil(self.config_params.clk_freq * delay.value))
@@ -46,19 +43,16 @@ class sdram_sim_utils:
 		# print("Num clk cycles: ", num_clk_cycles)
 		return num_clk_cycles
 
-	def get_cmd(self, dut_ios):
-		if self.utest_params.skip_cmd_decoding:
-			decoded_cmd = sdram_cmds((yield dut_ios.cmd))
-			# print(f"cmd is {decoded_cmd}")
-		else:
-			assert 0, "cmd decoding not implemented yet here"
+	def get_cmd(self, pin_ui):
+		decoded_cmd = sdram_cmds((yield pin_ui.cmd))
+		# print(f"cmd is {decoded_cmd}")
 		return decoded_cmd
 	
-	def assert_cmd_is(self, dut_ios, expected_cmd):
-		# print(f"Asserting {yield from self.get_cmd(dut_ios)} == {expected_cmd}")
-		assert (yield from self.get_cmd(dut_ios)) == expected_cmd
+	def assert_cmd_is(self, pin_ui, expected_cmd):
+		# print(f"Asserting {yield from self.get_cmd(pin_ui)} == {expected_cmd}")
+		assert (yield from self.get_cmd(pin_ui)) == expected_cmd
 
-	def assert_idle_cmd_for(self, dut_ios, min_duration, focus_bank = None):
+	def assert_idle_cmd_for(self, pin_ui, min_duration, focus_bank = None):
 		""" 
 		This will assert that for at least <min_duration> [seconds], the cmdi is in <valid_idle_states>.
 		After that period, this function returns when cmdi not in <valid_idle_states>, with the new cmd.
@@ -70,12 +64,12 @@ class sdram_sim_utils:
 		- must wait this much time... but how to catch for if invalid commands etc occur in this time? ...cover / bmc?
 		"""
 		valid_idle_states = [sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL]
-		initial_state = yield from self.get_cmd(dut_ios)
+		initial_state = yield from self.get_cmd(pin_ui)
 		clks = 0
 		while True:
 			# yield Settle() # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
-			cmd = yield from self.get_cmd(dut_ios)
-			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield dut_ios.ba) == focus_bank)):# (cmd == end_state):
+			cmd = yield from self.get_cmd(pin_ui)
+			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield pin_ui.ba) == focus_bank)):# (cmd == end_state):
 				if not (clks >= self.num_clk_cycles(min_duration)):
 					print("Error: ", clks, self.num_clk_cycles(min_duration))
 					assert 0
@@ -97,7 +91,7 @@ class model_sdram(sdram_sim_utils):
 	- add startup monitor (i.e. the thing that monitors what the set burstlen is)
 	"""
 
-	def get_refresh_monitor_process(self, dut_ios):
+	def get_refresh_monitor_process(self, pin_ui):
 		"""
 		todo - implement the self-refresh functionality, as on p.24 of the datasheet
 		- To represent the refresh state of the chip
@@ -142,8 +136,8 @@ class model_sdram(sdram_sim_utils):
 			while True:
 				try:
 					# ensure the banks are precharged...?
-					yield from self.assert_cmd_is(dut_ios, sdram_cmds.CMD_REF)
-					yield from self.assert_idle_cmd_for(dut_ios, min_duration = self.config_params.ic_timing.T_RC)
+					yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_REF)
+					yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RC)
 					
 					# print("Only gets here if a refresh was done succesfully, ", counter)
 					counter = (counter + increment_per_refresh) if ((counter + increment_per_refresh) < counter_max) else counter
@@ -178,7 +172,7 @@ class model_sdram(sdram_sim_utils):
 				# print(counter)
 		return func
 
-	def get_readwrite_process_for_bank(self, bank_id, dut_ios):
+	def get_readwrite_process_for_bank(self, bank_id, pin_ui):
 		""" 
 		This should be called once for each bank, to make a separate bank monitor process
 		"""
@@ -264,8 +258,8 @@ class model_sdram(sdram_sim_utils):
 						
 
 					# print(f"Bank {bank_id}, {bank_state} : {[a for a in args]}")
-				if bank_id == (yield dut_ios.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
-					cmd = sdram_cmds((yield dut_ios.cmd)) 
+				if bank_id == (yield pin_ui.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
+					cmd = sdram_cmds((yield pin_ui.cmd)) 
 				else:
 					cmd = sdram_cmds.CMD_NOP
 				
@@ -285,9 +279,9 @@ class model_sdram(sdram_sim_utils):
 				# --------------------------------------------------------
 				if bank_state == bank_states.IDLE:
 					if cmd == sdram_cmds.CMD_ACT:
-						yield from self.assert_cmd_is(dut_ios, sdram_cmds.CMD_ACT)
-						temp_row = (yield dut_ios.a)
-						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(dut_ios, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
+						yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_ACT)
+						temp_row = (yield pin_ui.a)
+						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
 						# try:
 						# except:
 						# 	# yield self.flagC.eq(1)
@@ -333,8 +327,8 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = True
 						else:
 							auto_precharge = False
-						column = (yield dut_ios.a) & 0x1FF
-						bank_memory[activated_row][column] = (yield dut_ios.copi_dq)
+						column = (yield pin_ui.a) & 0x1FF
+						bank_memory[activated_row][column] = (yield pin_ui.copi_dq)
 						writes_remaining = self.config_params.burstlen - 1
 						if writes_remaining > 0: # this deals with the case of a burst length of 1
 							bank_state = bank_states.WRITE
@@ -345,7 +339,7 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = True
 						else:
 							auto_precharge = False
-						column = (yield dut_ios.a) & 0x1FF
+						column = (yield pin_ui.a) & 0x1FF
 						reads_remaining = self.config_params.burstlen
 
 						clks_until_latency_elapsed = self.config_params.latency - 1
@@ -362,7 +356,7 @@ class model_sdram(sdram_sim_utils):
 						# now schedule in writes from this bank, do one for
 						# each clock after read, because that's when dqm is sampled
 						# note: these writes will appear on the dqm bus <latency> clocks later
-						if ~(yield dut_ios.dqm):
+						if ~(yield pin_ui.dqm):
 							# print(hex(activated_row), hex(column)) 
 							# print(activated_row, column)
 							# print(bank_memory)
@@ -393,7 +387,7 @@ class model_sdram(sdram_sim_utils):
 
 					if reads_remaining != None:
 						if reads_remaining > 0:
-							if ~(yield dut_ios.dqm):
+							if ~(yield pin_ui.dqm):
 								self.reads_to_return.append({"bank_src" : bank_id, "data" : bank_memory[activated_row].pop(column)})
 							else:
 								self.reads_to_return.append({"bank_src" : None})
@@ -431,7 +425,7 @@ class model_sdram(sdram_sim_utils):
 							if writes_remaining > 0:
 								writes_remaining -= 1
 								column += 1
-								bank_memory[activated_row][column] = (yield dut_ios.copi_dq)
+								bank_memory[activated_row][column] = (yield pin_ui.copi_dq)
 							
 							if writes_remaining == 0:
 								writes_remaining = None
@@ -488,7 +482,7 @@ class model_sdram(sdram_sim_utils):
 
 		return func
 
-	def propagate_i_dq_reads(self, dut_ios):
+	def propagate_i_dq_reads(self, pin_ui):
 		def func():
 			""" 
 			This will only use the dq bus if a valid write occured <latency> clocks ago
@@ -500,8 +494,10 @@ class model_sdram(sdram_sim_utils):
 
 					if next_write["bank_src"] != None:
 						# print("next write is ", next_write["bank_src"], hex(next_write["data"]))
-						yield dut_ios.cipo_dq.eq(next_write["data"])
+						yield pin_ui.cipo_dq.eq(next_write["data"])
 						# yield self.nflagA.eq(1)
+					else:
+						yield pin_ui.cipo_dq.eq(0xBEAD) # use 0xBEAD to indicate that there's no valid read
 					# else:
 						# yield self.nflagA.eq(0)
 

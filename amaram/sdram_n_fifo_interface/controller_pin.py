@@ -35,15 +35,12 @@ from parameters_standard_sdram import sdram_cmds, rw_cmds
 
 def get_rw_pipeline_layout(_dir):
 	# this is to enable the ability to read back pipelined data easily
-	assert _dir in ["copi", "cipo"]
-	forward_dir = DIR_FANOUT if _dir=="copi" else DIR_FANIN
-	reverse_dir = DIR_FANIN if _dir=="copi" else DIR_FANOUT
 
 	rw_pipeline_layout = [
-		("dq",			16,		forward_dir),	#todo: make this width variable, ie 8/16/32
-		("read_active",	1,		forward_dir),	# whether or not a read will be active on the dq bus in read mode
-		("a",			13,		forward_dir),
-		("ba",			2,		forward_dir)
+		("dq",			16,		_dir),	#todo: make this width variable, ie 8/16/32
+		("read_active",	1,		_dir),	# whether or not a read will be active on the dq bus in read mode
+		("a",			13,		_dir),
+		("ba",			2,		_dir)
 	]
 
 	return rw_pipeline_layout
@@ -57,8 +54,8 @@ class controller_pin(Elaboratable):
 		("clk_en", 		1,		DIR_FANOUT),
 		("dqm",			1, 		DIR_FANOUT),
 
-		("rw_copi", 	get_rw_pipeline_layout("copi")), 
-		("rw_cipo", 	get_rw_pipeline_layout("cipo")),  
+		("rw_copi", 	get_rw_pipeline_layout(DIR_FANOUT)), 
+		("rw_cipo", 	get_rw_pipeline_layout(DIR_FANIN)),  
 	]
 
 	# this represents the pins of the sdram chip
@@ -66,8 +63,8 @@ class controller_pin(Elaboratable):
 		("clk_en", 		1,		DIR_FANOUT),
 		("dqm",			1, 		DIR_FANOUT),
 
-		("rw_copi", 	get_rw_pipeline_layout("copi")), 
-		("rw_cipo", 	get_rw_pipeline_layout("cipo")),  
+		("rw_copi", 	get_rw_pipeline_layout(DIR_FANOUT)), 
+		("rw_cipo", 	get_rw_pipeline_layout(DIR_FANIN)),  
 
 		("cs",			1,		DIR_FANOUT),
 		("we",			1,		DIR_FANOUT),

@@ -128,29 +128,45 @@ def min_num_of_clk_cycles(freq_hz, period_sec):
 
 class controller_readwrite(Elaboratable):
 	ui_layout = [
-		("task",	rw_cmds,	DIR_FANOUT),
-		("addr",			None,		None), # the ones with None are added dynamically below
-		("data",			None,		None),
-		("readback_active",	1,		DIR_FANIN),
-		("readback_addr",	None,		None),
-		("readback_data",	None,		None),
-
+		("rw_copi", [
+			# This is to either do a write with this w_data, 
+			# or to trigger a pipelined read on the address
+			("task",	rw_cmds,	DIR_FANOUT),
+			("addr",	None,	DIR_FANOUT),
+			("w_data",	None,	DIR_FANOUT)
+		]),
+		("r_cipo", [
+			# this is to recieve the pipelined read that is
+			# scheduled using the above pipeline
+			("read_active",	1,	DIR_FANIN),
+			("addr",	None,	DIR_FANIN),
+			("r_data",	None,	DIR_FANIN),
+		])
 	]
 
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
-		def populate_interface_with_configurable_widths():
-			for i in range(len(controller_readwrite.ui_layout)):
-				if (controller_readwrite.ui_layout[i][0] == "addr") and (controller_readwrite.ui_layout[i][1]) == None:
-					controller_readwrite.ui_layout[i] = ("addr", self.config_params.rw_params.get_ADDR_BITS(), DIR_FANOUT)
 
-				elif (controller_readwrite.ui_layout[i][0] == "data") and (controller_readwrite.ui_layout[i][1]) == None:
-					controller_readwrite.ui_layout[i] = ("data", self.config_params.rw_params.DATA_BITS.value, DIR_FANOUT)
-				
-				elif (controller_readwrite.ui_layout[i][0] == "readback_addr") and (controller_readwrite.ui_layout[i][1]) == None:
-					controller_readwrite.ui_layout[i] = ("readback_addr", self.config_params.rw_params.get_ADDR_BITS(), DIR_FANIN)
-				
-				elif (controller_readwrite.ui_layout[i][0] == "readback_data") and (controller_readwrite.ui_layout[i][1]) == None:
-					controller_readwrite.ui_layout[i] = ("readback_data", self.config_params.rw_params.DATA_BITS.value, DIR_FANIN)
+		def populate_interface_with_configurable_widths():
+			"goal: replace the 'None's above with dynamic values"
+			new_layout = []
+			for i, outer_field in enumerate(controller_readwrite.ui_layout):
+				if isinstance(outer_field[1], type([])):
+					inner_fields = outer_field[1]
+					new_inner_layout = []
+					for j, inner_field in enumerate(inner_fields):
+						
+						if inner_field[0] == "addr":
+							new_inner_layout.append(("addr", self.config_params.rw_params.get_ADDR_BITS(), inner_field[2]))
+						
+						elif inner_field[0] in ["r_data", "w_data"]:
+							new_inner_layout.append((inner_field[0], self.config_params.rw_params.DATA_BITS.value, inner_field[2]))
+
+						else:
+							new_inner_layout.append(inner_field)
+					new_layout.append((outer_field[0], new_inner_layout))
+				else:
+					new_layout.append(outer_field)
+			controller_readwrite.ui_layout = new_layout
 
 		super().__init__()
 
@@ -178,21 +194,45 @@ class controller_readwrite(Elaboratable):
 		# make inter-module interfaces
 		_ui = Record.like(self.ui)
 		_pin_ui = Record.like(self.pin_ui)
-		m.d.sync += [
-			self.ui.connect(_ui),
-			_pin_ui.connect(self.pin_ui), # so 'fanout' signals go the right way etc
-		]
+		myui = Record.like(self.pin_ui)
 
 		# default io values
 		m.d.sync += [
 			_pin_ui.cmd.eq(sdram_cmds.CMD_NOP),
 			_pin_ui.clk_en.eq(1), # best done here or elsewhere?
 			_pin_ui.dqm.eq(1), 
-			_pin_ui.copi_dq.eq(0),
-			# _pin_ui.cipo_dq.eq(0),
-			_pin_ui.a.eq(0),
-			_pin_ui.ba.eq(0),
+			# _pin_ui.rw_copi.dq.eq(0),
+			# _pin_ui.rw_cipo.dq.eq(0),
+			_pin_ui.rw_copi.a.eq(0),
+			_pin_ui.rw_copi.ba.eq(0),
+
+			_pin_ui.rw_copi.read_active.eq(0)
 		]
+
+
+		m.d.sync += [
+			self.ui.connect(_ui),
+
+			# connect the write signals to the package pins
+			_pin_ui.connect(self.pin_ui, exclude=["rw_cipo"]),
+			# self.pin_ui.cmd.eq(_pin_ui.cmd),
+			# self.pin_ui.clk_en.eq(_pin_ui.clk_en),
+			# self.pin_ui.rw_copi.dq.eq(_pin_ui.rw_copi.dq),
+			# self.pin_ui.rw_copi.a.eq(_pin_ui.rw_copi.a),
+			# self.pin_ui.rw_copi.ba.eq(_pin_ui.rw_copi.ba),
+			# self.pin_ui.rw_copi.read_active.eq(_pin_ui.rw_copi.read_active),
+			
+
+			# and the readback pipeline
+			_pin_ui.rw_cipo.dq.eq(self.pin_ui.rw_cipo.dq), # cipo!
+			_pin_ui.rw_cipo.a.eq(Past(self.pin_ui.rw_copi.a, clocks=self.config_params.latency)),
+			_pin_ui.rw_cipo.ba.eq(Past(self.pin_ui.rw_copi.ba, clocks=self.config_params.latency)),
+			_pin_ui.rw_cipo.read_active.eq(self.pin_ui.rw_copi.read_active),
+
+		]
+
+		
+
 		
 
 		# make_row_column_and_bank_from_address
@@ -206,11 +246,11 @@ class controller_readwrite(Elaboratable):
 		burst_bits = bits_for(self.config_params.burstlen-1)
 		burst_index = Signal(burst_bits)
 		m.d.sync += [
-			Cat(col[:burst_bits], bank, col[burst_bits:], row).eq(_ui.addr),
-			data.eq(_ui.data),
+			Cat(col[:burst_bits], bank, col[burst_bits:], row).eq(_ui.rw_copi.addr),
+			data.eq(_ui.rw_copi.w_data),
 
 			# this index is where are we in the current burst,
-			burst_index.eq(_ui.addr[:burst_bits])
+			burst_index.eq(_ui.rw_copi.addr[:burst_bits])
 		]
 
 		# assume this for now, but later generate the values from these from the given timing settings
@@ -234,11 +274,12 @@ class controller_readwrite(Elaboratable):
 		adding_to_readback_bus = Signal()
 		m.d.comb += adding_to_readback_bus.eq(Cat([_bank_using.readback_bus for _bank_using in bank_using_array]).any())
 
+		# for bank_id, bank_using in enumerate([bank_using_array[0]]):
 		for bank_id, bank_using in enumerate(bank_using_array):
 			
-			# defaults
+			# defaults (note! must use 'bank_using', as this is called in a loop, otherwise will be overwritten)
 			m.d.sync += [
-				bank_using.readback_bus.eq(0)
+				bank_using.readback_bus.eq(0),
 			]
 
 			with m.FSM(name=f"rw_bank_{bank_id}_fsm") as fsm:
@@ -255,12 +296,12 @@ class controller_readwrite(Elaboratable):
 				]
 
 				with m.State("IDLE"):
-					with m.If((bank == bank_id) & (burst_index == 0) & (Past(_ui.task) != rw_cmds.RW_IDLE)):
+					with m.If((bank == bank_id) & (burst_index == 0) & (Past(_ui.rw_copi.task) != rw_cmds.RW_IDLE)):
 						m.d.sync += [
 							bank_using.cmd_and_addr_bus.eq(1),
 							_pin_ui.cmd.eq(sdram_cmds.CMD_ACT),
-							_pin_ui.ba.eq(Past(bank_id)),	
-							_pin_ui.a.eq(Past(row)),
+							_pin_ui.rw_copi.ba.eq(Past(bank_id)),	
+							_pin_ui.rw_copi.a.eq(Past(row)),
 						]
 						m.next = "WAS_ACTIVE_NOP1"
 
@@ -268,10 +309,10 @@ class controller_readwrite(Elaboratable):
 					m.next = "NOP3"
 
 				with m.State("NOP3"):
-					with m.If(Past(_ui.task, clocks=t_ra_clks) == rw_cmds.RW_WRITE):
+					with m.If(Past(_ui.rw_copi.task, clocks=t_ra_clks) == rw_cmds.RW_WRITE):
 						m.next = "WRITE_0"
 					
-					with m.Elif(Past(_ui.task, clocks=t_ra_clks) == rw_cmds.RW_READ):
+					with m.Elif(Past(_ui.rw_copi.task, clocks=t_ra_clks) == rw_cmds.RW_READ):
 						m.next = "READ_-3"
 
 					with m.Else():
@@ -284,12 +325,12 @@ class controller_readwrite(Elaboratable):
 						bank_using.cmd_and_addr_bus.eq(1),
 						bank_using.data_bus.eq(1),
 						_pin_ui.cmd.eq(sdram_cmds.CMD_WRITE_AP),
-						_pin_ui.ba.eq(bank_id), # constant for this bank
+						_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
 
 						# 13mar2022 note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
 						# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
-						_pin_ui.a.eq(Past(col, clocks=t_ra_clks)),
-						_pin_ui.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
+						_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
 
 						_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
 					]
@@ -300,7 +341,7 @@ class controller_readwrite(Elaboratable):
 					with m.State(f"WRITE_{byte_id}"):
 						m.d.sync += [
 							bank_using.data_bus.eq(1),
-							_pin_ui.copi_dq.eq(Past(data, clocks=t_ra_clks)),
+							_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
 							_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
 						]
 
@@ -319,8 +360,8 @@ class controller_readwrite(Elaboratable):
 					m.d.sync += [
 						bank_using.cmd_and_addr_bus.eq(1),
 						_pin_ui.cmd.eq(sdram_cmds.CMD_READ_AP),
-						_pin_ui.ba.eq(bank_id), # constant for this bank
-						_pin_ui.a.eq(Past(col, clocks=t_ra_clks)),
+						_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
+						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
 						_pin_ui.dqm.eq(0),
 					]
 					m.next = "READ_-2"
@@ -333,21 +374,9 @@ class controller_readwrite(Elaboratable):
 						
 						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
 							m.d.sync += [
-								bank_using.readback_bus.eq(1),
-								# _ui.readback_active.eq(Past(bank_using.readback_bus, clocks=2)), # todo: remove the magic number
-								_ui.readback_active.eq(Past(adding_to_readback_bus, clocks=2)), # todo: remove the magic number
-								_ui.readback_addr.eq(Past(_ui.addr, clocks=t_ra_clks + t_cas_clks + self.config_params.readback_addr_offset)), # is this right? todo: make this in a better/more robust way
-								_ui.readback_data.eq(_pin_ui.cipo_dq)
-								# _pin_ui.copi_dq.eq(Past(data, clocks=t_ra_clks)),
 								# _pin_ui.dqm.eq(0),  # dqm low synchronous with write data
+								_pin_ui.rw_copi.read_active.eq(1)
 							]
-						# else:
-						# 	m.d.sync += [
-						# 		bank_using.readback_bus.eq(0),
-						# 		_ui.readback_active.eq(0),
-						# 		_ui.readback_addr.eq(0),
-						# 		_ui.readback_data.eq(0)
-						# 	]
 
 						if byte_id < (self.config_params.burstlen)-1:
 							m.next = f"READ_{byte_id+1}"
@@ -469,7 +498,7 @@ if __name__ == "__main__":
 								if action == rw_cmds.RW_WRITE:
 									yield dut.ui.data.eq(i)
 								elif action == rw_cmds.RW_READ:
-									# yield dut.pin_ui.cipo_dq.eq(i) # is this right? reading data from the chip?
+									# yield dut.pin_ui.rw_cipo.dq.eq(i) # is this right? reading data from the chip?
 									... # no: use the chip model for this
 
 								yield dut.ui.addr.eq(i)
@@ -512,6 +541,13 @@ if __name__ == "__main__":
 
 				sim = Simulator(dut)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+				# and a negedge clock for the 'propagate_i_dq_reads' simulation process
+
+				# clki_n = ClockDomain("clki_n", clk_edge="pos")#, local=True)
+				# # clki_n = ClockDomain("clki_n", clk_edge="neg")
+				# self.m.domains += clki_n
+				# self.m.d.comb += clki_n.clk.eq(~self.dut.o_clk) # 
+				
 
 				sdram_model = model_sdram(config_params, utest_params)
 				for i in range(4): # num of banks
@@ -530,27 +566,37 @@ if __name__ == "__main__":
 							i += addr_offset
 
 							if action == rw_cmds.RW_WRITE:
-								yield dut.ui.data.eq(i)
+								yield dut.ui.rw_copi.w_data.eq(i)
 							elif action == rw_cmds.RW_READ:
-								# yield dut.pin_ui.cipo_dq.eq(i) # is this right? reading data from the chip?
+								# assert (yield dut.pin_ui.rw_cipo.dq) == i # is this right? reading data from the chip?
 								... # no: use the chip model for this
 
-							yield dut.ui.addr.eq(i)
+							yield dut.ui.rw_copi.addr.eq(i)
 
 							if ((i % config_params.burstlen) == 0):
-								yield dut.ui.task.eq(action)
+								yield dut.ui.rw_copi.task.eq(action)
 							else:
-								yield dut.ui.task.eq(action)
+								# yield dut.ui.rw_copi.task.eq(action)
+								...
 
 							yield
 						
 						# a few extra clocks at the end
 						for _ in range(10):
 							yield
+				
+				# def connect_cipo_context_signals():
+				# 	yield Passive()
+				# 	while True:
+				# 		# dq is done in the model
+				# 		yield dut.pin_ui.rw_cipo.a.eq((yield dut.pin_ui.rw_copi.a))
+				# 		yield dut.pin_ui.rw_cipo.ba.eq((yield dut.pin_ui.rw_copi.ba))
+				# 		yield dut.pin_ui.rw_cipo.read_active.eq((yield dut.pin_ui.rw_copi.read_active))
+				# 		yield
 
+				# sim.add_sync_process(connect_cipo_context_signals)
 				sim.add_sync_process(use_ui_and_see_if_correct_rw_behaviour)
 
-				
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
 					sim.run()

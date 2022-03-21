@@ -11,7 +11,7 @@ from amaranth.hdl.rec import DIR_NONE, DIR_FANOUT, DIR_FANIN, Layout, Record
 from amaranth.hdl.mem import Memory
 from amaranth.hdl.xfrm import DomainRenamer
 from amaranth.cli import main_parser, main_runner
-from amaranth.sim import Simulator, Delay, Tick, Passive, Active
+from amaranth.sim import Simulator, Delay, Tick, Passive, Active, Settle
 from amaranth.asserts import Assert, Assume, Cover, Past
 from amaranth.lib.fifo import AsyncFIFOBuffered
 #from amaranth.lib.cdc import AsyncFFSynchronizer
@@ -69,7 +69,7 @@ class sdram_sim_utils:
 		while True:
 			# yield Settle() # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
 			cmd = yield from self.get_cmd(pin_ui)
-			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield pin_ui.ba) == focus_bank)):# (cmd == end_state):
+			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield pin_ui.rw_copi.ba) == focus_bank)):# (cmd == end_state):
 				if not (clks >= self.num_clk_cycles(min_duration)):
 					print("Error: ", clks, self.num_clk_cycles(min_duration))
 					assert 0
@@ -258,7 +258,7 @@ class model_sdram(sdram_sim_utils):
 						
 
 					# print(f"Bank {bank_id}, {bank_state} : {[a for a in args]}")
-				if bank_id == (yield pin_ui.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
+				if bank_id == (yield pin_ui.rw_copi.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
 					cmd = sdram_cmds((yield pin_ui.cmd)) 
 				else:
 					cmd = sdram_cmds.CMD_NOP
@@ -280,7 +280,7 @@ class model_sdram(sdram_sim_utils):
 				if bank_state == bank_states.IDLE:
 					if cmd == sdram_cmds.CMD_ACT:
 						yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_ACT)
-						temp_row = (yield pin_ui.a)
+						temp_row = (yield pin_ui.rw_copi.a)
 						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
 						# try:
 						# except:
@@ -327,8 +327,8 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = True
 						else:
 							auto_precharge = False
-						column = (yield pin_ui.a) & 0x1FF
-						bank_memory[activated_row][column] = (yield pin_ui.copi_dq)
+						column = (yield pin_ui.rw_copi.a) & 0x1FF
+						bank_memory[activated_row][column] = (yield pin_ui.rw_copi.dq)
 						writes_remaining = self.config_params.burstlen - 1
 						if writes_remaining > 0: # this deals with the case of a burst length of 1
 							bank_state = bank_states.WRITE
@@ -339,7 +339,7 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = True
 						else:
 							auto_precharge = False
-						column = (yield pin_ui.a) & 0x1FF
+						column = (yield pin_ui.rw_copi.a) & 0x1FF
 						reads_remaining = self.config_params.burstlen
 
 						clks_until_latency_elapsed = self.config_params.latency - 1
@@ -425,7 +425,7 @@ class model_sdram(sdram_sim_utils):
 							if writes_remaining > 0:
 								writes_remaining -= 1
 								column += 1
-								bank_memory[activated_row][column] = (yield pin_ui.copi_dq)
+								bank_memory[activated_row][column] = (yield pin_ui.rw_copi.dq)
 							
 							if writes_remaining == 0:
 								writes_remaining = None
@@ -485,23 +485,27 @@ class model_sdram(sdram_sim_utils):
 	def propagate_i_dq_reads(self, pin_ui):
 		def func():
 			""" 
+			Use with a negedge sim clock! otherwise instability possible
 			This will only use the dq bus if a valid write occured <latency> clocks ago
 			"""
 			yield Passive()
 			while True:
+				# print(self.reads_to_return)
 				if len(self.reads_to_return) > 0:
 					next_write = self.reads_to_return.pop(0) # {"bank_src" : x, "data" : y}
-
+					# print(f"next write: {next_write}")
 					if next_write["bank_src"] != None:
 						# print("next write is ", next_write["bank_src"], hex(next_write["data"]))
-						yield pin_ui.cipo_dq.eq(next_write["data"])
+						yield pin_ui.rw_cipo.dq.eq(next_write["data"])
 						# yield self.nflagA.eq(1)
 					else:
-						yield pin_ui.cipo_dq.eq(0xBEAD) # use 0xBEAD to indicate that there's no valid read
+						yield pin_ui.rw_cipo.dq.eq(0xBEAD) # use 0xBEAD to indicate that there's no valid read
 					# else:
 						# yield self.nflagA.eq(0)
 
 				# else:
 					# yield self.nflagA.eq(0)
+				yield Settle() # this should deal with not using a negedge sim clock
 				yield
+				yield Settle() # this should deal with not using a negedge sim clock
 		return func

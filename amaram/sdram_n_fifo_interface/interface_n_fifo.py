@@ -39,19 +39,16 @@ from controller_readwrite import controller_readwrite
 """ 
 This file is intended as the user interface, that will allow access to 
 persistent data storage in sdram through a fifo interface.
-
-
-Areas for improvement:
-- Don't assume the width here is 16
-- make some of the layout stuff dynamic?
-
 """
 
-class sdram_n_fifo(Elaboratable):
+def get_ui_layout(config_params):
 	ui_layout = [
 		("contains_data",	1,					DIR_FANIN) # not used yet
 	]
+	return ui_layout
 
+def get_fifo_layout(config_params):
+	# todo: add the ability to make the fifo io not always 16bits wide
 	fifo_layout = [
 		("w_data", 	16,							DIR_FANOUT),
 		("w_rdy", 	1,							DIR_FANOUT),
@@ -64,7 +61,10 @@ class sdram_n_fifo(Elaboratable):
 		("r_en",	1,							DIR_FANOUT),
 		("r_level",	bits_for(50 + 1),			DIR_FANIN),
 	]
+	return fifo_layout
 
+
+class sdram_n_fifo(Elaboratable):
 	
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
@@ -73,8 +73,8 @@ class sdram_n_fifo(Elaboratable):
 		self.utest_params = utest_params
 		self.utest = utest
 
-		self.ui = Record(sdram_n_fifo.ui_layout)
-		self.fifos = Array(Record(sdram_n_fifo.fifo_layout) for _ in range(self.config_params.num_fifos))
+		self.ui = Record(get_ui_layout(self.config_params))
+		self.fifos = Array(Record(get_fifo_layout(self.config_params)) for _ in range(self.config_params.num_fifos))
 
 		# calculate some relations
 		rw_params = self.config_params.rw_params
@@ -194,9 +194,9 @@ class sdram_n_fifo(Elaboratable):
 				rw_pin_ui.connect(rw_ctrl.pin_ui)
 			]
 
-	
+			...
 
-
+			return rw_ui, rw_pin_ui
 			
 		
 		def route_readback_pipeline_to_dstfifos():

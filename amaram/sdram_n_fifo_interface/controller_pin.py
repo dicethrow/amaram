@@ -33,20 +33,20 @@ from amtest.utils import FHDLTestCase, Params
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
 
-def get_rw_pipeline_layout(_dir):
+def get_rw_pipeline_layout(config_params, _dir):
 	# this is to enable the ability to read back pipelined data easily
 
 	rw_pipeline_layout = [
-		("dq",			16,		_dir),	#todo: make this width variable, ie 8/16/32
-		("read_active",	1,		_dir),	# whether or not a read will be active on the dq bus in read mode
-		("a",			13,		_dir),
-		("ba",			2,		_dir)
+		("dq",			config_params.rw_params.DATA_BITS.value,		_dir),
+		("read_active",	1,			_dir),		# whether or not a read will be active on the dq bus in read mode
+		("a",			config_params.rw_params.A_BITS.value,			_dir),
+		("ba",			config_params.rw_params.BANK_BITS.value,		_dir),
+		("addr",		config_params.rw_params.get_ADDR_BITS(),		_dir),
 	]
 
 	return rw_pipeline_layout
 
-class controller_pin(Elaboratable):
-
+def get_ui_layout(config_params):
 	# this represents the inter-module user interface
 	ui_layout = [
 		("cmd", sdram_cmds, 	DIR_FANOUT), # a high-level representation of the desired cmd
@@ -54,17 +54,20 @@ class controller_pin(Elaboratable):
 		("clk_en", 		1,		DIR_FANOUT),
 		("dqm",			1, 		DIR_FANOUT),
 
-		("rw_copi", 	get_rw_pipeline_layout(DIR_FANOUT)), 
-		("rw_cipo", 	get_rw_pipeline_layout(DIR_FANIN)),  
+		("rw_copi", 	get_rw_pipeline_layout(config_params, DIR_FANOUT)), 
+		("rw_cipo", 	get_rw_pipeline_layout(config_params, DIR_FANIN)),  
 	]
 
+	return ui_layout
+
+def get_io_layout(config_params):
 	# this represents the pins of the sdram chip
 	io_layout = [
 		("clk_en", 		1,		DIR_FANOUT),
 		("dqm",			1, 		DIR_FANOUT),
 
-		("rw_copi", 	get_rw_pipeline_layout(DIR_FANOUT)), 
-		("rw_cipo", 	get_rw_pipeline_layout(DIR_FANIN)),  
+		("rw_copi", 	get_rw_pipeline_layout(config_params, DIR_FANOUT)), 
+		("rw_cipo", 	get_rw_pipeline_layout(config_params, DIR_FANIN)),  
 
 		("cs",			1,		DIR_FANOUT),
 		("we",			1,		DIR_FANOUT),
@@ -72,7 +75,9 @@ class controller_pin(Elaboratable):
 		("cas",			1,		DIR_FANOUT)
 	]
 
+	return io_layout
 
+class controller_pin(Elaboratable):
 
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
@@ -81,8 +86,8 @@ class controller_pin(Elaboratable):
 		self.utest_params = utest_params
 		self.utest = utest
 
-		self.ui = Record(controller_pin.ui_layout)
-		self.io = Record(controller_pin.io_layout)
+		self.ui = Record(get_ui_layout(self.config_params))
+		self.io = Record(get_io_layout(self.config_params))
 	
 
 	def elaborate(self, platform = None):

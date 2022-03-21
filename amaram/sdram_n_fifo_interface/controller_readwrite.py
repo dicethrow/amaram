@@ -12,7 +12,7 @@ from amaranth.hdl.rec import DIR_NONE, DIR_FANOUT, DIR_FANIN, Layout, Record
 from amaranth.hdl.mem import Memory
 from amaranth.hdl.xfrm import DomainRenamer
 from amaranth.cli import main_parser, main_runner
-from amaranth.sim import Simulator, Delay, Tick, Passive, Active
+from amaranth.sim import Simulator, Delay, Tick, Passive, Active, Settle
 from amaranth.asserts import Assert, Assume, Cover, Past
 from amaranth.lib.fifo import AsyncFIFOBuffered
 #from amaranth.lib.cdc import AsyncFFSynchronizer
@@ -31,7 +31,8 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-from controller_pin import controller_pin
+# from controller_pin import controller_pin
+import controller_pin
 from Delayer import Delayer
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
@@ -126,47 +127,31 @@ note that there is a bit of 'wasted' clock cycles when transitioning from read t
 def min_num_of_clk_cycles(freq_hz, period_sec):
 	return int(np.ceil(period_sec * freq_hz))
 
-class controller_readwrite(Elaboratable):
+def get_ui_layout(config_params):
 	ui_layout = [
 		("rw_copi", [
 			# This is to either do a write with this w_data, 
 			# or to trigger a pipelined read on the address
 			("task",	rw_cmds,	DIR_FANOUT),
-			("addr",	None,	DIR_FANOUT),
-			("w_data",	None,	DIR_FANOUT)
+			("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANOUT),
+			("w_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANOUT)
 		]),
 		("r_cipo", [
 			# this is to recieve the pipelined read that is
 			# scheduled using the above pipeline
 			("read_active",	1,	DIR_FANIN),
-			("addr",	None,	DIR_FANIN),
-			("r_data",	None,	DIR_FANIN),
+			("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANIN),
+			("r_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANIN),
 		])
 	]
 
+	return ui_layout
+
+
+class controller_readwrite(Elaboratable):
+	
+
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
-
-		def populate_interface_with_configurable_widths():
-			"goal: replace the 'None's above with dynamic values"
-			new_layout = []
-			for i, outer_field in enumerate(controller_readwrite.ui_layout):
-				if isinstance(outer_field[1], type([])):
-					inner_fields = outer_field[1]
-					new_inner_layout = []
-					for j, inner_field in enumerate(inner_fields):
-						
-						if inner_field[0] == "addr":
-							new_inner_layout.append(("addr", self.config_params.rw_params.get_ADDR_BITS(), inner_field[2]))
-						
-						elif inner_field[0] in ["r_data", "w_data"]:
-							new_inner_layout.append((inner_field[0], self.config_params.rw_params.DATA_BITS.value, inner_field[2]))
-
-						else:
-							new_inner_layout.append(inner_field)
-					new_layout.append((outer_field[0], new_inner_layout))
-				else:
-					new_layout.append(outer_field)
-			controller_readwrite.ui_layout = new_layout
 
 		super().__init__()
 
@@ -174,10 +159,8 @@ class controller_readwrite(Elaboratable):
 		self.utest_params = utest_params
 		self.utest = utest
 
-		populate_interface_with_configurable_widths()
-
-		self.ui = Record(controller_readwrite.ui_layout)
-		self.pin_ui = Record(controller_pin.ui_layout)
+		self.ui = Record(get_ui_layout(self.config_params))
+		self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
 
 		# add some default parameters. Could this be done better?
 		if not hasattr(self.config_params, "burstlen"): 	self.config_params.burstlen = 8
@@ -209,31 +192,27 @@ class controller_readwrite(Elaboratable):
 			_pin_ui.rw_copi.read_active.eq(0)
 		]
 
-
+		# connect the write signals to the package pins,
+		# excluding the readback pipeline
 		m.d.sync += [
 			self.ui.connect(_ui),
-
-			# connect the write signals to the package pins
 			_pin_ui.connect(self.pin_ui, exclude=["rw_cipo"]),
-			# self.pin_ui.cmd.eq(_pin_ui.cmd),
-			# self.pin_ui.clk_en.eq(_pin_ui.clk_en),
-			# self.pin_ui.rw_copi.dq.eq(_pin_ui.rw_copi.dq),
-			# self.pin_ui.rw_copi.a.eq(_pin_ui.rw_copi.a),
-			# self.pin_ui.rw_copi.ba.eq(_pin_ui.rw_copi.ba),
-			# self.pin_ui.rw_copi.read_active.eq(_pin_ui.rw_copi.read_active),
-			
-
-			# and the readback pipeline
-			_pin_ui.rw_cipo.dq.eq(self.pin_ui.rw_cipo.dq), # cipo!
-			_pin_ui.rw_cipo.a.eq(Past(self.pin_ui.rw_copi.a, clocks=self.config_params.latency)),
-			_pin_ui.rw_cipo.ba.eq(Past(self.pin_ui.rw_copi.ba, clocks=self.config_params.latency)),
-			_pin_ui.rw_cipo.read_active.eq(self.pin_ui.rw_copi.read_active),
-
 		]
 
-		
+		# now connect the readback pipeline
+		m.d.sync += [
+			# connect the readback pipeline
+			_pin_ui.rw_cipo.dq.eq(self.pin_ui.rw_cipo.dq), # cipo!
 
-		
+			_pin_ui.rw_cipo.addr.eq(Past(self.pin_ui.rw_cipo.addr, clocks=self.config_params.latency)),
+			_pin_ui.rw_cipo.read_active.eq(self.pin_ui.rw_cipo.read_active),	
+
+			# and connect it back to the module interface
+			_ui.r_cipo.read_active.eq(_pin_ui.rw_cipo.read_active),
+			_ui.r_cipo.addr.eq(_pin_ui.rw_cipo.addr),
+			_ui.r_cipo.r_data.eq(_pin_ui.rw_cipo.dq),
+					
+		]
 
 		# make_row_column_and_bank_from_address
 		row = Signal(rw_params.ROW_BITS.value)
@@ -363,6 +342,10 @@ class controller_readwrite(Elaboratable):
 						_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
 						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
 						_pin_ui.dqm.eq(0),
+
+						# this records the global address that the read occurred at,
+						# so it can more easily identify read data in the read pipeline
+						_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks+1)),
 					]
 					m.next = "READ_-2"
 				
@@ -370,12 +353,15 @@ class controller_readwrite(Elaboratable):
 					byte_id = i-2
 					with m.State(f"READ_{byte_id}"):
 						if byte_id in [b-2 for b in range(self.config_params.burstlen-1)]:
-							m.d.sync += _pin_ui.dqm.eq(0) # assuming this is 2 clks before a read
+							m.d.sync += [
+								_pin_ui.dqm.eq(0), # assuming this is 2 clks before a read
+								_pin_ui.rw_copi.addr.eq(_pin_ui.rw_copi.addr + 1),
+							]
 						
 						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
 							m.d.sync += [
 								# _pin_ui.dqm.eq(0),  # dqm low synchronous with write data
-								_pin_ui.rw_copi.read_active.eq(1)
+								_pin_ui.rw_copi.read_active.eq(1),
 							]
 
 						if byte_id < (self.config_params.burstlen)-1:
@@ -584,18 +570,33 @@ if __name__ == "__main__":
 						# a few extra clocks at the end
 						for _ in range(10):
 							yield
-				
-				# def connect_cipo_context_signals():
-				# 	yield Passive()
-				# 	while True:
-				# 		# dq is done in the model
-				# 		yield dut.pin_ui.rw_cipo.a.eq((yield dut.pin_ui.rw_copi.a))
-				# 		yield dut.pin_ui.rw_cipo.ba.eq((yield dut.pin_ui.rw_copi.ba))
-				# 		yield dut.pin_ui.rw_cipo.read_active.eq((yield dut.pin_ui.rw_copi.read_active))
-				# 		yield
+					
+					# a few extra clocks at the end
+					for _ in range(20):
+						yield
 
-				# sim.add_sync_process(connect_cipo_context_signals)
+				def print_readback_data():
+					yield Passive()
+					while True:
+						if (yield dut.ui.r_cipo.read_active):
+							data = (yield dut.ui.r_cipo.r_data)
+							addr = (yield dut.ui.r_cipo.addr)
+							print(f"Read at address={hex(addr)}, data={hex(data)}")
+						yield
+
+				def start_readback_pipeline():
+					# this should be done close to where the copi_dq and cipo_dq split
+					yield Passive()
+					while True:
+						yield dut.pin_ui.rw_cipo.addr.eq((dut.pin_ui.rw_copi.addr))
+						yield dut.pin_ui.rw_cipo.read_active.eq((dut.pin_ui.rw_copi.read_active))
+						yield Settle()
+						yield
+						yield Settle()
+
 				sim.add_sync_process(use_ui_and_see_if_correct_rw_behaviour)
+				sim.add_sync_process(print_readback_data)
+				sim.add_sync_process(start_readback_pipeline)
 
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):

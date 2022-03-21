@@ -23,6 +23,8 @@ class rw_params(Enum):
 	BANK_BITS 	= 2
 	ROW_BITS 	= 11
 	COL_BITS 	= 9
+
+	A_BITS		= 13 # this is the bits of the 'a' bus, not the ADDR_BITS below, which enables a globally unique address of each word
 	DATA_BITS 	= 16
 	
 	@classmethod

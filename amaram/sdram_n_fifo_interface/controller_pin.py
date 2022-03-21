@@ -33,7 +33,23 @@ from amtest.utils import FHDLTestCase, Params
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
 
+def get_rw_pipeline_layout(_dir):
+	# this is to enable the ability to read back pipelined data easily
+	assert _dir in ["copi", "cipo"]
+	forward_dir = DIR_FANOUT if _dir=="copi" else DIR_FANIN
+	reverse_dir = DIR_FANIN if _dir=="copi" else DIR_FANOUT
+
+	rw_pipeline_layout = [
+		("dq",			16,		forward_dir),	#todo: make this width variable, ie 8/16/32
+		("read_active",	1,		forward_dir),	# whether or not a read will be active on the dq bus in read mode
+		("a",			13,		forward_dir),
+		("ba",			2,		forward_dir)
+	]
+
+	return rw_pipeline_layout
+
 class controller_pin(Elaboratable):
+
 	# this represents the inter-module user interface
 	ui_layout = [
 		("cmd", sdram_cmds, 	DIR_FANOUT), # a high-level representation of the desired cmd
@@ -41,11 +57,8 @@ class controller_pin(Elaboratable):
 		("clk_en", 		1,		DIR_FANOUT),
 		("dqm",			1, 		DIR_FANOUT),
 
-		("copi_dq", 	16,		DIR_FANOUT), #todo: make this width variable, ie 8/16/32
-		("cipo_dq", 	16, 	DIR_FANIN),
-
-		("a", 			13, 	DIR_FANOUT),
-		("ba", 			2, 		DIR_FANOUT),
+		("rw_copi", 	get_rw_pipeline_layout("copi")), 
+		("rw_cipo", 	get_rw_pipeline_layout("cipo")),  
 	]
 
 	# this represents the pins of the sdram chip
@@ -53,17 +66,16 @@ class controller_pin(Elaboratable):
 		("clk_en", 		1,		DIR_FANOUT),
 		("dqm",			1, 		DIR_FANOUT),
 
-		("copi_dq", 	16,		DIR_FANOUT), #todo: make this width variable, ie 8/16/32
-		("cipo_dq", 	16, 	DIR_FANIN),
-
-		("a", 			13, 	DIR_FANOUT),
-		("ba", 			2, 		DIR_FANOUT),
+		("rw_copi", 	get_rw_pipeline_layout("copi")), 
+		("rw_cipo", 	get_rw_pipeline_layout("cipo")),  
 
 		("cs",			1,		DIR_FANOUT),
 		("we",			1,		DIR_FANOUT),
 		("ras",			1,		DIR_FANOUT),
 		("cas",			1,		DIR_FANOUT)
 	]
+
+
 
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
@@ -125,7 +137,7 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(0),
 					_io.cas.eq(1),
 					_io.we.eq(0),
-					_io.a[10].eq(0)
+					_io.rw_copi.a[10].eq(0)
 					# self.ba and self.a needs to be set too, at the same time as this command
 				]
 				
@@ -135,7 +147,7 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(0),
 					_io.cas.eq(1),
 					_io.we.eq(0),
-					_io.a[10].eq(1)
+					_io.rw_copi.a[10].eq(1)
 					# self.ba and self.a needs to be set too, at the same time as this command
 				]
 				
@@ -145,7 +157,7 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(0),
 					_io.cas.eq(1),
 					_io.we.eq(1),
-					_io.a[10].eq(0)
+					_io.rw_copi.a[10].eq(0)
 					# self.ba and self.a needs to be set too, at the same time as this command
 				]
 				
@@ -155,7 +167,7 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(0),
 					_io.cas.eq(1),
 					_io.we.eq(1),
-					_io.a[10].eq(1)
+					_io.rw_copi.a[10].eq(1)
 					# self.ba and self.a needs to be set too, at the same time as this command
 				]
 				
@@ -174,7 +186,7 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(1),
 					_io.cas.eq(0),
 					_io.we.eq(1),
-					_io.a[10].eq(0)
+					_io.rw_copi.a[10].eq(0)
 					# self.ba needs to be set too
 				]
 				
@@ -184,7 +196,7 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(1),
 					_io.cas.eq(0),
 					_io.we.eq(1),
-					_io.a[10].eq(1)
+					_io.rw_copi.a[10].eq(1)
 				]
 				
 			with m.Case(sdram_cmds.CMD_REF):
@@ -211,8 +223,8 @@ class controller_pin(Elaboratable):
 					_io.ras.eq(1),
 					_io.cas.eq(1),
 					_io.we.eq(1),
-					_io.ba.eq(0b00),
-					_io.a[10].eq(0)
+					_io.rw_copi.ba.eq(0b00),
+					_io.rw_copi.a[10].eq(0)
 					# and self.a[:10] needs to be valid with the desired register bits
 				]
 
@@ -233,9 +245,9 @@ class controller_pin(Elaboratable):
 					~self.io.ras,
 					~self.io.cas, 
 					~self.io.we, 
-					self.io.ba[1], 
-					self.io.ba[0], 
-					self.io.a[10]],
+					self.io.rw_copi.ba[1], 
+					self.io.rw_copi.ba[0], 
+					self.io.rw_copi.a[10]],
 				)))
 
 				def set_state(new_state):
@@ -320,17 +332,17 @@ if __name__ == "__main__":
 
 						yield dut.ui.cmd.eq(cmd_state)
 						yield dut.ui.dqm.eq(-1)
-						yield dut.ui.copi_dq.eq(-1)
-						yield dut.ui.a.eq(-1)
-						yield dut.ui.ba.eq(-1)
+						yield dut.ui.rw_copi.dq.eq(-1)
+						yield dut.ui.rw_copi.a.eq(-1)
+						yield dut.ui.rw_copi.ba.eq(-1)
 
 						yield
 
 						yield dut.ui.cmd.eq(0)
 						yield dut.ui.dqm.eq(0)
-						yield dut.ui.copi_dq.eq(0)
-						yield dut.ui.a.eq(0)
-						yield dut.ui.ba.eq(0)
+						yield dut.ui.rw_copi.dq.eq(0)
+						yield dut.ui.rw_copi.a.eq(0)
+						yield dut.ui.rw_copi.ba.eq(0)
 
 						# revert it back
 						if cmd_state == sdram_cmds.CMD_SELF:
@@ -340,8 +352,19 @@ if __name__ == "__main__":
 					# end delay
 					for i in range(10):
 						yield 
-				
+					
+				def route_back_cipo_dq():
+					yield Passive()
+					while True:
+						yield dut.io.rw_cipo.dq.eq((yield dut.io.rw_copi.dq))
+						yield dut.io.rw_cipo.read_active.eq((yield dut.io.rw_copi.read_active))
+						yield dut.io.rw_cipo.a.eq((yield dut.io.rw_copi.a))
+						yield dut.io.rw_cipo.ba.eq((yield dut.io.rw_copi.ba))
+						yield
+
+
 				sim.add_sync_process(apply_each_cmd_and_strobe_other_signals)
+				sim.add_sync_process(route_back_cipo_dq)
 				
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):

@@ -134,7 +134,7 @@ def get_ui_layout(config_params):
 			# or to trigger a pipelined read on the address
 			("task",	rw_cmds,	DIR_FANOUT),
 			("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANOUT),
-			("w_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANOUT)
+			("w_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANOUT),
 		]),
 		("r_cipo", [
 			# this is to recieve the pipelined read that is
@@ -183,7 +183,7 @@ class controller_readwrite(Elaboratable):
 		m.d.sync += [
 			_pin_ui.cmd.eq(sdram_cmds.CMD_NOP),
 			_pin_ui.clk_en.eq(1), # best done here or elsewhere?
-			_pin_ui.dqm.eq(1), 
+			# _pin_ui.dqm.eq(1), 
 			# _pin_ui.rw_copi.dq.eq(0),
 			# _pin_ui.rw_cipo.dq.eq(0),
 			_pin_ui.rw_copi.a.eq(0),
@@ -247,11 +247,15 @@ class controller_readwrite(Elaboratable):
 		bank_using_array = Array(Record([
 			("cmd_and_addr_bus",	1),
 			("data_bus",			1),
-			("readback_bus",		1)
+			("readback_bus",		1),
+			("dqm",					1)
 		]) for i in range(num_banks)) # for debuging, so we can see bus contention etc
 
 		adding_to_readback_bus = Signal()
-		m.d.comb += adding_to_readback_bus.eq(Cat([_bank_using.readback_bus for _bank_using in bank_using_array]).any())
+		m.d.comb += [
+			adding_to_readback_bus.eq(Cat([_bank_using.readback_bus for _bank_using in bank_using_array]).any()),
+			_pin_ui.dqm.eq(Cat([_bank_using.dqm for _bank_using in bank_using_array]).all())
+		]
 
 		# for bank_id, bank_using in enumerate([bank_using_array[0]]):
 		for bank_id, bank_using in enumerate(bank_using_array):
@@ -259,6 +263,7 @@ class controller_readwrite(Elaboratable):
 			# defaults (note! must use 'bank_using', as this is called in a loop, otherwise will be overwritten)
 			m.d.sync += [
 				bank_using.readback_bus.eq(0),
+				bank_using.dqm.eq(1),
 			]
 
 			with m.FSM(name=f"rw_bank_{bank_id}_fsm") as fsm:
@@ -311,7 +316,7 @@ class controller_readwrite(Elaboratable):
 						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
 						_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
 
-						_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
+						bank_using.dqm.eq(0),  # dqm low synchronous with write data
 					]
 					m.next = "WRITE_1"
 				
@@ -321,7 +326,7 @@ class controller_readwrite(Elaboratable):
 						m.d.sync += [
 							bank_using.data_bus.eq(1),
 							_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
-							_pin_ui.dqm.eq(0),  # dqm low synchronous with write data
+							bank_using.dqm.eq(0),  # dqm low synchronous with write data
 						]
 
 						if byte_id < (self.config_params.burstlen)-1:
@@ -341,7 +346,7 @@ class controller_readwrite(Elaboratable):
 						_pin_ui.cmd.eq(sdram_cmds.CMD_READ_AP),
 						_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
 						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
-						_pin_ui.dqm.eq(0),
+						bank_using.dqm.eq(0),
 
 						# this records the global address that the read occurred at,
 						# so it can more easily identify read data in the read pipeline
@@ -354,13 +359,13 @@ class controller_readwrite(Elaboratable):
 					with m.State(f"READ_{byte_id}"):
 						if byte_id in [b-2 for b in range(self.config_params.burstlen-1)]:
 							m.d.sync += [
-								_pin_ui.dqm.eq(0), # assuming this is 2 clks before a read
+								bank_using.dqm.eq(0), # assuming this is 2 clks before a read
 								_pin_ui.rw_copi.addr.eq(_pin_ui.rw_copi.addr + 1),
 							]
 						
 						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
 							m.d.sync += [
-								# _pin_ui.dqm.eq(0),  # dqm low synchronous with write data
+								# bank_using.dqm.eq(0),  # dqm low synchronous with write data
 								_pin_ui.rw_copi.read_active.eq(1),
 							]
 
@@ -562,7 +567,7 @@ if __name__ == "__main__":
 							if ((i % config_params.burstlen) == 0):
 								yield dut.ui.rw_copi.task.eq(action)
 							else:
-								# yield dut.ui.rw_copi.task.eq(action)
+								yield dut.ui.rw_copi.task.eq(rw_cmds.RW_IDLE)
 								...
 
 							yield

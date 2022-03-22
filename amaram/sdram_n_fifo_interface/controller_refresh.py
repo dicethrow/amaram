@@ -30,7 +30,8 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-from controller_pin import controller_pin
+# from controller_pin import controller_pin
+import controller_pin
 from Delayer import Delayer
 
 from parameters_standard_sdram import sdram_cmds
@@ -59,6 +60,16 @@ Goals
 # 	("done",			1, DIR_FANOUT)	# this is how other modules know they can do their thing
 # ]
 
+def get_ui_layout(config_params):
+	ui_layout = [
+			("initialised",	1,				DIR_FANIN),	# high until set low later on
+			("request_to_refresh_soon",	1,	DIR_FANIN),	# 
+			("enable_refresh",	1,			DIR_FANOUT),
+			("refresh_in_progress",	1,		DIR_FANIN),
+			("refresh_lapsed",	1,			DIR_FANIN) # to indicate whether data loss from a lack of refreshing has occurred
+		]
+	return ui_layout
+
 class controller_refresh(Elaboratable):
 	""" 
 	ah! make this controller do
@@ -68,18 +79,12 @@ class controller_refresh(Elaboratable):
 	todo 15nov2021 - make this handle delayed refreshes, 
 	so the refresh requirements are never exceeded
 	"""
-	ui_layout = [
-		("initialised",	1,				DIR_FANIN),	# high until set low later on
-		("request_to_refresh_soon",	1,	DIR_FANIN),	# 
-		("enable_refresh",	1,			DIR_FANOUT),
-		("refresh_in_progress",	1,		DIR_FANIN),
-		("refresh_lapsed",	1,			DIR_FANIN) # to indicate whether data loss from a lack of refreshing has occurred
-	]
+	
 
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
-		self.controller_pin_ui = Record(controller_pin.ui_layout)
-		self.ui = Record(controller_refresh.ui_layout)
+		self.controller_pin_ui = Record(controller_pin.get_ui_layout(config_params))
+		self.ui = Record(get_ui_layout(config_params))
 
 		self.config_params = config_params
 		self.utest_params = utest_params
@@ -178,7 +183,7 @@ class controller_refresh(Elaboratable):
 						with m.State("LOAD_MODE_REG"):
 							m.d.sync += [
 								_controller_pin_ui.cmd.eq(sdram_cmds.CMD_MRS),
-								_controller_pin_ui.a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
+								_controller_pin_ui.rw_copi.a[:10].eq(0b0000110011) # burst=8, sequential; latency=3
 								# _controller_pin_ui.a[:10].eq(0b0000110010) # burst=4, sequential; latency=3
 								# _controller_pin_ui.a[:10].eq(0b0000110001) # burst=2, sequential; latency=3
 							]
@@ -305,21 +310,25 @@ if __name__ == "__main__":
 	parser = main_parser()
 	args = parser.parse_args()
 
-	class Testbench(Elaboratable):
+	def get_tb_ui_layout(config_params):
 		ui_layout = [
-			("tb_fanin_flags", 	[
-				("in_normal_operation",		1,	DIR_FANIN),
-				("in_requesting_refresh",	1,	DIR_FANIN),
-				("in_performing_refresh",	1,	DIR_FANIN)
-			]),
-			("tb_fanout_flags",[
-				("trigger",		1,	DIR_FANOUT)
-			])
-		] + controller_refresh.ui_layout
+				("tb_fanin_flags", 	[
+					("in_normal_operation",		1,	DIR_FANIN),
+					("in_requesting_refresh",	1,	DIR_FANIN),
+					("in_performing_refresh",	1,	DIR_FANIN)
+				]),
+				("tb_fanout_flags",[
+					("trigger",		1,	DIR_FANOUT)
+				])
+			] + get_ui_layout(config_params)
+		return ui_layout
+
+	class Testbench(Elaboratable):
+		
 
 		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 			super().__init__()
-			self.ui = Record(Testbench.ui_layout)
+			self.ui = Record(get_tb_ui_layout(config_params))
 
 			self.config_params = config_params
 			self.utest_params = utest_params
@@ -384,13 +393,14 @@ if __name__ == "__main__":
 			def test_sim(self):
 				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
 
-				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
 				from model_sdram import model_sdram
 
 				config_params = Params()
 				config_params.clk_freq = 143e6
 				config_params.ic_timing = ic_timing
 				config_params.ic_refresh_timing = ic_refresh_timing
+				config_params.rw_params = rw_params
 
 				utest_params = Params()
 				utest_params.skip_cmd_decoding = True
@@ -401,7 +411,7 @@ if __name__ == "__main__":
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
 				sdram_model = model_sdram(config_params, utest_params)
-				sim.add_sync_process(sdram_model.get_refresh_monitor_process(dut_ios=dut.controller_pin_ui))
+				sim.add_sync_process(sdram_model.get_refresh_monitor_process(pin_ui=dut.controller_pin_ui))
 
 				def use_refresher_with_resource_blocking_task():
 					def resource_blocking_task():

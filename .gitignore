@@ -1,3 +1,8 @@
 *.egg-info/
 *__pycache__/
 *.configjson
+
+*.vcd
+*.gtkw
+!old/sdram_n_fifo_interface_IS42S16160G/simulations_to_keep/*
+!amaram/sdram_n_fifo_interface/simulations_to_keep/*

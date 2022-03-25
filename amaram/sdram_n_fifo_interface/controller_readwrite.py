@@ -531,6 +531,8 @@ if __name__ == "__main__":
 
 				dut = controller_readwrite(config_params, utest_params, utest=self)
 
+
+
 				sim = Simulator(dut)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 				# and a negedge clock for the 'propagate_i_dq_reads' simulation process

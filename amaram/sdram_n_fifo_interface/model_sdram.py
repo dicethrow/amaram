@@ -177,6 +177,34 @@ class model_sdram(sdram_sim_utils):
 		This should be called once for each bank, to make a separate bank monitor process
 		"""
 		def func():
+			def add_read_to_return(bank_id, activated_row = None, column = None):
+
+				if (bank_id == None):
+					self.reads_to_return.append({"bank_src" : bank_id})
+
+				else:
+
+					try:
+						read_value = bank_memory[activated_row].pop(column) # as reads on the sdram chip are destructive I think? test this!
+
+					except KeyError:
+						# typical issue - fix better! 
+						# for now, print info instead
+						print("KeyError! Ignoring")
+
+						print(hex(activated_row), hex(column)) 
+						print(activated_row, column)
+						print(bank_memory)
+						print(bank_memory[activated_row])
+						# print("Appending to reads_to_return: ", hex(bank_memory[activated_row][column])) # so the issue is before here
+						
+						# add fake data instead
+						read_value = 0xFACE
+					
+					self.reads_to_return.append({"bank_src" : bank_id, "data" : read_value}) 
+			
+			def toggle_debug_flag(i):
+				yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
 
 
 			num_banks = 1<<self.config_params.rw_params.BANK_BITS.value
@@ -281,6 +309,7 @@ class model_sdram(sdram_sim_utils):
 					if cmd == sdram_cmds.CMD_ACT:
 						yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_ACT)
 						temp_row = (yield pin_ui.rw_copi.a)
+						yield from toggle_debug_flag(0)
 						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
 						# try:
 						# except:
@@ -328,6 +357,7 @@ class model_sdram(sdram_sim_utils):
 						else:
 							auto_precharge = False
 						column = (yield pin_ui.rw_copi.a) & 0x1FF
+						yield from toggle_debug_flag(1)
 						bank_memory[activated_row][column] = (yield pin_ui.rw_copi.dq)
 						writes_remaining = self.config_params.burstlen - 1
 						if writes_remaining > 0: # this deals with the case of a burst length of 1
@@ -340,6 +370,7 @@ class model_sdram(sdram_sim_utils):
 						else:
 							auto_precharge = False
 						column = (yield pin_ui.rw_copi.a) & 0x1FF
+						yield from toggle_debug_flag(2)
 						reads_remaining = self.config_params.burstlen
 
 						clks_until_latency_elapsed = self.config_params.latency - 1
@@ -351,21 +382,17 @@ class model_sdram(sdram_sim_utils):
 						else:
 							# or pad the duration before <latency> with blanks, if needed
 							while len(self.reads_to_return) < clks_until_latency_elapsed:
-								self.reads_to_return.append({"bank_src" : None})
+								add_read_to_return(bank_id=None)
 
 						# now schedule in writes from this bank, do one for
 						# each clock after read, because that's when dqm is sampled
 						# note: these writes will appear on the dqm bus <latency> clocks later
 						if ~(yield pin_ui.dqm):
-							# print(hex(activated_row), hex(column)) 
-							# print(activated_row, column)
-							# print(bank_memory)
-							# print(bank_memory[activated_row])
-							# print("Appending to reads_to_return: ", hex(bank_memory[activated_row][column])) # so the issue is before here
-							self.reads_to_return.append({"bank_src" : bank_id, "data" : bank_memory[activated_row].pop(column)}) # as reads on the sdram chip are destructive I think? test this!
+							add_read_to_return(bank_id, activated_row, column)
+							yield from toggle_debug_flag(3)
 
 						else:
-							self.reads_to_return.append({"bank_src" : None})
+							add_read_to_return(bank_id=None)
 
 						# bprint("zzzz")
 						# bprint(self.reads_to_return)
@@ -388,9 +415,9 @@ class model_sdram(sdram_sim_utils):
 					if reads_remaining != None:
 						if reads_remaining > 0:
 							if ~(yield pin_ui.dqm):
-								self.reads_to_return.append({"bank_src" : bank_id, "data" : bank_memory[activated_row].pop(column)})
+								add_read_to_return(bank_id, activated_row, column)
 							else:
-								self.reads_to_return.append({"bank_src" : None})
+								add_read_to_return(bank_id=None)
 
 							# bprint(self.reads_to_return)
 							

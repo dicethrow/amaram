@@ -506,6 +506,26 @@ class sdram_n_fifo(Elaboratable):
 			with m.State("ERROR"):
 				pass
 
+
+		if isinstance(self.utest, FHDLTestCase):
+			add_clock(m, "sync")
+			# add_clock(m, "sync_1e6")
+
+			# and for negedge - because clk_edge=neg doesn't work? according to something I read? 
+			# I lost the link, but this workaround was recommended
+			sync_n = ClockDomain("sync_n", clk_edge="pos")#, local=True)
+			# clki_n = ClockDomain("clki_n", clk_edge="neg")
+			m.domains += sync_n
+			m.d.comb += sync_n.clk.eq(~ClockDomain("sync").clk) # 
+
+			test_id = self.utest.get_test_id()
+
+			if test_id == "fifoInterface_sim_thatWrittenFifos_canBeReadBack":
+				assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
+				
+				for flag in self.utest_params.debug_flags:
+					m.d.sync_n += flag.eq(flag) # needed to prevent it being optimised out?
+
 		return m
 		
 
@@ -552,6 +572,7 @@ if __name__ == "__main__":
 				utest_params.read_clk_freqs = config_params.num_fifos * [4e6]#[60e6] 
 				utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
 				utest_params.num_fifo_writes = 200 # 50
+				utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(5))
 
 				dut = sdram_n_fifo(config_params, utest_params, utest=self)
 
@@ -562,11 +583,12 @@ if __name__ == "__main__":
 				for i, (r_domain, w_domain) in enumerate(zip(config_params.fifo_read_domains, config_params.fifo_write_domains)):
 					sim.add_clock(period=1/utest_params.read_clk_freqs[i], domain=r_domain) # represents faster reads
 					sim.add_clock(period=1/utest_params.write_clk_freqs[i], domain=w_domain) # represents slower reads
+				
 
-				# sdram_model = model_sdram(config_params, utest_params)
-				# for i in range(4): # num of banks
-				# 	sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, dut_ios=dut.controller_pin_ui.ios))
-				# sim.add_sync_process(sdram_model.propagate_i_dq_reads(dut_ios=dut.controller_pin_ui.ios))
+				sdram_model = model_sdram(config_params, utest_params)
+				for i in range(4): # num of banks
+					sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, pin_ui=dut.pin_ui))
+				sim.add_sync_process(sdram_model.propagate_i_dq_reads(pin_ui=dut.pin_ui))
 
 				# all_writes_done = Signal(shape=range(config_params.num_fifos+1), reset=config_params.num_fifos)
 

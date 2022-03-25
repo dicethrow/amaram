@@ -142,7 +142,8 @@ def get_ui_layout(config_params):
 			("read_active",	1,	DIR_FANIN),
 			("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANIN),
 			("r_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANIN),
-		])
+		]),
+		("in_progress",		1,		DIR_FANIN)
 	]
 
 	return ui_layout
@@ -245,6 +246,7 @@ class controller_readwrite(Elaboratable):
 
 		# main logic, per bank
 		bank_using_array = Array(Record([
+			("in_progress",			1),
 			("cmd_and_addr_bus",	1),
 			("data_bus",			1),
 			("readback_bus",		1),
@@ -254,18 +256,12 @@ class controller_readwrite(Elaboratable):
 		adding_to_readback_bus = Signal()
 		m.d.comb += [
 			adding_to_readback_bus.eq(Cat([_bank_using.readback_bus for _bank_using in bank_using_array]).any()),
-			_pin_ui.dqm.eq(Cat([_bank_using.dqm for _bank_using in bank_using_array]).all())
+			_pin_ui.dqm.eq(Cat([_bank_using.dqm for _bank_using in bank_using_array]).all()),
+			_ui.in_progress.eq(Cat([_bank_using.in_progress for _bank_using in bank_using_array]).any())
 		]
 
 		# for bank_id, bank_using in enumerate([bank_using_array[0]]):
 		for bank_id, bank_using in enumerate(bank_using_array):
-			
-			# defaults (note! must use 'bank_using', as this is called in a loop, otherwise will be overwritten)
-			m.d.sync += [
-				bank_using.readback_bus.eq(0),
-				bank_using.dqm.eq(1),
-			]
-
 			with m.FSM(name=f"rw_bank_{bank_id}_fsm") as fsm:
 				""" 
 				todo:
@@ -273,10 +269,14 @@ class controller_readwrite(Elaboratable):
 				  here .sync's are used everywhere instead
 				
 				"""
+				# defaults (note! must use 'bank_using', as this is called in a loop, otherwise will be overwritten)
 				# default to not using resources
 				m.d.sync += [
+					bank_using.readback_bus.eq(0),
+					bank_using.dqm.eq(1),
 					bank_using.cmd_and_addr_bus.eq(0),
 					bank_using.data_bus.eq(0),
+					bank_using.in_progress.eq(~fsm.ongoing("IDLE"))
 				]
 
 				with m.State("IDLE"):
@@ -337,9 +337,10 @@ class controller_readwrite(Elaboratable):
 				##################### read ###############################
 
 				with m.State("READ_-3"):
-					# do a check to see if the dqm condition was met
-					# with self.m.If(Cat([Past(self.o_dqm, clocks=1+j, domain="sdram") for j in range(3)]) != 0b111):
-					# 	self.m.next = "ERROR"
+					# do a check to see if the dqm condition was met. Should this be in simulation
+					# rather than in rtl?
+					# with m.If(Cat([Past(_pin_ui.dqm, clocks=1+j) for j in range(3)]) != 0b111):
+					# 	m.next = "ERROR"
 
 					m.d.sync += [
 						bank_using.cmd_and_addr_bus.eq(1),

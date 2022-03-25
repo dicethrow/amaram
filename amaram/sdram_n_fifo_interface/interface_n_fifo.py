@@ -188,7 +188,7 @@ class sdram_n_fifo(Elaboratable):
 						with m.If(fifo_controls[i].words_stored_in_ram == 0):
 							m.next = "BYPASS_SDRAM"
 						
-						# todo: should there be a check done around here that sdram contains at least a burstlen of space?
+						# todo: should there be a check done around here that sdram contains at least a burstlen of space?					
 
 		def determine_how_much_sdram_is_used_per_fifo():
 			# check_if_srcfifo_ready_to_be_writen_to_sdram
@@ -212,7 +212,6 @@ class sdram_n_fifo(Elaboratable):
 			]
 
 			return rw_ui#, rw_pin_ui
-			
 		
 		def route_readback_pipeline_to_dstfifos():
 			readback_fifo_id = Signal(shape=self.config_params.fifo_buf_id_bits)
@@ -247,6 +246,8 @@ class sdram_n_fifo(Elaboratable):
 			"""
 
 			fifo_index = Signal(shape=self.config_params.fifo_buf_id_bits)
+
+			
 
 			next_srcfifo_readable_to_sdram = Signal()
 			next_srcfifo_index = Signal(shape=self.config_params.fifo_buf_id_bits)
@@ -352,10 +353,10 @@ class sdram_n_fifo(Elaboratable):
 				Note that this needs to be an.. even number of clock cycles (or equal to the burstlen cycles?), if doing a memory access at the moment? so trying REFRESH_OR_IDLE_2 state to see if that fixes a bug
 				"""
 				with m.If(refresh_ui.request_to_refresh_soon):
-					with m.If(self.pin_ui.dqm): # wait for sany reads/writes to finish / banks to go idle, is this needed?
+					with m.If(~rw_ui.in_progress): # wait for sany reads/writes to finish / banks to go idle, is this needed?
 						m.d.sync += refresh_ui.enable_refresh.eq(1) # sync?
 
-				with m.Elif(~self.pin_ui.dqm):
+				with m.Elif(refresh_ui.refresh_in_progress):
 					pass # wait for it to finish
 
 				with m.Else():
@@ -437,6 +438,13 @@ class sdram_n_fifo(Elaboratable):
 							when_burst_ends_change_fifo_or_readwrite()
 
 			with m.State("READ_SDRAM_TO_DSTFIFOS"):
+				# this state exists to ensure that the dqm pin is kept high for <latency> clock cycles,
+				# to prevent driver-driver conflict on the sdram chip
+				# m.d.sync += self.pin_ui.dqm.eq(1)
+				with m.If(Cat([Past(self.pin_ui.dqm, clocks=1+j) for j in range(3)]) == 0b111):
+					m.next = "_READ_SDRAM_TO_DSTFIFOS"
+
+			with m.State("_READ_SDRAM_TO_DSTFIFOS"):
 				m.d.sync += rw_ui.rw_copi.task.eq(Mux(burst_index==0, rw_cmds.RW_READ, rw_cmds.RW_IDLE))
 
 				with m.Switch(fifo_index):

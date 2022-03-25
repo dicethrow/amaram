@@ -443,6 +443,8 @@ class sdram_n_fifo(Elaboratable):
 				# m.d.sync += self.pin_ui.dqm.eq(1)
 				with m.If(Cat([Past(self.pin_ui.dqm, clocks=1+j) for j in range(3)]) == 0b111):
 					m.next = "_READ_SDRAM_TO_DSTFIFOS"
+				
+				assert 0, "Ensure the switching-from-write-to-read behavior here is as expected. Perhaps ignore this dqm thing for now?"
 
 			with m.State("_READ_SDRAM_TO_DSTFIFOS"):
 				m.d.sync += rw_ui.rw_copi.task.eq(Mux(burst_index==0, rw_cmds.RW_READ, rw_cmds.RW_IDLE))

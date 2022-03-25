@@ -177,35 +177,6 @@ class model_sdram(sdram_sim_utils):
 		This should be called once for each bank, to make a separate bank monitor process
 		"""
 		def func():
-			def add_read_to_return(bank_id, activated_row = None, column = None):
-
-				if (bank_id == None):
-					self.reads_to_return.append({"bank_src" : bank_id})
-
-				else:
-
-					try:
-						read_value = bank_memory[activated_row].pop(column) # as reads on the sdram chip are destructive I think? test this!
-
-					except KeyError:
-						# typical issue - fix better! 
-						# for now, print info instead
-						print("KeyError! Ignoring")
-
-						print(hex(activated_row), hex(column)) 
-						print(activated_row, column)
-						print(bank_memory)
-						print(bank_memory[activated_row])
-						# print("Appending to reads_to_return: ", hex(bank_memory[activated_row][column])) # so the issue is before here
-						
-						# add fake data instead
-						read_value = 0xFACE
-					
-					self.reads_to_return.append({"bank_src" : bank_id, "data" : read_value}) 
-			
-			def toggle_debug_flag(i):
-				yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
-
 
 			num_banks = 1<<self.config_params.rw_params.BANK_BITS.value
 			# sdram_cmds
@@ -246,6 +217,30 @@ class model_sdram(sdram_sim_utils):
 			yield Passive()
 			
 			while True:
+				def add_read_to_return(bank_id, activated_row = None, column = None):
+					if (bank_id == None):
+						self.reads_to_return.append({"bank_src" : bank_id})
+					else:
+						try:
+							read_value = bank_memory[activated_row].pop(column) # as reads on the sdram chip are destructive I think? test this!
+						except KeyError:
+							# typical issue - fix better! 
+							# for now, print info instead
+							print("KeyError! Ignoring")
+
+							print(hex(activated_row), hex(column)) 
+							print(activated_row, column)
+							print(bank_memory)
+							print(bank_memory[activated_row])
+							# print("Appending to reads_to_return: ", hex(bank_memory[activated_row][column])) # so the issue is before here
+							
+							# add fake data instead
+							read_value = 0xFACE
+						
+						self.reads_to_return.append({"bank_src" : bank_id, "data" : read_value}) 
+				
+				def toggle_debug_flag(i):
+					yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
 
 				def bprint(*args):
 					if print_bank_debug_statements:
@@ -389,7 +384,6 @@ class model_sdram(sdram_sim_utils):
 						# note: these writes will appear on the dqm bus <latency> clocks later
 						if ~(yield pin_ui.dqm):
 							add_read_to_return(bank_id, activated_row, column)
-							yield from toggle_debug_flag(3)
 
 						else:
 							add_read_to_return(bank_id=None)

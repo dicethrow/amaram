@@ -284,8 +284,8 @@ class controller_readwrite(Elaboratable):
 						m.d.sync += [
 							bank_using.cmd_and_addr_bus.eq(1),
 							_pin_ui.cmd.eq(sdram_cmds.CMD_ACT),
-							_pin_ui.rw_copi.ba.eq(Past(bank_id)),	
-							_pin_ui.rw_copi.a.eq(Past(row)),
+							_pin_ui.rw_copi.ba.eq(bank_id),#Past(bank_id)),	 # past of a const doesn't make sense
+							_pin_ui.rw_copi.a.eq(row),#Past(row)),
 						]
 						m.next = "WAS_ACTIVE_NOP1"
 

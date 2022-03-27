@@ -211,8 +211,6 @@ class model_sdram(sdram_sim_utils):
 			clks_at_read_cmd = None
 			clks_at_last_write = None
 			clks_at_last_read = None
-
-			print_bank_debug_statements = True
 			
 			yield Passive()
 			
@@ -243,7 +241,8 @@ class model_sdram(sdram_sim_utils):
 					yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
 
 				def bprint(*args):
-					if print_bank_debug_statements:
+					# if print_bank_debug_statements:
+					if self.utest_params.enable_detailed_model_printing:
 						colors = ["red", "green", "yellow", "blue"]
 						outstr = f"Bank {bank_id}, {bank_state} : "
 						for arg in args:
@@ -496,7 +495,9 @@ class model_sdram(sdram_sim_utils):
 				# print(bank_memory)
 				
 				clks_since_active = clks_since_active + 1 if (clks_since_active != None) else None
+				# yield Settle() # this should deal with not using a negedge sim clock
 				yield
+				# yield Settle() # this should deal with not using a negedge sim clock
 				# print(",")
 
 			# assert the bank state is inactive
@@ -526,7 +527,7 @@ class model_sdram(sdram_sim_utils):
 
 				# else:
 					# yield self.nflagA.eq(0)
-				yield Settle() # this should deal with not using a negedge sim clock
+				# yield Settle() # this should deal with not using a negedge sim clock
 				yield
-				yield Settle() # this should deal with not using a negedge sim clock
+				# yield Settle() # this should deal with not using a negedge sim clock
 		return func

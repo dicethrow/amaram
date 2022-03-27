@@ -185,7 +185,7 @@ class fifo_controller(sdram_base):
 			("r_next_addr", self.fifo_buf_word_addr_bits) # can we assume this resets to zero?
 		]
 		self.fifo_controls = Array(Record(per_fifo_values) for _ in self.src_fifos)
-
+444
 
 		def route_data_through_sdram_or_bypass():
 			# for i in ?

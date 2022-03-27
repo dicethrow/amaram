@@ -21,6 +21,24 @@ from amaranth.utils import bits_for
 
 from parameters_standard_sdram import sdram_cmds
 
+
+class sdram_model_rtl(Elaboratable):
+	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+		super().__init__()
+		self.ui = Record(get_tb_ui_layout(config_params))
+
+		self.config_params = config_params
+		self.utest_params = utest_params
+		self.utest = utest
+
+	def elaborate(self, platform = None):
+			m = Module()
+
+			...
+
+
+			return m
+
 class sdram_sim_utils:
 	def __init__(self, config_params, utest_params):
 		self.config_params = config_params
@@ -31,6 +49,7 @@ class sdram_sim_utils:
 			# {"bank_src" : 3, "data" : 0},	# for example
 			# {"bank_src" : None}
 		]
+
 
 	def num_clk_cycles(self, delay):
 		if isinstance(delay, enum.Enum):
@@ -77,7 +96,9 @@ class sdram_sim_utils:
 			return cmd, clks # the actual command that caused this block to stop
 		else:
 			# print("xx c")
+			yield Settle()
 			yield
+			yield Settle()
 			clks += 1
 			# print(clks)
 
@@ -90,6 +111,9 @@ class model_sdram(sdram_sim_utils):
 	todo:
 	- add startup monitor (i.e. the thing that monitors what the set burstlen is)
 	"""
+
+	def toggle_debug_flag(self, i):
+		yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
 
 	def get_refresh_monitor_process(self, pin_ui):
 		"""
@@ -167,8 +191,9 @@ class model_sdram(sdram_sim_utils):
 				if counter == 0:
 					memory_lapsed = True
 
-
+				yield Settle()
 				yield
+				yield Settle()
 				# print(counter)
 		return func
 
@@ -211,17 +236,21 @@ class model_sdram(sdram_sim_utils):
 			clks_at_read_cmd = None
 			clks_at_last_write = None
 			clks_at_last_read = None
+
 			
 			yield Passive()
 			
 			while True:
 				def add_read_to_return(bank_id, activated_row = None, column = None):
+					just_had_keyerror = False
+
 					if (bank_id == None):
 						self.reads_to_return.append({"bank_src" : bank_id})
 					else:
 						try:
 							read_value = bank_memory[activated_row].pop(column) # as reads on the sdram chip are destructive I think? test this!
 						except KeyError:
+							just_had_keyerror = True
 							# typical issue - fix better! 
 							# for now, print info instead
 							print("KeyError! Ignoring")
@@ -233,12 +262,13 @@ class model_sdram(sdram_sim_utils):
 							# print("Appending to reads_to_return: ", hex(bank_memory[activated_row][column])) # so the issue is before here
 							
 							# add fake data instead
-							read_value = 0xFACE
+							read_value = 0xFACE # this suggests that the error was in the writing stage
 						
 						self.reads_to_return.append({"bank_src" : bank_id, "data" : read_value}) 
+
+					return just_had_keyerror
+
 				
-				def toggle_debug_flag(i):
-					yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
 
 				def bprint(*args):
 					# if print_bank_debug_statements:
@@ -303,7 +333,7 @@ class model_sdram(sdram_sim_utils):
 					if cmd == sdram_cmds.CMD_ACT:
 						yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_ACT)
 						temp_row = (yield pin_ui.rw_copi.a)
-						yield from toggle_debug_flag(0)
+						# yield from toggle_debug_flag(0)
 						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
 						# try:
 						# except:
@@ -351,7 +381,7 @@ class model_sdram(sdram_sim_utils):
 						else:
 							auto_precharge = False
 						column = (yield pin_ui.rw_copi.a) & 0x1FF
-						yield from toggle_debug_flag(1)
+						# yield from toggle_debug_flag(1)
 						bank_memory[activated_row][column] = (yield pin_ui.rw_copi.dq)
 						writes_remaining = self.config_params.burstlen - 1
 						if writes_remaining > 0: # this deals with the case of a burst length of 1
@@ -364,7 +394,7 @@ class model_sdram(sdram_sim_utils):
 						else:
 							auto_precharge = False
 						column = (yield pin_ui.rw_copi.a) & 0x1FF
-						yield from toggle_debug_flag(2)
+						# yield from toggle_debug_flag(2)
 						reads_remaining = self.config_params.burstlen
 
 						clks_until_latency_elapsed = self.config_params.latency - 1
@@ -376,16 +406,22 @@ class model_sdram(sdram_sim_utils):
 						else:
 							# or pad the duration before <latency> with blanks, if needed
 							while len(self.reads_to_return) < clks_until_latency_elapsed:
-								add_read_to_return(bank_id=None)
+								just_had_keyerror = add_read_to_return(bank_id=None)
+								if just_had_keyerror:
+									yield from self.toggle_debug_flag(0)
 
 						# now schedule in writes from this bank, do one for
 						# each clock after read, because that's when dqm is sampled
 						# note: these writes will appear on the dqm bus <latency> clocks later
 						if ~(yield pin_ui.dqm):
-							add_read_to_return(bank_id, activated_row, column)
+							just_had_keyerror = add_read_to_return(bank_id, activated_row, column)
+							if just_had_keyerror:
+									yield from self.toggle_debug_flag(1)
 
 						else:
-							add_read_to_return(bank_id=None)
+							just_had_keyerror = add_read_to_return(bank_id=None)
+							if just_had_keyerror:
+									yield from self.toggle_debug_flag(2)
 
 						# bprint("zzzz")
 						# bprint(self.reads_to_return)
@@ -408,9 +444,13 @@ class model_sdram(sdram_sim_utils):
 					if reads_remaining != None:
 						if reads_remaining > 0:
 							if ~(yield pin_ui.dqm):
-								add_read_to_return(bank_id, activated_row, column)
+								just_had_keyerror = add_read_to_return(bank_id, activated_row, column)
+								if just_had_keyerror:
+									yield from self.toggle_debug_flag(3)
 							else:
-								add_read_to_return(bank_id=None)
+								just_had_keyerror = add_read_to_return(bank_id=None)
+								if just_had_keyerror:
+									yield from self.toggle_debug_flag(4)
 
 							# bprint(self.reads_to_return)
 							
@@ -495,9 +535,9 @@ class model_sdram(sdram_sim_utils):
 				# print(bank_memory)
 				
 				clks_since_active = clks_since_active + 1 if (clks_since_active != None) else None
-				# yield Settle() # this should deal with not using a negedge sim clock
+				yield Settle() # this should deal with not using a negedge sim clock
 				yield
-				# yield Settle() # this should deal with not using a negedge sim clock
+				yield Settle() # this should deal with not using a negedge sim clock
 				# print(",")
 
 			# assert the bank state is inactive
@@ -521,13 +561,14 @@ class model_sdram(sdram_sim_utils):
 						yield pin_ui.rw_cipo.dq.eq(next_write["data"])
 						# yield self.nflagA.eq(1)
 					else:
-						yield pin_ui.rw_cipo.dq.eq(0xBEAD) # use 0xBEAD to indicate that there's no valid read
+						yield pin_ui.rw_cipo.dq.eq(0xBEAD) # this indicates that the error is with reading
+						yield from self.toggle_debug_flag(5)
 					# else:
 						# yield self.nflagA.eq(0)
 
 				# else:
 					# yield self.nflagA.eq(0)
-				# yield Settle() # this should deal with not using a negedge sim clock
+				yield Settle() # this should deal with not using a negedge sim clock
 				yield
-				# yield Settle() # this should deal with not using a negedge sim clock
+				yield Settle() # this should deal with not using a negedge sim clock
 		return func

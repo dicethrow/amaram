@@ -571,7 +571,7 @@ class sdram_n_fifo(Elaboratable):
 
 if __name__ == "__main__":
 	""" 
-	feb2022 - mar2022
+	feb2022 - apr2022
 
 	Adding tests to each file, so I can more easily make 
 	changes in order to improve timing performance.

@@ -19,25 +19,10 @@ from amaranth.lib.cdc import FFSynchronizer
 from amaranth.build import Platform
 from amaranth.utils import bits_for
 
-from parameters_standard_sdram import sdram_cmds
+from amtest.utils import FHDLTestCase, Params
 
+from parameters_standard_sdram import rw_cmds, sdram_cmds
 
-class sdram_model_rtl(Elaboratable):
-	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
-		super().__init__()
-		self.ui = Record(get_tb_ui_layout(config_params))
-
-		self.config_params = config_params
-		self.utest_params = utest_params
-		self.utest = utest
-
-	def elaborate(self, platform = None):
-			m = Module()
-
-			...
-
-
-			return m
 
 class sdram_sim_utils:
 	def __init__(self, config_params, utest_params):
@@ -572,3 +557,277 @@ class model_sdram(sdram_sim_utils):
 				yield
 				yield Settle() # this should deal with not using a negedge sim clock
 		return func
+
+
+#####
+
+def get_model_sdram_as_module_io_layout(config_params):
+	io_layout = [
+		("clk_en",		1,		DIR_FANOUT),
+		("dqm",			1,		DIR_FANOUT),
+		
+		("cs",			1,		DIR_FANOUT),
+		("we",			1,		DIR_FANOUT),
+		("ras",			1,		DIR_FANOUT),
+		("cas",			1,		DIR_FANOUT),
+
+
+		("a",			config_params.rw_params.A_BITS.value,		DIR_FANOUT),
+		("ba",			config_params.rw_params.BANK_BITS.value,	DIR_FANOUT),
+		("dq_copi",		config_params.rw_params.DATA_BITS.value,	DIR_FANOUT),
+		("dq_cipo",		config_params.rw_params.DATA_BITS.value,	DIR_FANIN),
+		("dq_copi_en",	1,		DIR_FANOUT)
+	]
+	return io_layout
+
+
+class model_sdram_as_module(Elaboratable):
+	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+		super().__init__()
+		self.io = Record(get_model_sdram_as_module_io_layout(config_params))
+
+		self.config_params = config_params
+		self.utest_params = utest_params
+		self.utest = utest
+
+		self.model = model_sdram(self.config_params, self.utest_params)
+
+	def elaborate(self, platform = None):
+		m = Module()
+
+		assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
+
+		# clarify the assumptions made in the implementation below
+		assert self.io.ba.width == 2
+		# assert self.config_params.rw_params.A_BITS.value == 13 # is this assert needed?
+
+		# add command decoding functionality
+		decoded_cmd = Signal(shape=sdram_cmds, reset=sdram_cmds.CMD_NOP)
+		encoded_cmd = Signal(shape=9)
+
+		m.d.comb += encoded_cmd.eq(Cat(reversed(
+			[Past(self.io.clk_en), 
+			self.io.clk_en, 
+			~self.io.cs, 	# using ~ as these are inverted by the use of PinsN in the Platform() upload stuff
+			~self.io.ras,
+			~self.io.cas, 
+			~self.io.we, 
+			self.io.ba[1], 
+			self.io.ba[0], 
+			self.io.a[10]],
+		)))
+
+		def set_state(new_state):
+			m.d.comb += decoded_cmd.eq(new_state)
+		
+		# I'm trying out a few ways to approach how to represent this, this is closet
+		# to what is specified on p.9 of the datasheet. The meaning of the matches() string is:
+		# past(clk_en) | clk_en | n_cs | n_ras | n_cas | n_we | ba[1] | ba[0] | a[10] 
+		with m.If(	encoded_cmd.matches("1-1------")): set_state(sdram_cmds.CMD_DESL)
+		with m.Elif(encoded_cmd.matches("1-0111---", "0--------", "--1------")): set_state(sdram_cmds.CMD_NOP)
+		with m.Elif(encoded_cmd.matches("1-0110---")): set_state(sdram_cmds.CMD_BST)
+		with m.Elif(encoded_cmd.matches("1-0101--0")): set_state(sdram_cmds.CMD_READ)
+		with m.Elif(encoded_cmd.matches("1-0101--1")): set_state(sdram_cmds.CMD_READ_AP)
+		with m.Elif(encoded_cmd.matches("1-0100--0")): set_state(sdram_cmds.CMD_WRITE)
+		with m.Elif(encoded_cmd.matches("1-0100--1")): set_state(sdram_cmds.CMD_WRITE_AP)
+		with m.Elif(encoded_cmd.matches("1-0011---")): set_state(sdram_cmds.CMD_ACT)
+		with m.Elif(encoded_cmd.matches("1-0010--0")): set_state(sdram_cmds.CMD_PRE)
+		with m.Elif(encoded_cmd.matches("1-0010--1")): set_state(sdram_cmds.CMD_PALL)
+		with m.Elif(encoded_cmd.matches("110001---")): set_state(sdram_cmds.CMD_REF)
+		with m.Elif(encoded_cmd.matches("100001---")): set_state(sdram_cmds.CMD_SELF)
+		with m.Elif(encoded_cmd.matches("1-0000000")): set_state(sdram_cmds.CMD_MRS)
+		with m.Else(): set_state(sdram_cmds.CMD_ILLEGAL)
+
+
+		return m
+
+	def add_simulations_to(self, sim):
+		...
+
+
+if __name__ == "__main__":
+	""" 
+	feb2022 - apr2022
+
+	Goal of this file:
+	- Confirm that the real-time-logic and simulation logic interacts as expected
+
+	Could I setup tests etc to run on github each push? It'd be good to learn how to do that.
+
+	"""
+	from pathlib import Path
+	current_filename = str(Path(__file__).absolute()).split(".py")[0]
+
+	parser = main_parser()
+	args = parser.parse_args()
+
+	class Testbench(Elaboratable):
+		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+			...
+			# have a .comb passthrough for the sdram io pins
+			# have a series of fsm's that turn the cmd enum into the desired value
+			# also - maybe we could actually use the formal verification thing here?
+			# although I feel it would be faster for now to just test by inspection
+
+	if args.action == "generate": # formal testing
+		...
+
+	elif args.action == "simulate": # time-domain testing
+
+		class modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync(FHDLTestCase):
+			def test_sim(self):
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
+				from model_sdram import model_sdram
+
+				config_params = Params()
+				config_params.clk_freq = 143e6
+				config_params.ic_timing = ic_timing
+				config_params.ic_refresh_timing = ic_refresh_timing
+				config_params.rw_params = rw_params
+
+				utest_params = Params()
+
+				##
+
+				# config_params = Params()
+				# config_params.clk_freq = 143e6
+				# config_params.burstlen = 8
+				# config_params.latency = 3
+				# config_params.numbursts = 2
+				# config_params.ic_timing = ic_timing
+				# config_params.ic_refresh_timing = ic_refresh_timing
+				# config_params.rw_params = rw_params
+				# config_params.num_fifos = 4
+				# config_params.fifo_read_domains = ["sync"] * config_params.num_fifos  #[f"read_{i}" for i in range(config_params.num_fifos)]
+				# config_params.fifo_write_domains =  ["sync"] * config_params.num_fifos  #[[f"write_{i}" for i in range(config_params.num_fifos)]
+				# config_params.fifo_width = 16
+				# config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 4 # 64
+				# config_params.readback_fifo_depth = 50
+
+				# utest_params = Params()
+				# utest_params.model_sdram_rtl = model_sdram_rtl
+				# utest_params.timeout_period = 20e-6 # seconds
+				# # utest_params.read_clk_freqs = config_params.num_fifos * [40e6]#[60e6] 
+				# # utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
+				# utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 10 # =160 #30 # 50 # 200
+				# utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
+				# utest_params.enable_detailed_model_printing = True
+
+				###
+
+				dut = model_sdram_as_module(config_params, utest_params, utest=self)
+
+				sim = Simulator(dut)
+				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+				# dut.add_simulations_to(sim)
+
+				# sdram_model = model_sdram(config_params, utest_params)
+				# for i in range(4): # num of banks
+				# 	sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, dut_ios=dut.controller_pin_ui.ios))
+				# sim.add_sync_process(sdram_model.propagate_i_dq_reads(dut_ios=dut.controller_pin_ui.ios))
+
+				expected_cmd_state = Signal(shape=sdram_cmds)
+				def apply_each_cmd_and_strobe_other_signals():
+					# let's default to holding clk_end high
+					yield dut.io.clk_en.eq(1)
+
+					# initial delay
+					for i in range(10):
+						yield 
+
+					for cmd_state in sdram_cmds:
+						# required by this command
+						if cmd_state == sdram_cmds.CMD_SELF:
+							yield dut.io.clk_en.eq(0) 
+						
+						yield expected_cmd_state.eq(cmd_state) # yield dut.io.cmd.eq(cmd_state)
+						yield dut.io.dqm.eq(-1)
+						yield dut.io.dq_copi.eq(-1)
+						yield dut.io.a.eq(-1)
+						yield dut.io.ba.eq(-1)
+
+						yield
+
+						yield expected_cmd_state.eq(0) # yield dut.io.cmd.eq(0)
+						yield dut.io.dqm.eq(0)
+						yield dut.io.dq_copi.eq(0)
+						yield dut.io.a.eq(0)
+						yield dut.io.ba.eq(0)
+
+						# revert it back
+						if cmd_state == sdram_cmds.CMD_SELF:
+							yield dut.io.clk_en.eq(1) 
+						yield
+
+					# end delay
+					for i in range(10):
+						yield 
+					
+				# def route_back_cipo_dq():
+				# 	yield Passive()
+				# 	while True:
+				# 		yield dut.io.rw_cipo.dq.eq((yield dut.io.rw_copi.dq))
+				# 		yield dut.io.rw_cipo.read_active.eq((yield dut.io.rw_copi.read_active))
+				# 		yield dut.io.rw_cipo.a.eq((yield dut.io.rw_copi.a))
+				# 		yield dut.io.rw_cipo.ba.eq((yield dut.io.rw_copi.ba))
+				# 		yield
+
+
+				sim.add_sync_process(apply_each_cmd_and_strobe_other_signals)
+				# sim.add_sync_process(route_back_cipo_dq)
+				
+				with sim.write_vcd(
+					f"{current_filename}_{self.get_test_id()}.vcd"):
+					sim.run()
+
+
+
+
+		# class sdramModel_sim_thatCommandCodes_areDecodedCorrectly():
+		# 	def test_sim(self):
+		# 		from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
+
+		# 		config_params = Params()
+		# 		config_params.clk_freq = 143e6
+		# 		config_params.burstlen = 8
+		# 		config_params.latency = 3
+		# 		config_params.numbursts = 2
+		# 		config_params.ic_timing = ic_timing
+		# 		config_params.ic_refresh_timing = ic_refresh_timing
+		# 		config_params.rw_params = rw_params
+		# 		config_params.num_fifos = 4
+		# 		config_params.fifo_read_domains = ["sync"] * config_params.num_fifos  #[f"read_{i}" for i in range(config_params.num_fifos)]
+		# 		config_params.fifo_write_domains =  ["sync"] * config_params.num_fifos  #[[f"write_{i}" for i in range(config_params.num_fifos)]
+		# 		config_params.fifo_width = 16
+		# 		config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 4 # 64
+		# 		config_params.readback_fifo_depth = 50
+
+		# 		utest_params = Params()
+		# 		utest_params.model_sdram_rtl = model_sdram_rtl
+		# 		utest_params.timeout_period = 20e-6 # seconds
+		# 		# utest_params.read_clk_freqs = config_params.num_fifos * [40e6]#[60e6] 
+		# 		# utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
+		# 		utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 10 # =160 #30 # 50 # 200
+		# 		utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
+		# 		utest_params.enable_detailed_model_printing = True
+
+		# 		...
+
+		# 		def run_for_longer():
+		# 			yield Active()
+		# 			yield Delay(300e-6)
+		# 		sim.add_process(run_for_longer)
+				
+		# 		with sim.write_vcd(
+		# 			f"{current_filename}_{self.get_test_id()}.vcd"):
+		# 			sim.run()
+
+	if args.action in ["generate", "simulate"]:
+		# now run each FHDLTestCase above 
+		import unittest
+		sys.argv[1:] = [] # so the args used for this file don't interfere with unittest
+		unittest.main()
+
+	else: # upload
+		...
+

@@ -19,25 +19,11 @@ from amaranth.lib.cdc import FFSynchronizer
 from amaranth.build import Platform
 from amaranth.utils import bits_for
 
-from parameters_standard_sdram import sdram_cmds
+from amtest.boards.ulx3s.common.clks import add_clock
+from amtest.utils import FHDLTestCase, Params
 
+from parameters_standard_sdram import rw_cmds, sdram_cmds
 
-class sdram_model_rtl(Elaboratable):
-	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
-		super().__init__()
-		self.ui = Record(get_tb_ui_layout(config_params))
-
-		self.config_params = config_params
-		self.utest_params = utest_params
-		self.utest = utest
-
-	def elaborate(self, platform = None):
-			m = Module()
-
-			...
-
-
-			return m
 
 class sdram_sim_utils:
 	def __init__(self, config_params, utest_params):
@@ -62,16 +48,16 @@ class sdram_sim_utils:
 		# print("Num clk cycles: ", num_clk_cycles)
 		return num_clk_cycles
 
-	def get_cmd(self, pin_ui):
-		decoded_cmd = sdram_cmds((yield pin_ui.cmd))
+	def get_cmd(self, io):
+		decoded_cmd = sdram_cmds((yield io.decoded_cmd))
 		# print(f"cmd is {decoded_cmd}")
 		return decoded_cmd
 	
-	def assert_cmd_is(self, pin_ui, expected_cmd):
-		# print(f"Asserting {yield from self.get_cmd(pin_ui)} == {expected_cmd}")
-		assert (yield from self.get_cmd(pin_ui)) == expected_cmd
+	def assert_cmd_is(self, io, expected_cmd):
+		# print(f"Asserting {yield from self.get_cmd(io)} == {expected_cmd}")
+		assert (yield from self.get_cmd(io)) == expected_cmd
 
-	def assert_idle_cmd_for(self, pin_ui, min_duration, focus_bank = None):
+	def assert_idle_cmd_for(self, io, min_duration, focus_bank = None):
 		""" 
 		This will assert that for at least <min_duration> [seconds], the cmdi is in <valid_idle_states>.
 		After that period, this function returns when cmdi not in <valid_idle_states>, with the new cmd.
@@ -83,12 +69,12 @@ class sdram_sim_utils:
 		- must wait this much time... but how to catch for if invalid commands etc occur in this time? ...cover / bmc?
 		"""
 		valid_idle_states = [sdram_cmds.CMD_NOP, sdram_cmds.CMD_DESL]
-		initial_state = yield from self.get_cmd(pin_ui)
+		initial_state = yield from self.get_cmd(io)
 		clks = 0
 		while True:
 			# yield Settle() # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
-			cmd = yield from self.get_cmd(pin_ui)
-			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield pin_ui.rw_copi.ba) == focus_bank)):# (cmd == end_state):
+			cmd = yield from self.get_cmd(io)
+			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield io.ba) == focus_bank)):# (cmd == end_state):
 				if not (clks >= self.num_clk_cycles(min_duration)):
 					print("Error: ", clks, self.num_clk_cycles(min_duration))
 					assert 0
@@ -105,6 +91,9 @@ class sdram_sim_utils:
 
 class model_sdram(sdram_sim_utils):
 	def __init__(self, config_params, utest_params):
+
+		if not hasattr(utest_params, "enable_detailed_model_printing"): utest_params.enable_detailed_model_printing = True
+
 		super().__init__(config_params, utest_params)
 	
 	""" 
@@ -115,7 +104,7 @@ class model_sdram(sdram_sim_utils):
 	def toggle_debug_flag(self, i):
 		yield self.utest_params.debug_flags[i].eq(~(yield self.utest_params.debug_flags[i]))
 
-	def get_refresh_monitor_process(self, pin_ui):
+	def get_refresh_monitor_process(self, io):
 		"""
 		todo - implement the self-refresh functionality, as on p.24 of the datasheet
 		- To represent the refresh state of the chip
@@ -160,8 +149,8 @@ class model_sdram(sdram_sim_utils):
 			while True:
 				try:
 					# ensure the banks are precharged...?
-					yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_REF)
-					yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RC)
+					yield from self.assert_cmd_is(io, sdram_cmds.CMD_REF)
+					yield from self.assert_idle_cmd_for(io, min_duration = self.config_params.ic_timing.T_RC)
 					
 					# print("Only gets here if a refresh was done succesfully, ", counter)
 					counter = (counter + increment_per_refresh) if ((counter + increment_per_refresh) < counter_max) else counter
@@ -197,7 +186,7 @@ class model_sdram(sdram_sim_utils):
 				# print(counter)
 		return func
 
-	def get_readwrite_process_for_bank(self, bank_id, pin_ui):
+	def get_readwrite_process_for_bank(self, bank_id, io):
 		""" 
 		This should be called once for each bank, to make a separate bank monitor process
 		"""
@@ -310,8 +299,8 @@ class model_sdram(sdram_sim_utils):
 						
 
 					# print(f"Bank {bank_id}, {bank_state} : {[a for a in args]}")
-				if bank_id == (yield pin_ui.rw_copi.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
-					cmd = sdram_cmds((yield pin_ui.cmd)) 
+				if bank_id == (yield io.ba):		# 13mar2022 ah! but isn't .cmd always going to be one clock behind the actual ras cas etc signals? Yes - fix later, don't half-fix now..
+					cmd = sdram_cmds((yield io.decoded_cmd)) 
 				else:
 					cmd = sdram_cmds.CMD_NOP
 				
@@ -331,10 +320,10 @@ class model_sdram(sdram_sim_utils):
 				# --------------------------------------------------------
 				if bank_state == bank_states.IDLE:
 					if cmd == sdram_cmds.CMD_ACT:
-						yield from self.assert_cmd_is(pin_ui, sdram_cmds.CMD_ACT)
-						temp_row = (yield pin_ui.rw_copi.a)
+						yield from self.assert_cmd_is(io, sdram_cmds.CMD_ACT)
+						temp_row = (yield io.a)
 						# yield from toggle_debug_flag(0)
-						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(pin_ui, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
+						new_cmd, waited_for_clks = yield from self.assert_idle_cmd_for(io, min_duration = self.config_params.ic_timing.T_RCD, focus_bank = bank_id)
 						# try:
 						# except:
 						# 	# yield self.flagC.eq(1)
@@ -380,9 +369,9 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = True
 						else:
 							auto_precharge = False
-						column = (yield pin_ui.rw_copi.a) & 0x1FF
+						column = (yield io.a) & 0x1FF
 						# yield from toggle_debug_flag(1)
-						bank_memory[activated_row][column] = (yield pin_ui.rw_copi.dq)
+						bank_memory[activated_row][column] = (yield io.dq)
 						writes_remaining = self.config_params.burstlen - 1
 						if writes_remaining > 0: # this deals with the case of a burst length of 1
 							bank_state = bank_states.WRITE
@@ -393,7 +382,7 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = True
 						else:
 							auto_precharge = False
-						column = (yield pin_ui.rw_copi.a) & 0x1FF
+						column = (yield io.a) & 0x1FF
 						# yield from toggle_debug_flag(2)
 						reads_remaining = self.config_params.burstlen
 
@@ -413,7 +402,7 @@ class model_sdram(sdram_sim_utils):
 						# now schedule in writes from this bank, do one for
 						# each clock after read, because that's when dqm is sampled
 						# note: these writes will appear on the dqm bus <latency> clocks later
-						if ~(yield pin_ui.dqm):
+						if ~(yield io.dqm):
 							just_had_keyerror = add_read_to_return(bank_id, activated_row, column)
 							if just_had_keyerror:
 									yield from self.toggle_debug_flag(1)
@@ -443,7 +432,7 @@ class model_sdram(sdram_sim_utils):
 
 					if reads_remaining != None:
 						if reads_remaining > 0:
-							if ~(yield pin_ui.dqm):
+							if ~(yield io.dqm):
 								just_had_keyerror = add_read_to_return(bank_id, activated_row, column)
 								if just_had_keyerror:
 									yield from self.toggle_debug_flag(3)
@@ -485,7 +474,7 @@ class model_sdram(sdram_sim_utils):
 							if writes_remaining > 0:
 								writes_remaining -= 1
 								column += 1
-								bank_memory[activated_row][column] = (yield pin_ui.rw_copi.dq)
+								bank_memory[activated_row][column] = (yield io.dq)
 							
 							if writes_remaining == 0:
 								writes_remaining = None
@@ -544,7 +533,7 @@ class model_sdram(sdram_sim_utils):
 
 		return func
 
-	def propagate_i_dq_reads(self, pin_ui):
+	def propagate_i_dq_reads(self, io):
 		def func():
 			""" 
 			Use with a negedge sim clock! otherwise instability possible
@@ -558,10 +547,10 @@ class model_sdram(sdram_sim_utils):
 					# print(f"next write: {next_write}")
 					if next_write["bank_src"] != None:
 						# print("next write is ", next_write["bank_src"], hex(next_write["data"]))
-						yield pin_ui.rw_cipo.dq.eq(next_write["data"])
+						yield io.dq_cipo.eq(next_write["data"])
 						# yield self.nflagA.eq(1)
 					else:
-						yield pin_ui.rw_cipo.dq.eq(0xBEAD) # this indicates that the error is with reading
+						yield io.dq_cipo.eq(0xBEAD) # this indicates that the error is with reading
 						yield from self.toggle_debug_flag(5)
 					# else:
 						# yield self.nflagA.eq(0)
@@ -572,3 +561,375 @@ class model_sdram(sdram_sim_utils):
 				yield
 				yield Settle() # this should deal with not using a negedge sim clock
 		return func
+
+
+	def get_sim_sync_processes(self, io):
+		for bank_id in range(2**self.config_params.rw_params.BANK_BITS.value):
+			yield self.get_readwrite_process_for_bank(bank_id, io)
+		
+		yield self.get_refresh_monitor_process(io)
+		yield self.propagate_i_dq_reads(io)
+
+
+def get_model_sdram_as_module_io_layout(config_params):
+	io_layout = [
+		("clk_en",		1,		DIR_FANOUT),
+		("dqm",			1,		DIR_FANOUT),
+		
+		("cs",			1,		DIR_FANOUT),
+		("we",			1,		DIR_FANOUT),
+		("ras",			1,		DIR_FANOUT),
+		("cas",			1,		DIR_FANOUT),
+
+
+		("a",			config_params.rw_params.A_BITS.value,		DIR_FANOUT),
+		("ba",			config_params.rw_params.BANK_BITS.value,	DIR_FANOUT),
+		("dq_copi",		config_params.rw_params.DATA_BITS.value,	DIR_FANOUT),
+		("dq_cipo",		config_params.rw_params.DATA_BITS.value,	DIR_FANIN),
+		("dq_copi_en",	1,		DIR_FANOUT)
+	]
+	return io_layout
+
+
+class model_sdram_as_module(Elaboratable):
+	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+		super().__init__()
+		self.io = Record([
+			("decoded_cmd",	sdram_cmds, 	DIR_FANOUT)
+		] + get_model_sdram_as_module_io_layout(config_params))
+
+		self.config_params = config_params
+		self.utest_params = utest_params
+		self.utest = utest
+
+
+		self.model = model_sdram(self.config_params, self.utest_params)
+
+	def get_sim_sync_processes(self):
+		for sync_process in self.model.get_sim_sync_processes(io = self.io):
+			yield sync_process
+
+	def elaborate(self, platform = None):
+		m = Module()
+
+		assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
+
+		# clarify the assumptions made in the implementation below
+		assert self.io.ba.width == 2
+		# assert self.config_params.rw_params.A_BITS.value == 13 # is this assert needed?
+
+		# add command decoding functionality
+		# decoded_cmd = Signal(shape=sdram_cmds, reset=sdram_cmds.CMD_NOP)
+		encoded_cmd = Signal(shape=9)
+
+		m.d.comb += encoded_cmd.eq(Cat(reversed(
+			[Past(self.io.clk_en), 
+			self.io.clk_en, 
+			~self.io.cs, 	# using ~ as these are inverted by the use of PinsN in the Platform() upload stuff
+			~self.io.ras,
+			~self.io.cas, 
+			~self.io.we, 
+			self.io.ba[1], 
+			self.io.ba[0], 
+			self.io.a[10]],
+		)))
+
+		def set_state(new_state):
+			m.d.comb += self.io.decoded_cmd.eq(new_state)
+		
+		# I'm trying out a few ways to approach how to represent this, this is closet
+		# to what is specified on p.9 of the datasheet. The meaning of the matches() string is:
+		# past(clk_en) | clk_en | n_cs | n_ras | n_cas | n_we | ba[1] | ba[0] | a[10] 
+		with m.If(	encoded_cmd.matches("1-1------")): set_state(sdram_cmds.CMD_DESL)
+		with m.Elif(encoded_cmd.matches("1-0111---", "0--------", "--1------")): set_state(sdram_cmds.CMD_NOP)
+		with m.Elif(encoded_cmd.matches("1-0110---")): set_state(sdram_cmds.CMD_BST)
+		with m.Elif(encoded_cmd.matches("1-0101--0")): set_state(sdram_cmds.CMD_READ)
+		with m.Elif(encoded_cmd.matches("1-0101--1")): set_state(sdram_cmds.CMD_READ_AP)
+		with m.Elif(encoded_cmd.matches("1-0100--0")): set_state(sdram_cmds.CMD_WRITE)
+		with m.Elif(encoded_cmd.matches("1-0100--1")): set_state(sdram_cmds.CMD_WRITE_AP)
+		with m.Elif(encoded_cmd.matches("1-0011---")): set_state(sdram_cmds.CMD_ACT)
+		with m.Elif(encoded_cmd.matches("1-0010--0")): set_state(sdram_cmds.CMD_PRE)
+		with m.Elif(encoded_cmd.matches("1-0010--1")): set_state(sdram_cmds.CMD_PALL)
+		with m.Elif(encoded_cmd.matches("110001---")): set_state(sdram_cmds.CMD_REF)
+		with m.Elif(encoded_cmd.matches("100001---")): set_state(sdram_cmds.CMD_SELF)
+		with m.Elif(encoded_cmd.matches("1-0000000")): set_state(sdram_cmds.CMD_MRS)
+		with m.Else(): set_state(sdram_cmds.CMD_ILLEGAL)
+
+
+		return m
+
+
+if __name__ == "__main__":
+	""" 
+	feb2022 - apr2022
+
+	Goal of this file:
+	- Confirm that the real-time-logic and simulation logic interacts as expected
+
+	Could I setup tests etc to run on github each push? It'd be good to learn how to do that.
+
+	"""
+	from pathlib import Path
+	current_filename = str(Path(__file__).absolute()).split(".py")[0]
+
+	parser = main_parser()
+	args = parser.parse_args()
+
+	def get_tb_ui_layout(config_params):
+		ui_layout = [
+			# ("sdram_io", controller_pin.get_ui_layout(config_params))
+			("finished",		1,		DIR_FANIN)
+		]
+		return ui_layout
+
+	class Testbench(Elaboratable):
+		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+			super().__init__()
+			self.ui = Record(get_tb_ui_layout(config_params))
+
+			self.config_params = config_params
+			self.utest_params = utest_params
+			self.utest = utest
+
+			self.dut_io = Record(get_model_sdram_as_module_io_layout(config_params))
+
+			# put in the constructor so we can access the simulation processes
+			self.dut = model_sdram_as_module(self.config_params, self.utest_params)
+			...
+			# have a .comb passthrough for the sdram io pins
+			# have a series of fsm's that turn the cmd enum into the desired value
+			# also - maybe we could actually use the formal verification thing here?
+			# although I feel it would be faster for now to just test by inspection
+	
+		def get_sim_sync_processes(self):
+			for sync_process in self.dut.get_sim_sync_processes():
+				yield sync_process
+			
+			test_id = self.utest.get_test_id()
+			if test_id == "modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
+				# now add some more sim processes? fifo stuff etc?
+				print("whoop!")
+		
+		def elaborate(self, platform = None):
+			m = Module()
+
+			m.submodules.dut = dut = self.dut #model_sdram_as_module(self.config_params, self.utest_params)
+
+			m.d.comb += self.dut_io.connect(dut.io) # right way around?
+
+			assert isinstance(self.utest, FHDLTestCase)
+			add_clock(m, "sync")
+			# add_clock(m, "sync_1e6")
+			test_id = self.utest.get_test_id()
+
+			if test_id == "modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
+
+				with m.FSM(name="testbench_fsm") as fsm:
+
+					m.d.comb += self.dut_io.clk_en.eq(1)
+
+					with m.State("INITIAL"):
+						m.next = "CHECK_CMD_DESL"
+					
+					with m.State("CHECK_CMD_DESL"):
+						m.d.comb += [
+							self.dut_io.cs.eq(0)
+						]
+						m.next = "CHECK_CMD_NOP"
+					
+					with m.State("CHECK_CMD_NOP"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(0),
+							self.dut_io.cas.eq(0),
+							self.dut_io.we.eq(0)
+						]
+						m.next = "CHECK_CMD_BST"
+
+					with m.State("CHECK_CMD_BST"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(0),
+							self.dut_io.cas.eq(0),
+							self.dut_io.we.eq(1)
+						]
+						m.next = "CHECK_CMD_READ"
+						
+					with m.State("CHECK_CMD_READ"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(0),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(0),
+							self.dut_io.a[10].eq(0)
+							# self.ba and self.a needs to be set too, at the same time as this command
+						]
+						m.next = "CHECK_CMD_READ_AP"
+						
+					with m.State("CHECK_CMD_READ_AP"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(0),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(0),
+							self.dut_io.a[10].eq(1)
+							# self.ba and self.a needs to be set too, at the same time as this command
+						]
+						m.next = "CHECK_CMD_WRITE"
+						
+					with m.State("CHECK_CMD_WRITE"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(0),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(1),
+							self.dut_io.a[10].eq(0)
+							# self.ba and self.a needs to be set too, at the same time as this command
+						]
+						m.next = "CHECK_CMD_WRITE_AP"
+						
+					with m.State("CHECK_CMD_WRITE_AP"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(0),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(1),
+							self.dut_io.a[10].eq(1)
+							# self.ba and self.a needs to be set too, at the same time as this command
+						]
+						m.next = "CHECK_CMD_ACT"
+						
+					with m.State("CHECK_CMD_ACT"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(1),
+							self.dut_io.cas.eq(0),
+							self.dut_io.we.eq(0)
+							# self.ba and self.a needs to be set too, at the same time as this command
+						]
+						m.next = "CHECK_CMD_PRE"
+						
+					with m.State("CHECK_CMD_PRE"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(1),
+							self.dut_io.cas.eq(0),
+							self.dut_io.we.eq(1),
+							self.dut_io.a[10].eq(0)
+							# self.ba needs to be set too
+						]
+						m.next = "CHECK_CMD_PALL"
+						
+					with m.State("CHECK_CMD_PALL"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(1),
+							self.dut_io.cas.eq(0),
+							self.dut_io.we.eq(1),
+							self.dut_io.a[10].eq(1)
+						]
+						m.next = "CHECK_CMD_REF"
+						
+					with m.State("CHECK_CMD_REF"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(1),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(0)
+							# clk_en needs to be 1, rather than just on the previous cycle
+						]
+						m.next = "CHECK_CMD_SELF"
+						
+					with m.State("CHECK_CMD_SELF"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(1),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(0),
+
+							self.dut_io.clk_en.eq(0)
+							# clk_en needs to be 0, and 1 on the previous cycle
+						]
+						m.next = "CHECK_CMD_MRS_CLKSETUP"
+					
+					with m.State("CHECK_CMD_MRS_CLKSETUP"):
+						m.d.comb += self.dut_io.clk_en.eq(1)
+						m.next = "CHECK_CMD_MRS"
+						
+					with m.State("CHECK_CMD_MRS"):
+						m.d.comb += [
+							self.dut_io.cs.eq(1),
+							self.dut_io.ras.eq(1),
+							self.dut_io.cas.eq(1),
+							self.dut_io.we.eq(1),
+							self.dut_io.ba.eq(0b00),
+							self.dut_io.a[10].eq(0),
+							# and self.a[:10] needs to be valid with the desired register bits
+
+							self.dut_io.clk_en.eq(0)
+						]
+						m.next = "DONE"
+					
+					with m.State("DONE"):
+						m.d.comb += self.ui.finished.eq(1)
+
+
+
+			return m
+
+	if args.action == "generate": # formal testing
+		...
+
+	elif args.action == "simulate": # time-domain testing
+
+		class modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync(FHDLTestCase):
+			def test_sim(self):
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
+				from model_sdram import model_sdram
+
+				config_params = Params()
+				config_params.clk_freq = 143e6
+				config_params.ic_timing = ic_timing
+				config_params.ic_refresh_timing = ic_refresh_timing
+				config_params.rw_params = rw_params
+
+				utest_params = Params()
+
+				tb = Testbench(config_params, utest_params, utest=self)
+
+				sim = Simulator(tb)
+				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+
+				# for sync_process in tb.dut.model.get_sim_sync_processes():
+				for sync_process in tb.get_sim_sync_processes():
+					sim.add_sync_process(sync_process)
+
+				def wait_until_finished():
+					yield Active()
+					timeout_count = 100
+					while timeout_count>0:
+						timeout_count -= 1
+						yield
+						if (yield tb.ui.finished):
+							timeout_count = -1
+				
+				sim.add_sync_process(wait_until_finished)
+
+				def wait_for_200us():
+					yield Active()
+					yield Delay(200e-6)
+				sim.add_process(wait_for_200us)
+
+				with sim.write_vcd(
+					f"{current_filename}_{self.get_test_id()}.vcd"):
+					sim.run()
+
+	if args.action in ["generate", "simulate"]:
+		# now run each FHDLTestCase above 
+		import unittest
+		sys.argv[1:] = [] # so the args used for this file don't interfere with unittest
+		unittest.main()
+
+	else: # upload
+		...
+

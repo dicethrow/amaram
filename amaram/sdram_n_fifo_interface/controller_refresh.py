@@ -30,11 +30,11 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-# from controller_pin import controller_pin
-import controller_pin
+from controller_pin import controller_pin
 from Delayer import Delayer
 
-from parameters_standard_sdram import sdram_cmds
+from parameters_standard_sdram import sdram_cmds, rw_cmds
+from _module_interfaces import controller_pin_interfaces, controller_refresh_interfaces
 
 """ 
 Refresh controller
@@ -51,25 +51,6 @@ Goals
 		so they are able to transition back into using the sdram.
 """
 
-
-
-# controller_refresh_interface_layout = [
-# 	# ("initialised", 	1, DIR_FANOUT), # is this the right dir? so initialised will flow out to subordinates.. sounds right
-# 	("do_soon",	1, DIR_FANOUT), # oh this is elegant
-# 	("disable",			1, DIR_FANIN)	# this should be how this is triggered
-# 	("done",			1, DIR_FANOUT)	# this is how other modules know they can do their thing
-# ]
-
-def get_ui_layout(config_params):
-	ui_layout = [
-			("initialised",	1,				DIR_FANIN),	# high until set low later on
-			("request_to_refresh_soon",	1,	DIR_FANIN),	# 
-			("enable_refresh",	1,			DIR_FANOUT),
-			("refresh_in_progress",	1,		DIR_FANIN),
-			("refresh_lapsed",	1,			DIR_FANIN) # to indicate whether data loss from a lack of refreshing has occurred
-		]
-	return ui_layout
-
 class controller_refresh(Elaboratable):
 	""" 
 	ah! make this controller do
@@ -83,8 +64,8 @@ class controller_refresh(Elaboratable):
 
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
-		self.controller_pin_ui = Record(controller_pin.get_ui_layout(config_params))
-		self.ui = Record(get_ui_layout(config_params))
+		self.controller_pin_ui = Record(controller_pin_interfaces.get_sub_ui_layout(config_params))
+		self.ui = Record(controller_refresh_interfaces.get_ui_layout(config_params))
 
 		self.config_params = config_params
 		self.utest_params = utest_params
@@ -92,44 +73,6 @@ class controller_refresh(Elaboratable):
 		
 		self.clks_per_period = int(np.ceil(self.config_params.ic_refresh_timing.T_REF.value * self.config_params.clk_freq))
 		self.increment_per_refresh = int(self.clks_per_period / self.config_params.ic_refresh_timing.NUM_REF.value)
-		
-
-	def get_sim_sync_processes(self):
-		def use_refresher_with_resource_blocking_task():
-			def resource_blocking_task():
-				# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
-				period = 200e-6
-				yield Delay(period) # how long could this be? make a test for that?
-				self.timeout_runtime -= period
-
-			refresh_count = 0
-			yield Active()
-			while self.timeout_runtime > 0:
-				if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
-					yield from resource_blocking_task()
-
-				if (yield dut.ui.request_to_refresh_soon):
-					yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
-					# wait for it to fall
-					while (yield dut.ui.request_to_refresh_soon):
-						yield 
-						self.timeout_runtime -= 1/config_params.clk_freq
-					yield dut.ui.enable_refresh.eq(0) 
-					refresh_count += 1								
-				
-				yield 
-				self.timeout_runtime -= 1/config_params.clk_freq
-
-				if refresh_count > 3:
-					return
-			
-			if self.timeout_runtime <= 0:
-				print("Timeout error!")
-
-
-		test_id = self.utest.get_test_id()
-		if test_id == "RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
-			yield use_refresher_with_resource_blocking_task
 
 	def elaborate(self, platform = None):
 		
@@ -292,43 +235,6 @@ class controller_refresh(Elaboratable):
 				with m.If(delayer.delay_for_time(ic_timing.T_RC)):
 					m.next = "DO_ANOTHER_REFRESH?"
 
-
-		# if isinstance(self.utest, FHDLTestCase):
-		# 	add_clock(m, "sync")
-		# 	# add_clock(m, "sync_1e6")
-		# 	test_id = self.utest.get_test_id()
-			
-		# 	if test_id == "RefreshCtrl_sim_withBlockingTask_staysRefreshed":
-		# 		assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
-
-		# 		with m.FSM(name="testbench_fsm") as fsm:
-		# 			m.d.sync += [
-		# 				_ui.tb_fanin_flags.in_start.eq(fsm.ongoing("START")),
-		# 				_ui.tb_fanin_flags.in_done.eq(fsm.ongoing("DONE"))
-		# 			]
-
-		# 			with m.State("INITIAL"):
-		# 				m.next = "START"
-					
-		# 			with m.State("START"):
-		# 				# m.d.sync += _ui.tb_fanout_flags.
-		# 				# with m.If(refresher_ui)
-		# 				...
-		# 				# just hang here for now, and look at the traces
-
-		# 			with m.State("DONE"):
-		# 				...
-			
-		# 	elif test_id == "RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
-		# 		...
-
-
-		# elif isinstance(platform, ULX3S_85F_Platform): 
-		# 	...
-		
-		# else:
-		# 	... # This case means that a test is occuring and this is not the top-level module.
-
 		
 		return m
 	
@@ -347,76 +253,144 @@ if __name__ == "__main__":
 	parser = main_parser()
 	args = parser.parse_args()
 
-	def get_tb_ui_layout(config_params):
-		ui_layout = [
-				("tb_fanin_flags", 	[
-					("in_normal_operation",		1,	DIR_FANIN),
-					("in_requesting_refresh",	1,	DIR_FANIN),
-					("in_performing_refresh",	1,	DIR_FANIN)
-				]),
-				("tb_fanout_flags",[
-					("trigger",		1,	DIR_FANOUT)
-				])
-			] + get_ui_layout(config_params)
-		return ui_layout
-
 	class Testbench(Elaboratable):
-		
-
 		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 			super().__init__()
-			self.ui = Record(get_tb_ui_layout(config_params))
 
 			self.config_params = config_params
 			self.utest_params = utest_params
 			self.utest = utest
+
+			# put in constructor so we can access in simulation processes
+			self.refresher = controller_refresh(self.config_params)
+
+			if isinstance(self.utest, FHDLTestCase):
+				from model_sdram import model_sdram, model_sdram_as_module
+				# put in the constructor so we can access the simulation processes
+				self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
+
+		def get_sim_sync_processes(self):
+			for sync_process in self.sdram_model.get_sim_sync_processes():
+				yield sync_process
+				
+			def use_refresher_with_resource_blocking_task():
+				def resource_blocking_task():
+					# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
+					period = 200e-6
+					yield Delay(period) # how long could this be? make a test for that?
+					self.utest_params.timeout_runtime -= period
+
+				refresh_count = 0
+				yield Active()
+				while self.utest_params.timeout_runtime > 0:
+					if not ( (yield self.refresher.ui.refresh_in_progress) or (yield self.refresher.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
+						yield from resource_blocking_task()
+
+					if (yield self.refresher.ui.request_to_refresh_soon):
+						yield self.refresher.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
+						# wait for it to fall
+						while (yield self.refresher.ui.request_to_refresh_soon):
+							yield 
+							self.utest_params.timeout_runtime -= 1/self.config_params.clk_freq
+						yield self.refresher.ui.enable_refresh.eq(0) 
+						refresh_count += 1								
+					
+					yield 
+					self.utest_params.timeout_runtime -= 1/self.config_params.clk_freq
+
+					if refresh_count > 3:
+						return
+				
+				if self.utest_params.timeout_runtime <= 0:
+					print("Timeout error!")
+
+
+			test_id = self.utest.get_test_id()
+			if test_id == "RefreshCtrl_sim_withModelAndBlockingTask_modelStaysRefreshed":
+				yield use_refresher_with_resource_blocking_task
 			
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.refresher = refresher = controller_refresh(self.config_params)
-			refresher_ui = Record.like(refresher.ui)
-			m.d.sync += refresher_ui.connect(refresher.ui)
+			m.submodules.refresher = self.refresher
 
-			_ui = Record.like(self.ui)
-			m.d.sync += self.ui.connect(_ui)
+			m.submodules.pin_ctrl = pin_ctrl = controller_pin(self.config_params, self.utest_params)
+
+			# connect the bus-selection mechanism
+			placeholder_record = Record.like(self.refresher.controller_pin_ui)
+			m.d.sync += [
+				pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(self.refresher.ui.enable_refresh | self.refresher.ui.refresh_in_progress),
+				self.refresher.controller_pin_ui.connect(pin_ctrl.ui.refresh),
+				placeholder_record.connect(pin_ctrl.ui.readwrite)
+			]
 
 			if isinstance(self.utest, FHDLTestCase):
 				add_clock(m, "sync")
 				# add_clock(m, "sync_1e6")
 				test_id = self.utest.get_test_id()
+
+				# now connect up the sdram model
+				m.submodules.sdram_model = self.sdram_model
+				m.d.sync += [ # comb or sync? sync would be more correct...
+					self.sdram_model.io.clk_en.eq(pin_ctrl.io.clk_en),
+					self.sdram_model.io.dqm.eq(pin_ctrl.io.dqm),
+
+					self.sdram_model.io.cs.eq(pin_ctrl.io.cs),
+					self.sdram_model.io.we.eq(pin_ctrl.io.we),
+					self.sdram_model.io.ras.eq(pin_ctrl.io.ras),
+					self.sdram_model.io.cas.eq(pin_ctrl.io.cas),
+
+					self.sdram_model.io.a.eq(pin_ctrl.io.rw_copi.a),
+					self.sdram_model.io.ba.eq(pin_ctrl.io.rw_copi.ba),
+					self.sdram_model.io.dq_copi.eq(pin_ctrl.io.rw_copi.dq),
+					self.sdram_model.io.dq_copi_en.eq(pin_ctrl.io.rw_copi.dq_oen), # not yet in use
+
+					# these are the readback signals. Do these line up as expected?
+					pin_ctrl.io.rw_cipo.dq.eq(self.sdram_model.io.dq_cipo),
+					pin_ctrl.io.rw_cipo.dq_oen.eq(pin_ctrl.io.rw_copi.dq_oen),
+					pin_ctrl.io.rw_cipo.ba.eq(pin_ctrl.io.rw_copi.ba),
+					pin_ctrl.io.rw_cipo.a.eq(pin_ctrl.io.rw_copi.a),
+					pin_ctrl.io.rw_cipo.read_active.eq(pin_ctrl.io.rw_copi.read_active)
+
+				]
 				
 				# if test_id == "RefreshTestbench_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
 				# 	...
 
 
 			elif isinstance(platform, ULX3S_85F_Platform): 
-				# then this is the test that is run when uploaded
-				with m.FSM() as fsm:
-					m.d.sync += [
-						_ui.tb_fanin_flags.in_normal_operation.eq(fsm.ongoing("NORMAL_OPERATION")),
-						_ui.tb_fanin_flags.in_requesting_refresh.eq(fsm.ongoing("REQUESTING_REFRESH")),
-						_ui.tb_fanin_flags.in_performing_refresh.eq(fsm.ongoing("PERFORMING_REFRESH")),
+				# the point of this part is to confirm that we can generate a bitstream
+				# although even if this does upload to the part, without reads/writes there's 
+				# no way to confirm that it's working 
+				
+				sdram = platform.request("sdram")
 
-						refresher.ui.enable_refresh.eq(fsm.ongoing("PERFORMING_REFRESH"))
-					]
+				m.d.sync += [ # or comb?
+					# Set the chip output pins
+					sdram.clk_en.eq(1),
+					sdram.clk.eq(ClockSignal()),#"sdram_clk")), # nice and compact!
+					sdram.dqm.eq(Cat(pin_ctrl.io.dqm, pin_ctrl.io.dqm)),
 
-					with m.State("NORMAL_OPERATION"):
-						# with m.If(_ui.tb_fanout_flags.trigger):
-						with m.If(refresher.ui.request_to_refresh_soon):
-							m.next = "REQUESTING_REFRESH"
-					
-					with m.State("REQUESTING_REFRESH"):
-						with m.If(_ui.tb_fanout_flags.trigger):
-							m.next = "PERFORMING_REFRESH"
-							
-					with m.State("PERFORMING_REFRESH"):	
-						with m.If(~refresher.ui.request_to_refresh_soon):
-							m.next = "NORMAL_OPERATION"
-					
+					sdram.cs.eq(pin_ctrl.io.cs),
+					sdram.we.eq(pin_ctrl.io.we),
+					sdram.ras.eq(pin_ctrl.io.ras),
+					sdram.cas.eq(pin_ctrl.io.cas),
+
+					sdram.a.eq(pin_ctrl.io.rw_copi.a),
+					sdram.ba.eq(pin_ctrl.io.rw_copi.ba),
+					sdram.dq.o.eq(pin_ctrl.io.rw_copi.dq),
+					sdram.dq.oe.eq(pin_ctrl.io.rw_copi.dq_oen), # not yet implementented
+
+					# these are the readback signals. Do these line up as expected?
+					pin_ctrl.io.rw_cipo.dq.eq(sdram.dq.i),
+					pin_ctrl.io.rw_cipo.dq_oen.eq(pin_ctrl.io.rw_copi.dq_oen),
+					pin_ctrl.io.rw_cipo.ba.eq(pin_ctrl.io.rw_copi.ba),
+					pin_ctrl.io.rw_cipo.a.eq(pin_ctrl.io.rw_copi.a),
+					pin_ctrl.io.rw_cipo.read_active.eq(pin_ctrl.io.rw_copi.read_active),
+				]
+
+				...
 			
-			else:
-				assert 0
 
 			return m
 		
@@ -426,10 +400,8 @@ if __name__ == "__main__":
 
 	elif args.action == "simulate": # time-domain testing
 
-		class RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed(FHDLTestCase):
+		class RefreshCtrl_sim_withModelAndBlockingTask_modelStaysRefreshed(FHDLTestCase):
 			def test_sim(self):
-				self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
-
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
 				from model_sdram import model_sdram
 
@@ -440,118 +412,25 @@ if __name__ == "__main__":
 				config_params.rw_params = rw_params
 
 				utest_params = Params()
-				utest_params.skip_cmd_decoding = True
+				utest_params.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
 
-				dut = controller_refresh(config_params, utest_params, utest=self)
-				
-				sim = Simulator(dut)
+				tb = Testbench(config_params, utest_params, utest=self)
+
+				# todo - how to properly deal with clocks? e.g. do we need to generate a opposite phase clock
+				# for the sdram chip to our sdram logic?
+				#	according to the sdram datasheet, the pins are sampled on the rising edge of the clock pin.
+				#	That sounds like we do just want to use the same clock signal for it - as the rising edge
+				#	is the same edge that the rest of the logic uses.
+
+				sim = Simulator(tb)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-
-
-				sim.add_sync_process(p for p in dut.get_sim_sync_processes())				
-
-				sdram_model = model_sdram(config_params, utest_params)
-				sim.add_sync_process(sdram_model.get_refresh_monitor_process(pin_ui=dut.controller_pin_ui))
-
-
-
-
-				# def use_refresher_with_resource_blocking_task():
-				# 	def resource_blocking_task():
-				# 		# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
-				# 		period = 200e-6
-				# 		yield Delay(period) # how long could this be? make a test for that?
-				# 		self.timeout_runtime -= period
-
-				# 	refresh_count = 0
-				# 	yield Active()
-				# 	while self.timeout_runtime > 0:
-				# 		if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
-				# 			yield from resource_blocking_task()
-
-				# 		if (yield dut.ui.request_to_refresh_soon):
-				# 			yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
-				# 			# wait for it to fall
-				# 			while (yield dut.ui.request_to_refresh_soon):
-				# 				yield 
-				# 				self.timeout_runtime -= 1/config_params.clk_freq
-				# 			yield dut.ui.enable_refresh.eq(0) 
-				# 			refresh_count += 1								
-						
-				# 		yield 
-				# 		self.timeout_runtime -= 1/config_params.clk_freq
-
-				# 		if refresh_count > 3:
-				# 			return
-					
-				# 	if self.timeout_runtime <= 0:
-				# 		print("Timeout error!")
-				sim.add_sync_process(use_refresher_with_resource_blocking_task)
+				for sync_process in tb.get_sim_sync_processes():
+					sim.add_sync_process(sync_process)
 
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
 					sim.run()
 
-		
-		# class RefreshCtrl_sim_withBlockingTask_staysRefreshed(FHDLTestCase):
-		# 	def test_sim(self):
-		# 		self.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
-
-		# 		from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
-
-		# 		config_params = Params()
-		# 		config_params.clk_freq = 143e6
-		# 		config_params.ic_timing = ic_timing
-		# 		config_params.ic_refresh_timing = ic_refresh_timing
-
-		# 		utest_params = Params()
-
-		# 		dut = controller_refresh(config_params, utest_params, utest=self)
-				
-		# 		sim = Simulator(dut)
-		# 		sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-
-		# 		# def wait_for_200us():
-		# 		# 	yield Delay(200e-6)
-		# 		# sim.add_process(wait_for_200us)
-
-		# 		def use_refresher_with_resource_blocking_task():
-
-		# 			def resource_blocking_task():
-		# 				# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
-		# 				period = 200e-6
-		# 				yield Delay(period) # how long could this be? make a test for that?
-		# 				self.timeout_runtime -= period
-
-		# 			refresh_count = 0
-		# 			yield Active()
-		# 			while self.timeout_runtime > 0:
-		# 				if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
-		# 					yield from resource_blocking_task()
-
-		# 				if (yield dut.ui.request_to_refresh_soon):
-		# 					yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
-		# 					# wait for it to fall
-		# 					while (yield dut.ui.request_to_refresh_soon):
-		# 						yield 
-		# 						self.timeout_runtime -= 1/config_params.clk_freq
-		# 					yield dut.ui.enable_refresh.eq(0) 
-		# 					refresh_count += 1								
-						
-		# 				yield 
-		# 				self.timeout_runtime -= 1/config_params.clk_freq
-
-		# 				if refresh_count > 3:
-		# 					return
-					
-		# 			if self.timeout_runtime <= 0:
-		# 				print("Timeout error!")
-		# 		sim.add_sync_process(use_refresher_with_resource_blocking_task)
-				
-
-		# 		with sim.write_vcd(
-		# 			f"{current_filename}_{self.get_test_id()}.vcd"):
-		# 			sim.run()
 
 	if args.action in ["generate", "simulate"]:
 		# now run each FHDLTestCase above 
@@ -563,48 +442,45 @@ if __name__ == "__main__":
 	else: # upload
 		class Upload(UploadBase):
 			def elaborate(self, platform = None):
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
 
 				self.config_params.sync_mode = "sync_and_143e6_sdram_from_pll"
+				self.config_params.clk_freq = 143e6
+				self.config_params.ic_timing = ic_timing
+				self.config_params.ic_refresh_timing = ic_refresh_timing
+				self.config_params.rw_params = rw_params
 
 				m = super().elaborate(platform) 
 
-				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
-				from model_sdram import model_sdram
+				m.submodules.tb = tb = DomainRenamer("sdram")(Testbench(self.config_params))
 
-				config_params = Params()
-				config_params.clk_freq = 143e6
-				config_params.ic_timing = ic_timing
-				config_params.ic_refresh_timing = ic_refresh_timing
+				# ui = Record.like(tb.ui)
+				# m.d.sync += ui.connect(tb.ui)
 
-				m.submodules.tb = tb = DomainRenamer({"sync":"sdram"})(Testbench(config_params))
+				# def start_on_left_button():
+				# 	start = Signal.like(self.i_buttons.left)
+				# 	m.d.sync += [
+				# 		start.eq(self.i_buttons.left),
+				# 		ui.tb_fanout_flags.trigger.eq(Rose(start))
+				# 	]
 
-				ui = Record.like(tb.ui)
-				m.d.sync += ui.connect(tb.ui)
+				# def reset_on_right_button():
+				# 	# don't manually route the reset - do this, 
+				# 	# otherwise, if Records are used, they will oscillate, as can't be reset_less
+				# 	m.d.sync += ResetSignal("sync").eq(self.i_buttons.right) 
 
-				def start_on_left_button():
-					start = Signal.like(self.i_buttons.left)
-					m.d.sync += [
-						start.eq(self.i_buttons.left),
-						ui.tb_fanout_flags.trigger.eq(Rose(start))
-					]
+				# def display_on_leds():
+				# 	m.d.comb += self.leds.eq(Cat([
+				# 		ui.tb_fanin_flags.in_normal_operation,
+				# 		ui.tb_fanin_flags.in_requesting_refresh,
+				# 		ui.tb_fanin_flags.in_performing_refresh,
+				# 		self.i_buttons.right,  		# led indicates that the start button was pressed
+				# 		self.i_buttons.left			# led indicates that the reset button was pressed
+				# 	]))
 
-				def reset_on_right_button():
-					# don't manually route the reset - do this, 
-					# otherwise, if Records are used, they will oscillate, as can't be reset_less
-					m.d.sync += ResetSignal("sync").eq(self.i_buttons.right) 
-
-				def display_on_leds():
-					m.d.comb += self.leds.eq(Cat([
-						ui.tb_fanin_flags.in_normal_operation,
-						ui.tb_fanin_flags.in_requesting_refresh,
-						ui.tb_fanin_flags.in_performing_refresh,
-						self.i_buttons.right,  		# led indicates that the start button was pressed
-						self.i_buttons.left			# led indicates that the reset button was pressed
-					]))
-
-				start_on_left_button()
-				reset_on_right_button()
-				display_on_leds()
+				# start_on_left_button()
+				# reset_on_right_button()
+				# display_on_leds()
 
 				return m
 		

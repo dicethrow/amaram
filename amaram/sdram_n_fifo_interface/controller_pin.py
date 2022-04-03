@@ -32,48 +32,7 @@ from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
-
-def get_rw_pipeline_layout(config_params, _dir):
-	# this is to enable the ability to read back pipelined data easily
-
-	rw_pipeline_layout = [
-		("dq",			config_params.rw_params.DATA_BITS.value,		_dir),
-		("read_active",	1,			_dir),		# whether or not a read will be active on the dq bus in read mode
-		("a",			config_params.rw_params.A_BITS.value,			_dir),
-		("ba",			config_params.rw_params.BANK_BITS.value,		_dir),
-		("addr",		config_params.rw_params.get_ADDR_BITS(),		_dir),
-	]
-
-	return rw_pipeline_layout
-
-def get_common_io_layout(config_params):
-	io_layout_common = [
-		("clk_en", 		1,		DIR_FANOUT),
-		("dqm",			1, 		DIR_FANOUT),
-
-		("rw_copi", 	get_rw_pipeline_layout(config_params, DIR_FANOUT)), 
-		("rw_cipo", 	get_rw_pipeline_layout(config_params, DIR_FANIN)),  
-	]
-	return io_layout_common
-
-def get_ui_layout(config_params):
-	# this represents the inter-module user interface
-	ui_layout = [
-		("cmd", sdram_cmds, 	DIR_FANOUT), # a high-level representation of the desired cmd
-	] + get_common_io_layout(config_params)
-
-	return ui_layout
-
-def get_io_layout(config_params):
-	# this is between the inter-module ui and the pins of the sdram chip
-	io_layout = [
-		("cs",			1,		DIR_FANOUT),
-		("we",			1,		DIR_FANOUT),
-		("ras",			1,		DIR_FANOUT),
-		("cas",			1,		DIR_FANOUT)
-	] + get_common_io_layout(config_params)
-
-	return io_layout
+from _module_interfaces import controller_pin_interfaces
 
 class controller_pin(Elaboratable):
 
@@ -84,16 +43,16 @@ class controller_pin(Elaboratable):
 		self.utest_params = utest_params
 		self.utest = utest
 
-		self.ui = Record(get_ui_layout(self.config_params))
-		self.io = Record(get_io_layout(self.config_params))
+		self.ui = Record(controller_pin_interfaces.get_ui_layout(self.config_params))
+		self.io = Record(controller_pin_interfaces.get_io_layout(self.config_params))
 
 		if isinstance(self.utest, FHDLTestCase):
 			from model_sdram import model_sdram, model_sdram_as_module
 			# put in the constructor so we can access the simulation processes
 			self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
 	
-	def get_sim_sync_processes(self):
-		...
+	# def get_sim_sync_processes(self):
+	# 	...
 
 	def elaborate(self, platform = None):
 		# is using 'comb' ok here?
@@ -104,10 +63,22 @@ class controller_pin(Elaboratable):
 		rw_params = self.config_params.rw_params
 
 		# make inter-module interfaces
-		_ui = Record.like(self.ui)
+
+		# allow either the readwrite controller, or the refresh controller, to have access to the chip
+		_ui = Record(controller_pin_interfaces.get_sub_ui_layout(self.config_params)) #Record.like(self.ui)
+		with m.If(self.ui.bus_is_refresh_not_readwrite):
+			m.d.sync += self.ui.refresh.connect(_ui)
+		with m.Else():
+			m.d.sync += self.ui.readwrite.connect(_ui)
+
+		# If the controlling bus changed, then make sure that we indicate it on any readback signal...? 
+		# with m.If(~Stable(self.ui.bus_is_refresh_not_RW)):
+		# 	m.d.sync += [
+		# 	]
+
 		_io = Record.like(self.io)
 		m.d.sync += [
-			self.ui.connect(_ui),
+			# self.ui.connect(_ui),
 			_io.connect(self.io)
 		]
 
@@ -266,6 +237,12 @@ class controller_pin(Elaboratable):
 
 			if test_id == "pinCtrl_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
 				...
+		
+		# elif isinstance(platform, ULX3S_85F_Platform): 
+		# 	...
+		
+		# else:
+		# 	... # This case means that a test is occuring and this is not the top-level module.
 			
 		return m
 
@@ -273,7 +250,7 @@ class controller_pin(Elaboratable):
 
 if __name__ == "__main__":
 	""" 
-	feb2022 - mar2022
+	feb2022 - apr2022
 
 	Adding tests to each file, so I can more easily make 
 	changes in order to improve timing performance.
@@ -284,6 +261,124 @@ if __name__ == "__main__":
 
 	parser = main_parser()
 	args = parser.parse_args()
+
+	# def get_tb_ui_layout(config_params):
+	# 	ui_layout = [
+	# 			("tb_fanin_flags", 	[
+	# 				("in_normal_operation",		1,	DIR_FANIN),
+	# 				("in_requesting_refresh",	1,	DIR_FANIN),
+	# 				("in_performing_refresh",	1,	DIR_FANIN)
+	# 			]),
+	# 			("tb_fanout_flags",[
+	# 				("trigger",		1,	DIR_FANOUT)
+	# 			])
+	# 		] + get_ui_layout(config_params)
+	# 	return ui_layout
+
+	class Testbench(Elaboratable):
+		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+			super().__init__()
+			# self.ui = Record(get_tb_ui_layout(config_params))
+
+			self.config_params = config_params
+			self.utest_params = utest_params
+			self.utest = utest
+
+			# self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
+
+			# put in the constructor so we can access it from sim processes
+			self.pin_ctrl = controller_pin(self.config_params, self.utest_params)
+
+			if isinstance(self.utest, FHDLTestCase):
+				from model_sdram import model_sdram, model_sdram_as_module
+				# put in the constructor so we can access the simulation processes
+				self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
+
+		def get_sim_sync_processes(self):
+			for sync_process in self.sdram_model.get_sim_sync_processes():
+				yield sync_process
+
+			test_id = self.utest.get_test_id()
+			if test_id == "pinCtrl_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
+				def apply_each_cmd_and_strobe_other_signals():
+					# let's default to holding clk_end high
+					yield self.pin_ctrl.ui.refresh.clk_en.eq(1)
+					yield self.pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(1)
+
+					# initial delay
+					for i in range(10):
+						yield 
+
+					for cmd_state in  self.utest_params.test_cmds: #sdram_cmds:
+						# required by this command
+						if cmd_state == sdram_cmds.CMD_SELF:
+							yield self.pin_ctrl.ui.refresh.clk_en.eq(0) 
+
+						yield self.pin_ctrl.ui.refresh.cmd.eq(cmd_state)
+						yield self.pin_ctrl.ui.refresh.dqm.eq(-1)
+						yield self.pin_ctrl.ui.refresh.rw_copi.dq.eq(-1)
+						yield self.pin_ctrl.ui.refresh.rw_copi.a.eq(-1)
+						yield self.pin_ctrl.ui.refresh.rw_copi.ba.eq(-1)
+
+						yield
+
+						yield self.pin_ctrl.ui.refresh.cmd.eq(0)
+						yield self.pin_ctrl.ui.refresh.dqm.eq(0)
+						yield self.pin_ctrl.ui.refresh.rw_copi.dq.eq(0)
+						yield self.pin_ctrl.ui.refresh.rw_copi.a.eq(0)
+						yield self.pin_ctrl.ui.refresh.rw_copi.ba.eq(0)
+
+						# revert it back
+						if cmd_state == sdram_cmds.CMD_SELF:
+							yield self.pin_ctrl.ui.refresh.clk_en.eq(1) 
+						yield
+
+					# end delay
+					for i in range(10):
+						yield 
+
+				yield apply_each_cmd_and_strobe_other_signals
+
+		def elaborate(self, platform = None):
+			m = Module()
+
+			if isinstance(self.utest, FHDLTestCase):
+				add_clock(m, "sync")
+				# add_clock(m, "sync_1e6")
+				test_id = self.utest.get_test_id()
+
+				m.submodules.pin_ctrl = self.pin_ctrl
+
+				# now connect up the sdram model
+				m.submodules.sdram_model = self.sdram_model
+				m.d.sync += [ # comb or sync? sync would be more correct...
+					# control bits
+					self.sdram_model.io.clk_en.eq(self.pin_ctrl.io.clk_en),
+					self.sdram_model.io.dqm.eq(self.pin_ctrl.io.dqm),
+					self.sdram_model.io.cs.eq(self.pin_ctrl.io.cs),
+					self.sdram_model.io.we.eq(self.pin_ctrl.io.we),
+					self.sdram_model.io.ras.eq(self.pin_ctrl.io.ras),
+					self.sdram_model.io.cas.eq(self.pin_ctrl.io.cas),
+
+					# data words
+					self.sdram_model.io.a.eq(self.pin_ctrl.io.rw_copi.a),
+					self.sdram_model.io.ba.eq(self.pin_ctrl.io.rw_copi.ba),
+					self.sdram_model.io.dq_copi.eq(self.pin_ctrl.io.rw_copi.dq),
+					# self.sdram_model.io.dq_copi_en.eq(), # not yet in use
+
+					# these are the readback signals. Do these line up as expected?
+					self.pin_ctrl.io.rw_cipo.dq.eq(self.sdram_model.io.dq_cipo),
+					self.pin_ctrl.io.rw_cipo.ba.eq(self.pin_ctrl.io.rw_copi.ba),
+					self.pin_ctrl.io.rw_cipo.a.eq(self.pin_ctrl.io.rw_copi.a),
+					self.pin_ctrl.io.rw_cipo.read_active.eq(self.pin_ctrl.io.rw_copi.read_active)
+
+				]
+				
+				# if test_id == "RefreshTestbench_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
+				# 	...
+
+			return m
+
 
 	if args.action == "generate": # formal testing
 		...
@@ -301,49 +396,15 @@ if __name__ == "__main__":
 				config_params.rw_params = rw_params
 
 				utest_params = Params()
+				utest_params.test_cmds = sdram_cmds
 
-				dut = controller_pin(config_params, utest_params, utest=self)
+				# dut = controller_pin(config_params, utest_params, utest=self)
+				tb = Testbench(config_params, utest_params, utest=self)
 
-				sim = Simulator(dut)
+				sim = Simulator(tb)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-
-				def apply_each_cmd_and_strobe_other_signals():
-					# let's default to holding clk_end high
-					yield dut.ui.clk_en.eq(1)
-
-					# initial delay
-					for i in range(10):
-						yield 
-
-					for cmd_state in sdram_cmds:
-						# required by this command
-						if cmd_state == sdram_cmds.CMD_SELF:
-							yield dut.ui.clk_en.eq(0) 
-
-						yield dut.ui.cmd.eq(cmd_state)
-						yield dut.ui.dqm.eq(-1)
-						yield dut.ui.rw_copi.dq.eq(-1)
-						yield dut.ui.rw_copi.a.eq(-1)
-						yield dut.ui.rw_copi.ba.eq(-1)
-
-						yield
-
-						yield dut.ui.cmd.eq(0)
-						yield dut.ui.dqm.eq(0)
-						yield dut.ui.rw_copi.dq.eq(0)
-						yield dut.ui.rw_copi.a.eq(0)
-						yield dut.ui.rw_copi.ba.eq(0)
-
-						# revert it back
-						if cmd_state == sdram_cmds.CMD_SELF:
-							yield dut.ui.clk_en.eq(1) 
-						yield
-
-					# end delay
-					for i in range(10):
-						yield 
-
-				sim.add_sync_process(apply_each_cmd_and_strobe_other_signals)
+				for sync_process in tb.get_sim_sync_processes():
+					sim.add_sync_process(sync_process)
 				
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):

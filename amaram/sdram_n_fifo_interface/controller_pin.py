@@ -46,34 +46,32 @@ def get_rw_pipeline_layout(config_params, _dir):
 
 	return rw_pipeline_layout
 
+def get_common_io_layout(config_params):
+	io_layout_common = [
+		("clk_en", 		1,		DIR_FANOUT),
+		("dqm",			1, 		DIR_FANOUT),
+
+		("rw_copi", 	get_rw_pipeline_layout(config_params, DIR_FANOUT)), 
+		("rw_cipo", 	get_rw_pipeline_layout(config_params, DIR_FANIN)),  
+	]
+	return io_layout_common
+
 def get_ui_layout(config_params):
 	# this represents the inter-module user interface
 	ui_layout = [
 		("cmd", sdram_cmds, 	DIR_FANOUT), # a high-level representation of the desired cmd
-
-		("clk_en", 		1,		DIR_FANOUT),
-		("dqm",			1, 		DIR_FANOUT),
-
-		("rw_copi", 	get_rw_pipeline_layout(config_params, DIR_FANOUT)), 
-		("rw_cipo", 	get_rw_pipeline_layout(config_params, DIR_FANIN)),  
-	]
+	] + get_common_io_layout(config_params)
 
 	return ui_layout
 
 def get_io_layout(config_params):
-	# this represents the pins of the sdram chip
+	# this is between the inter-module ui and the pins of the sdram chip
 	io_layout = [
-		("clk_en", 		1,		DIR_FANOUT),
-		("dqm",			1, 		DIR_FANOUT),
-
-		("rw_copi", 	get_rw_pipeline_layout(config_params, DIR_FANOUT)), 
-		("rw_cipo", 	get_rw_pipeline_layout(config_params, DIR_FANIN)),  
-
 		("cs",			1,		DIR_FANOUT),
 		("we",			1,		DIR_FANOUT),
 		("ras",			1,		DIR_FANOUT),
 		("cas",			1,		DIR_FANOUT)
-	]
+	] + get_common_io_layout(config_params)
 
 	return io_layout
 
@@ -88,7 +86,14 @@ class controller_pin(Elaboratable):
 
 		self.ui = Record(get_ui_layout(self.config_params))
 		self.io = Record(get_io_layout(self.config_params))
+
+		if isinstance(self.utest, FHDLTestCase):
+			from model_sdram import model_sdram, model_sdram_as_module
+			# put in the constructor so we can access the simulation processes
+			self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
 	
+	def get_sim_sync_processes(self):
+		...
 
 	def elaborate(self, platform = None):
 		# is using 'comb' ok here?
@@ -235,44 +240,32 @@ class controller_pin(Elaboratable):
 			# add_clock(m, "sync_1e6")
 			test_id = self.utest.get_test_id()
 
+			# now connect up the sdram model
+			m.submodules.sdram_model = self.sdram_model
+			m.d.sync += [ # comb or sync? sync would be more correct...
+				self.sdram_model.io.clk_en.eq(self.io.clk_en),
+				self.sdram_model.io.dqm.eq(self.io.dqm),
+
+				self.sdram_model.io.cs.eq(self.io.cs),
+				self.sdram_model.io.we.eq(self.io.we),
+				self.sdram_model.io.ras.eq(self.io.ras),
+				self.sdram_model.io.cas.eq(self.io.cas),
+
+				self.sdram_model.io.a.eq(self.io.rw_copi.a),
+				self.sdram_model.io.ba.eq(self.io.rw_copi.ba),
+				self.sdram_model.io.dq_copi.eq(self.io.rw_copi.dq),
+				# self.sdram_model.io.dq_copi_en.eq(), # not yet in use
+
+				# these are the readback signals. Do these line up as expected?
+				self.io.rw_cipo.dq.eq(self.sdram_model.io.dq_cipo),
+				self.io.rw_cipo.ba.eq(self.io.rw_copi.ba),
+				self.io.rw_cipo.a.eq(self.io.rw_copi.a),
+				self.io.rw_cipo.read_active.eq(self.io.rw_copi.read_active)
+
+			]
+
 			if test_id == "pinCtrl_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
-				# add command decoding functionality
-				decoded_cmd = Signal(shape=sdram_cmds, reset=sdram_cmds.CMD_NOP)
-				encoded_cmd = Signal(shape=9)
-
-				m.d.comb += encoded_cmd.eq(Cat(reversed(
-					[Past(self.io.clk_en), 
-					self.io.clk_en, 
-					~self.io.cs, 	# using ~ as these are inverted by the use of PinsN in the Platform() upload stuff
-					~self.io.ras,
-					~self.io.cas, 
-					~self.io.we, 
-					self.io.rw_copi.ba[1], 
-					self.io.rw_copi.ba[0], 
-					self.io.rw_copi.a[10]],
-				)))
-
-				def set_state(new_state):
-					m.d.comb += decoded_cmd.eq(new_state)
-				
-				# I'm trying out a few ways to approach how to represent this, this is closet
-				# to what is specified on p.9 of the datasheet
-				# past(clk_en) | clk_en | n_cs | n_ras | n_cas | n_we | ba[1] | ba[0] | a[10] 
-				with m.If(	encoded_cmd.matches("1-1------")): set_state(sdram_cmds.CMD_DESL)
-				with m.Elif(encoded_cmd.matches("1-0111---", "0--------", "--1------")): set_state(sdram_cmds.CMD_NOP)
-				with m.Elif(encoded_cmd.matches("1-0110---")): set_state(sdram_cmds.CMD_BST)
-				with m.Elif(encoded_cmd.matches("1-0101--0")): set_state(sdram_cmds.CMD_READ)
-				with m.Elif(encoded_cmd.matches("1-0101--1")): set_state(sdram_cmds.CMD_READ_AP)
-				with m.Elif(encoded_cmd.matches("1-0100--0")): set_state(sdram_cmds.CMD_WRITE)
-				with m.Elif(encoded_cmd.matches("1-0100--1")): set_state(sdram_cmds.CMD_WRITE_AP)
-				with m.Elif(encoded_cmd.matches("1-0011---")): set_state(sdram_cmds.CMD_ACT)
-				with m.Elif(encoded_cmd.matches("1-0010--0")): set_state(sdram_cmds.CMD_PRE)
-				with m.Elif(encoded_cmd.matches("1-0010--1")): set_state(sdram_cmds.CMD_PALL)
-				with m.Elif(encoded_cmd.matches("110001---")): set_state(sdram_cmds.CMD_REF)
-				with m.Elif(encoded_cmd.matches("100001---")): set_state(sdram_cmds.CMD_SELF)
-				with m.Elif(encoded_cmd.matches("1-0000000")): set_state(sdram_cmds.CMD_MRS)
-				with m.Else(): set_state(sdram_cmds.CMD_ILLEGAL)
-
+				...
 			
 		return m
 
@@ -314,11 +307,6 @@ if __name__ == "__main__":
 				sim = Simulator(dut)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
-				# sdram_model = model_sdram(config_params, utest_params)
-				# for i in range(4): # num of banks
-				# 	sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, dut_ios=dut.controller_pin_ui.ios))
-				# sim.add_sync_process(sdram_model.propagate_i_dq_reads(dut_ios=dut.controller_pin_ui.ios))
-
 				def apply_each_cmd_and_strobe_other_signals():
 					# let's default to holding clk_end high
 					yield dut.ui.clk_en.eq(1)
@@ -354,19 +342,8 @@ if __name__ == "__main__":
 					# end delay
 					for i in range(10):
 						yield 
-					
-				def route_back_cipo_dq():
-					yield Passive()
-					while True:
-						yield dut.io.rw_cipo.dq.eq((yield dut.io.rw_copi.dq))
-						yield dut.io.rw_cipo.read_active.eq((yield dut.io.rw_copi.read_active))
-						yield dut.io.rw_cipo.a.eq((yield dut.io.rw_copi.a))
-						yield dut.io.rw_cipo.ba.eq((yield dut.io.rw_copi.ba))
-						yield
-
 
 				sim.add_sync_process(apply_each_cmd_and_strobe_other_signals)
-				sim.add_sync_process(route_back_cipo_dq)
 				
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
@@ -379,52 +356,4 @@ if __name__ == "__main__":
 		unittest.main()
 
 	else: # upload
-		class Upload(UploadBase):
-			def __init__(self):
-				super().__init__(sync_mode="sync_and_143e6_sdram_from_pll")
-				
-			def elaborate(self, platform = None):
-				m, platform = super().elaborate(platform) 
-
-				# from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
-				# from model_sdram import model_sdram
-
-				# config_params = Params()
-				# config_params.clk_freq = 143e6
-				# config_params.ic_timing = ic_timing
-				# config_params.ic_refresh_timing = ic_refresh_timing
-
-				# m.submodules.tb = tb = DomainRenamer({"sync":"sdram"})(Testbench(config_params))
-
-				# ui = Record.like(tb.ui)
-				# m.d.sync += ui.connect(tb.ui)
-
-				# def start_on_left_button():
-				# 	start = Signal.like(self.i_buttons.left)
-				# 	m.d.sync += [
-				# 		start.eq(self.i_buttons.left),
-				# 		ui.tb_fanout_flags.trigger.eq(Rose(start))
-				# 	]
-
-				# def reset_on_right_button():
-				# 	# don't manually route the reset - do this, 
-				# 	# otherwise, if Records are used, they will oscillate, as can't be reset_less
-				# 	m.d.sync += ResetSignal("sync").eq(self.i_buttons.right) 
-
-				# def display_on_leds():
-				# 	m.d.comb += self.leds.eq(Cat([
-				# 		ui.tb_fanin_flags.in_normal_operation,
-				# 		ui.tb_fanin_flags.in_requesting_refresh,
-				# 		ui.tb_fanin_flags.in_performing_refresh,
-				# 		self.i_buttons.right,  		# led indicates that the start button was pressed
-				# 		self.i_buttons.left			# led indicates that the reset button was pressed
-				# 	]))
-
-				# start_on_left_button()
-				# reset_on_right_button()
-				# display_on_leds()
-
-				# return DomainRenamer("sdram")(m)
-				return m
-		
-		platform.build(Upload(), do_program=False, build_dir=f"{current_filename}_build")
+		...

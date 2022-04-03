@@ -94,6 +94,43 @@ class controller_refresh(Elaboratable):
 		self.increment_per_refresh = int(self.clks_per_period / self.config_params.ic_refresh_timing.NUM_REF.value)
 		
 
+	def get_sim_sync_processes(self):
+		def use_refresher_with_resource_blocking_task():
+			def resource_blocking_task():
+				# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
+				period = 200e-6
+				yield Delay(period) # how long could this be? make a test for that?
+				self.timeout_runtime -= period
+
+			refresh_count = 0
+			yield Active()
+			while self.timeout_runtime > 0:
+				if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
+					yield from resource_blocking_task()
+
+				if (yield dut.ui.request_to_refresh_soon):
+					yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
+					# wait for it to fall
+					while (yield dut.ui.request_to_refresh_soon):
+						yield 
+						self.timeout_runtime -= 1/config_params.clk_freq
+					yield dut.ui.enable_refresh.eq(0) 
+					refresh_count += 1								
+				
+				yield 
+				self.timeout_runtime -= 1/config_params.clk_freq
+
+				if refresh_count > 3:
+					return
+			
+			if self.timeout_runtime <= 0:
+				print("Timeout error!")
+
+
+		test_id = self.utest.get_test_id()
+		if test_id == "RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
+			yield use_refresher_with_resource_blocking_task
+
 	def elaborate(self, platform = None):
 		
 		m = Module()
@@ -256,41 +293,41 @@ class controller_refresh(Elaboratable):
 					m.next = "DO_ANOTHER_REFRESH?"
 
 
-		if isinstance(self.utest, FHDLTestCase):
-			add_clock(m, "sync")
-			# add_clock(m, "sync_1e6")
-			test_id = self.utest.get_test_id()
+		# if isinstance(self.utest, FHDLTestCase):
+		# 	add_clock(m, "sync")
+		# 	# add_clock(m, "sync_1e6")
+		# 	test_id = self.utest.get_test_id()
 			
-			if test_id == "RefreshCtrl_sim_withBlockingTask_staysRefreshed":
-				assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
+		# 	if test_id == "RefreshCtrl_sim_withBlockingTask_staysRefreshed":
+		# 		assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
 
-				with m.FSM(name="testbench_fsm") as fsm:
-					m.d.sync += [
-						_ui.tb_fanin_flags.in_start.eq(fsm.ongoing("START")),
-						_ui.tb_fanin_flags.in_done.eq(fsm.ongoing("DONE"))
-					]
+		# 		with m.FSM(name="testbench_fsm") as fsm:
+		# 			m.d.sync += [
+		# 				_ui.tb_fanin_flags.in_start.eq(fsm.ongoing("START")),
+		# 				_ui.tb_fanin_flags.in_done.eq(fsm.ongoing("DONE"))
+		# 			]
 
-					with m.State("INITIAL"):
-						m.next = "START"
+		# 			with m.State("INITIAL"):
+		# 				m.next = "START"
 					
-					with m.State("START"):
-						# m.d.sync += _ui.tb_fanout_flags.
-						# with m.If(refresher_ui)
-						...
-						# just hang here for now, and look at the traces
+		# 			with m.State("START"):
+		# 				# m.d.sync += _ui.tb_fanout_flags.
+		# 				# with m.If(refresher_ui)
+		# 				...
+		# 				# just hang here for now, and look at the traces
 
-					with m.State("DONE"):
-						...
+		# 			with m.State("DONE"):
+		# 				...
 			
-			elif test_id == "RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
-				...
+		# 	elif test_id == "RefreshCtrl_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
+		# 		...
 
 
-		elif isinstance(platform, ULX3S_85F_Platform): 
-			...
+		# elif isinstance(platform, ULX3S_85F_Platform): 
+		# 	...
 		
-		else:
-			... # This case means that a test is occuring and this is not the top-level module.
+		# else:
+		# 	... # This case means that a test is occuring and this is not the top-level module.
 
 		
 		return m
@@ -410,39 +447,45 @@ if __name__ == "__main__":
 				sim = Simulator(dut)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
+
+				sim.add_sync_process(p for p in dut.get_sim_sync_processes())				
+
 				sdram_model = model_sdram(config_params, utest_params)
 				sim.add_sync_process(sdram_model.get_refresh_monitor_process(pin_ui=dut.controller_pin_ui))
 
-				def use_refresher_with_resource_blocking_task():
-					def resource_blocking_task():
-						# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
-						period = 200e-6
-						yield Delay(period) # how long could this be? make a test for that?
-						self.timeout_runtime -= period
 
-					refresh_count = 0
-					yield Active()
-					while self.timeout_runtime > 0:
-						if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
-							yield from resource_blocking_task()
 
-						if (yield dut.ui.request_to_refresh_soon):
-							yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
-							# wait for it to fall
-							while (yield dut.ui.request_to_refresh_soon):
-								yield 
-								self.timeout_runtime -= 1/config_params.clk_freq
-							yield dut.ui.enable_refresh.eq(0) 
-							refresh_count += 1								
+
+				# def use_refresher_with_resource_blocking_task():
+				# 	def resource_blocking_task():
+				# 		# e.g. this uses the ic for other stuff, so it cannot be refreshed during this time
+				# 		period = 200e-6
+				# 		yield Delay(period) # how long could this be? make a test for that?
+				# 		self.timeout_runtime -= period
+
+				# 	refresh_count = 0
+				# 	yield Active()
+				# 	while self.timeout_runtime > 0:
+				# 		if not ( (yield dut.ui.refresh_in_progress) or (yield dut.ui.request_to_refresh_soon) ): # how do we prevent a refresh starting while we're in blocking_task()?
+				# 			yield from resource_blocking_task()
+
+				# 		if (yield dut.ui.request_to_refresh_soon):
+				# 			yield dut.ui.enable_refresh.eq(1) # note - this should be a multi-or ing thing to handle multiple requests
+				# 			# wait for it to fall
+				# 			while (yield dut.ui.request_to_refresh_soon):
+				# 				yield 
+				# 				self.timeout_runtime -= 1/config_params.clk_freq
+				# 			yield dut.ui.enable_refresh.eq(0) 
+				# 			refresh_count += 1								
 						
-						yield 
-						self.timeout_runtime -= 1/config_params.clk_freq
+				# 		yield 
+				# 		self.timeout_runtime -= 1/config_params.clk_freq
 
-						if refresh_count > 3:
-							return
+				# 		if refresh_count > 3:
+				# 			return
 					
-					if self.timeout_runtime <= 0:
-						print("Timeout error!")
+				# 	if self.timeout_runtime <= 0:
+				# 		print("Timeout error!")
 				sim.add_sync_process(use_refresher_with_resource_blocking_task)
 
 				with sim.write_vcd(

@@ -691,10 +691,10 @@ if __name__ == "__main__":
 			self.utest_params = utest_params
 			self.utest = utest
 
-			self.dut_io = Record(get_model_sdram_as_module_io_layout(config_params))
+			self.sdram_model_io = Record(get_model_sdram_as_module_io_layout(config_params))
 
 			# put in the constructor so we can access the simulation processes
-			self.dut = model_sdram_as_module(self.config_params, self.utest_params)
+			self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
 			...
 			# have a .comb passthrough for the sdram io pins
 			# have a series of fsm's that turn the cmd enum into the desired value
@@ -702,7 +702,7 @@ if __name__ == "__main__":
 			# although I feel it would be faster for now to just test by inspection
 	
 		def get_sim_sync_processes(self):
-			for sync_process in self.dut.get_sim_sync_processes():
+			for sync_process in self.sdram_model.get_sim_sync_processes():
 				yield sync_process
 			
 			test_id = self.utest.get_test_id()
@@ -713,9 +713,9 @@ if __name__ == "__main__":
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.dut = dut = self.dut #model_sdram_as_module(self.config_params, self.utest_params)
+			m.submodules.sdram_model = sdram_model = self.sdram_model #model_sdram_as_module(self.config_params, self.utest_params)
 
-			m.d.comb += self.dut_io.connect(dut.io) # right way around?
+			m.d.comb += self.sdram_model_io.connect(sdram_model.io) # right way around?
 
 			assert isinstance(self.utest, FHDLTestCase)
 			add_clock(m, "sync")
@@ -726,147 +726,147 @@ if __name__ == "__main__":
 
 				with m.FSM(name="testbench_fsm") as fsm:
 
-					m.d.comb += self.dut_io.clk_en.eq(1)
+					m.d.comb += self.sdram_model_io.clk_en.eq(1)
 
 					with m.State("INITIAL"):
 						m.next = "CHECK_CMD_DESL"
 					
 					with m.State("CHECK_CMD_DESL"):
 						m.d.comb += [
-							self.dut_io.cs.eq(0)
+							self.sdram_model_io.cs.eq(0)
 						]
 						m.next = "CHECK_CMD_NOP"
 					
 					with m.State("CHECK_CMD_NOP"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(0),
-							self.dut_io.cas.eq(0),
-							self.dut_io.we.eq(0)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(0),
+							self.sdram_model_io.cas.eq(0),
+							self.sdram_model_io.we.eq(0)
 						]
 						m.next = "CHECK_CMD_BST"
 
 					with m.State("CHECK_CMD_BST"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(0),
-							self.dut_io.cas.eq(0),
-							self.dut_io.we.eq(1)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(0),
+							self.sdram_model_io.cas.eq(0),
+							self.sdram_model_io.we.eq(1)
 						]
 						m.next = "CHECK_CMD_READ"
 						
 					with m.State("CHECK_CMD_READ"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(0),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(0),
-							self.dut_io.a[10].eq(0)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(0),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(0),
+							self.sdram_model_io.a[10].eq(0)
 							# self.ba and self.a needs to be set too, at the same time as this command
 						]
 						m.next = "CHECK_CMD_READ_AP"
 						
 					with m.State("CHECK_CMD_READ_AP"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(0),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(0),
-							self.dut_io.a[10].eq(1)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(0),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(0),
+							self.sdram_model_io.a[10].eq(1)
 							# self.ba and self.a needs to be set too, at the same time as this command
 						]
 						m.next = "CHECK_CMD_WRITE"
 						
 					with m.State("CHECK_CMD_WRITE"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(0),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(1),
-							self.dut_io.a[10].eq(0)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(0),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(1),
+							self.sdram_model_io.a[10].eq(0)
 							# self.ba and self.a needs to be set too, at the same time as this command
 						]
 						m.next = "CHECK_CMD_WRITE_AP"
 						
 					with m.State("CHECK_CMD_WRITE_AP"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(0),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(1),
-							self.dut_io.a[10].eq(1)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(0),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(1),
+							self.sdram_model_io.a[10].eq(1)
 							# self.ba and self.a needs to be set too, at the same time as this command
 						]
 						m.next = "CHECK_CMD_ACT"
 						
 					with m.State("CHECK_CMD_ACT"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(1),
-							self.dut_io.cas.eq(0),
-							self.dut_io.we.eq(0)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(1),
+							self.sdram_model_io.cas.eq(0),
+							self.sdram_model_io.we.eq(0)
 							# self.ba and self.a needs to be set too, at the same time as this command
 						]
 						m.next = "CHECK_CMD_PRE"
 						
 					with m.State("CHECK_CMD_PRE"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(1),
-							self.dut_io.cas.eq(0),
-							self.dut_io.we.eq(1),
-							self.dut_io.a[10].eq(0)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(1),
+							self.sdram_model_io.cas.eq(0),
+							self.sdram_model_io.we.eq(1),
+							self.sdram_model_io.a[10].eq(0)
 							# self.ba needs to be set too
 						]
 						m.next = "CHECK_CMD_PALL"
 						
 					with m.State("CHECK_CMD_PALL"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(1),
-							self.dut_io.cas.eq(0),
-							self.dut_io.we.eq(1),
-							self.dut_io.a[10].eq(1)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(1),
+							self.sdram_model_io.cas.eq(0),
+							self.sdram_model_io.we.eq(1),
+							self.sdram_model_io.a[10].eq(1)
 						]
 						m.next = "CHECK_CMD_REF"
 						
 					with m.State("CHECK_CMD_REF"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(1),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(0)
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(1),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(0)
 							# clk_en needs to be 1, rather than just on the previous cycle
 						]
 						m.next = "CHECK_CMD_SELF"
 						
 					with m.State("CHECK_CMD_SELF"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(1),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(0),
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(1),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(0),
 
-							self.dut_io.clk_en.eq(0)
+							self.sdram_model_io.clk_en.eq(0)
 							# clk_en needs to be 0, and 1 on the previous cycle
 						]
 						m.next = "CHECK_CMD_MRS_CLKSETUP"
 					
 					with m.State("CHECK_CMD_MRS_CLKSETUP"):
-						m.d.comb += self.dut_io.clk_en.eq(1)
+						m.d.comb += self.sdram_model_io.clk_en.eq(1)
 						m.next = "CHECK_CMD_MRS"
 						
 					with m.State("CHECK_CMD_MRS"):
 						m.d.comb += [
-							self.dut_io.cs.eq(1),
-							self.dut_io.ras.eq(1),
-							self.dut_io.cas.eq(1),
-							self.dut_io.we.eq(1),
-							self.dut_io.ba.eq(0b00),
-							self.dut_io.a[10].eq(0),
+							self.sdram_model_io.cs.eq(1),
+							self.sdram_model_io.ras.eq(1),
+							self.sdram_model_io.cas.eq(1),
+							self.sdram_model_io.we.eq(1),
+							self.sdram_model_io.ba.eq(0b00),
+							self.sdram_model_io.a[10].eq(0),
 							# and self.a[:10] needs to be valid with the desired register bits
 
-							self.dut_io.clk_en.eq(0)
+							self.sdram_model_io.clk_en.eq(0)
 						]
 						m.next = "DONE"
 					
@@ -912,7 +912,6 @@ if __name__ == "__main__":
 						yield
 						if (yield tb.ui.finished):
 							timeout_count = -1
-				
 				sim.add_sync_process(wait_until_finished)
 
 				def wait_for_200us():

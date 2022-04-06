@@ -659,8 +659,11 @@ class model_sdram_as_module(Elaboratable):
 
 		# now sort out the clock
 		# we want this model to be clocked by the clock input pin
-		m.domains.clki = clki = ClockDomain("clki", clk_edge="pos")
+		m.domains.clki = clki = ClockDomain("clki", clk_edge="pos")# local=True)
 		m.d.comb += clki.clk.eq(self.io.clk & self.io.clk_en)
+
+		# m.domains.sync = sync = ClockDomain("sync", clk_edge="pos")# local=True)
+		# m.d.comb += sync.clk.eq(self.io.clk & self.io.clk_en)
 
 
 		test_counter = Signal(8)

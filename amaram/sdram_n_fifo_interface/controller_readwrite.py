@@ -528,6 +528,21 @@ if __name__ == "__main__":
 				# config_params.numbursts = 2 # only used in the fifo controller, not in rw controller
 
 				utest_params = Params()
+				utest_params.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
+
+
+				tb = Testbench(config_params, utest_params, utest=self)
+
+				sim = Simulator(tb)
+				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+				for process, domain in tb.get_sim_sync_processes():
+					sim.add_sync_process(process, domain=domain)
+
+				with sim.write_vcd(
+					f"{current_filename}_{self.get_test_id()}.vcd"):
+					sim.run()
+
+				################## old below
 
 				dut = controller_readwrite(config_params, utest_params, utest=self)
 

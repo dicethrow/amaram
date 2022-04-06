@@ -263,14 +263,10 @@ if __name__ == "__main__":
 
 			# put in constructor so we can access in simulation processes
 			self.refresher = controller_refresh(self.config_params)
-
-			if isinstance(self.utest, FHDLTestCase):
-				from model_sdram import model_sdram, model_sdram_as_module
-				# put in the constructor so we can access the simulation processes
-				self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
+			self.pin_ctrl = controller_pin(self.config_params, self.utest_params)
 
 		def get_sim_sync_processes(self):
-			for process, domain in self.sdram_model.get_sim_sync_processes():
+			for process, domain in self.pin_ctrl.get_sim_sync_processes():
 				yield process, domain
 				
 			def use_refresher_with_resource_blocking_task():
@@ -314,83 +310,27 @@ if __name__ == "__main__":
 
 			m.submodules.refresher = self.refresher
 
-			m.submodules.pin_ctrl = pin_ctrl = controller_pin(self.config_params, self.utest_params)
+			m.submodules.pin_ctrl = self.pin_ctrl
 
 			# connect the bus-selection mechanism
 			placeholder_record = Record.like(self.refresher.controller_pin_ui)
 			m.d.sync += [
-				pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(self.refresher.ui.enable_refresh | self.refresher.ui.refresh_in_progress),
-				self.refresher.controller_pin_ui.connect(pin_ctrl.ui.refresh),
-				placeholder_record.connect(pin_ctrl.ui.readwrite)
+				self.pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(self.refresher.ui.enable_refresh | self.refresher.ui.refresh_in_progress),
+				self.refresher.controller_pin_ui.connect(self.pin_ctrl.ui.refresh),
+				placeholder_record.connect(self.pin_ctrl.ui.readwrite)
 			]
 
 			if isinstance(self.utest, FHDLTestCase):
 				add_clock(m, "sync")
 				# add_clock(m, "sync_1e6")
 				test_id = self.utest.get_test_id()
-
-				# now connect up the sdram model
-				m.submodules.sdram_model = self.sdram_model
-				m.d.comb += self.sdram_model.io.clk.eq(~ClockSignal("sync"))
-				m.d.sync += [ # comb or sync? sync would be more correct...
-					self.sdram_model.io.clk_en.eq(pin_ctrl.io.clk_en),
-					self.sdram_model.io.dqm.eq(pin_ctrl.io.dqm),
-
-					self.sdram_model.io.cs.eq(pin_ctrl.io.cs),
-					self.sdram_model.io.we.eq(pin_ctrl.io.we),
-					self.sdram_model.io.ras.eq(pin_ctrl.io.ras),
-					self.sdram_model.io.cas.eq(pin_ctrl.io.cas),
-
-					self.sdram_model.io.a.eq(pin_ctrl.io.rw_copi.a),
-					self.sdram_model.io.ba.eq(pin_ctrl.io.rw_copi.ba),
-					self.sdram_model.io.dq_copi.eq(pin_ctrl.io.rw_copi.dq),
-					self.sdram_model.io.dq_copi_en.eq(pin_ctrl.io.rw_copi.dq_oen), # not yet in use
-
-					# these are the readback signals. Do these line up as expected?
-					pin_ctrl.io.rw_cipo.dq.eq(self.sdram_model.io.dq_cipo),
-					pin_ctrl.io.rw_cipo.dq_oen.eq(pin_ctrl.io.rw_copi.dq_oen),
-					pin_ctrl.io.rw_cipo.ba.eq(pin_ctrl.io.rw_copi.ba),
-					pin_ctrl.io.rw_cipo.a.eq(pin_ctrl.io.rw_copi.a),
-					pin_ctrl.io.rw_cipo.read_active.eq(pin_ctrl.io.rw_copi.read_active)
-
-				]
 				
 				# if test_id == "RefreshTestbench_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
 				# 	...
 
 
-			elif isinstance(platform, ULX3S_85F_Platform): 
-				# the point of this part is to confirm that we can generate a bitstream
-				# although even if this does upload to the part, without reads/writes there's 
-				# no way to confirm that it's working 
-				
-				sdram = platform.request("sdram")
-
-				m.d.comb += sdram.clk.eq(~ClockSignal("sync"))
-				m.d.sync += [ # or comb?
-					# Set the chip output pins
-					sdram.clk_en.eq(1),
-					sdram.dqm.eq(Cat(pin_ctrl.io.dqm, pin_ctrl.io.dqm)),
-
-					sdram.cs.eq(pin_ctrl.io.cs),
-					sdram.we.eq(pin_ctrl.io.we),
-					sdram.ras.eq(pin_ctrl.io.ras),
-					sdram.cas.eq(pin_ctrl.io.cas),
-
-					sdram.a.eq(pin_ctrl.io.rw_copi.a),
-					sdram.ba.eq(pin_ctrl.io.rw_copi.ba),
-					sdram.dq.o.eq(pin_ctrl.io.rw_copi.dq),
-					sdram.dq.oe.eq(pin_ctrl.io.rw_copi.dq_oen), # not yet implementented
-
-					# these are the readback signals. Do these line up as expected?
-					pin_ctrl.io.rw_cipo.dq.eq(sdram.dq.i),
-					pin_ctrl.io.rw_cipo.dq_oen.eq(pin_ctrl.io.rw_copi.dq_oen),
-					pin_ctrl.io.rw_cipo.ba.eq(pin_ctrl.io.rw_copi.ba),
-					pin_ctrl.io.rw_cipo.a.eq(pin_ctrl.io.rw_copi.a),
-					pin_ctrl.io.rw_cipo.read_active.eq(pin_ctrl.io.rw_copi.read_active),
-				]
-
-				...
+			# elif isinstance(platform, ULX3S_85F_Platform): 
+			# 	...
 			
 
 			return m
@@ -414,6 +354,7 @@ if __name__ == "__main__":
 
 				utest_params = Params()
 				utest_params.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
+				utest_params.use_sdram_model = True
 
 				tb = Testbench(config_params, utest_params, utest=self)
 

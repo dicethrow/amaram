@@ -270,8 +270,8 @@ if __name__ == "__main__":
 				self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
 
 		def get_sim_sync_processes(self):
-			for sync_process in self.sdram_model.get_sim_sync_processes():
-				yield sync_process
+			for process, domain in self.sdram_model.get_sim_sync_processes():
+				yield process, domain
 				
 			def use_refresher_with_resource_blocking_task():
 				def resource_blocking_task():
@@ -307,7 +307,7 @@ if __name__ == "__main__":
 
 			test_id = self.utest.get_test_id()
 			if test_id == "RefreshCtrl_sim_withModelAndBlockingTask_modelStaysRefreshed":
-				yield use_refresher_with_resource_blocking_task
+				yield use_refresher_with_resource_blocking_task, "sync"
 			
 		def elaborate(self, platform = None):
 			m = Module()
@@ -331,6 +331,7 @@ if __name__ == "__main__":
 
 				# now connect up the sdram model
 				m.submodules.sdram_model = self.sdram_model
+				m.d.comb += self.sdram_model.io.clk.eq(~ClockSignal("sync"))
 				m.d.sync += [ # comb or sync? sync would be more correct...
 					self.sdram_model.io.clk_en.eq(pin_ctrl.io.clk_en),
 					self.sdram_model.io.dqm.eq(pin_ctrl.io.dqm),
@@ -365,10 +366,10 @@ if __name__ == "__main__":
 				
 				sdram = platform.request("sdram")
 
+				m.d.comb += sdram.clk.eq(~ClockSignal("sync"))
 				m.d.sync += [ # or comb?
 					# Set the chip output pins
 					sdram.clk_en.eq(1),
-					sdram.clk.eq(ClockSignal()),#"sdram_clk")), # nice and compact!
 					sdram.dqm.eq(Cat(pin_ctrl.io.dqm, pin_ctrl.io.dqm)),
 
 					sdram.cs.eq(pin_ctrl.io.cs),
@@ -424,8 +425,8 @@ if __name__ == "__main__":
 
 				sim = Simulator(tb)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-				for sync_process in tb.get_sim_sync_processes():
-					sim.add_sync_process(sync_process)
+				for process, domain in tb.get_sim_sync_processes():
+					sim.add_sync_process(process, domain=domain)
 
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):

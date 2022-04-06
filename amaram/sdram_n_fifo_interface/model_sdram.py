@@ -72,7 +72,7 @@ class sdram_sim_utils:
 		initial_state = yield from self.get_cmd(io)
 		clks = 0
 		while True:
-			# yield Settle() # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
+			# # yield Settle() # trying using clki negedge clock # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
 			cmd = yield from self.get_cmd(io)
 			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield io.ba) == focus_bank)):# (cmd == end_state):
 				if not (clks >= self.num_clk_cycles(min_duration)):
@@ -82,9 +82,9 @@ class sdram_sim_utils:
 			return cmd, clks # the actual command that caused this block to stop
 		else:
 			# print("xx c")
-			yield Settle()
+			# yield Settle() # trying using clki negedge clock
 			yield
-			yield Settle()
+			# yield Settle() # trying using clki negedge clock
 			clks += 1
 			# print(clks)
 
@@ -180,11 +180,11 @@ class model_sdram(sdram_sim_utils):
 				if counter == 0:
 					memory_lapsed = True
 
-				yield Settle()
+				# yield Settle() # trying using clki negedge clock
 				yield
-				yield Settle()
+				# yield Settle() # trying using clki negedge clock
 				# print(counter)
-		return func
+		return func, "clki"
 
 	def get_readwrite_process_for_bank(self, bank_id, io):
 		""" 
@@ -524,14 +524,14 @@ class model_sdram(sdram_sim_utils):
 				# print(bank_memory)
 				
 				clks_since_active = clks_since_active + 1 if (clks_since_active != None) else None
-				yield Settle() # this should deal with not using a negedge sim clock
+				# yield Settle() # trying using clki negedge clock # this should deal with not using a negedge sim clock
 				yield
-				yield Settle() # this should deal with not using a negedge sim clock
+				# yield Settle() # trying using clki negedge clock # this should deal with not using a negedge sim clock
 				# print(",")
 
 			# assert the bank state is inactive
 
-		return func
+		return func, "clki"
 
 	def propagate_i_dq_reads(self, io):
 		def func():
@@ -557,10 +557,10 @@ class model_sdram(sdram_sim_utils):
 
 				# else:
 					# yield self.nflagA.eq(0)
-				yield Settle() # this should deal with not using a negedge sim clock
+				# yield Settle() # trying using clki negedge clock # this should deal with not using a negedge sim clock
 				yield
-				yield Settle() # this should deal with not using a negedge sim clock
-		return func
+				# yield Settle() # trying using clki negedge clock # this should deal with not using a negedge sim clock
+		return func, "clki"
 
 
 	def get_sim_sync_processes(self, io):
@@ -574,6 +574,7 @@ class model_sdram(sdram_sim_utils):
 def get_model_sdram_as_module_io_layout(config_params):
 	io_layout = [
 		("clk_en",		1,		DIR_FANOUT),
+		("clk",			1,		DIR_FANOUT),
 		("dqm",			1,		DIR_FANOUT),
 		
 		("cs",			1,		DIR_FANOUT),
@@ -606,8 +607,8 @@ class model_sdram_as_module(Elaboratable):
 		self.model = model_sdram(self.config_params, self.utest_params)
 
 	def get_sim_sync_processes(self):
-		for sync_process in self.model.get_sim_sync_processes(io = self.io):
-			yield sync_process
+		for process, domain in self.model.get_sim_sync_processes(io = self.io):
+			yield process, domain
 
 	def elaborate(self, platform = None):
 		m = Module()
@@ -656,7 +657,17 @@ class model_sdram_as_module(Elaboratable):
 		with m.Else(): set_state(sdram_cmds.CMD_ILLEGAL)
 
 
-		return m
+		# now sort out the clock
+		# we want this model to be clocked by the clock input pin
+		m.domains.clki = clki = ClockDomain("clki", clk_edge="pos")
+		m.d.comb += clki.clk.eq(self.io.clk & self.io.clk_en)
+
+
+		test_counter = Signal(8)
+		m.d.sync += test_counter.eq(test_counter + 1)
+
+		# now make all references to 'sync' actually refer to "clki"
+		return DomainRenamer("clki")(m)
 
 
 if __name__ == "__main__":
@@ -702,8 +713,8 @@ if __name__ == "__main__":
 			# although I feel it would be faster for now to just test by inspection
 	
 		def get_sim_sync_processes(self):
-			for sync_process in self.sdram_model.get_sim_sync_processes():
-				yield sync_process
+			for process, domain in self.sdram_model.get_sim_sync_processes():
+				yield process, domain
 			
 			test_id = self.utest.get_test_id()
 			if test_id == "modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
@@ -717,6 +728,8 @@ if __name__ == "__main__":
 
 			m.d.comb += self.sdram_model_io.connect(sdram_model.io) # right way around?
 
+			m.d.comb += self.sdram_model_io.clk.eq(~ClockSignal("sync")) # assuming that 'sync' will be renamed to 'sdram' or something later
+			
 			assert isinstance(self.utest, FHDLTestCase)
 			add_clock(m, "sync")
 			# add_clock(m, "sync_1e6")
@@ -901,8 +914,8 @@ if __name__ == "__main__":
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
 				# for sync_process in tb.dut.model.get_sim_sync_processes():
-				for sync_process in tb.get_sim_sync_processes():
-					sim.add_sync_process(sync_process)
+				for process, domain in tb.get_sim_sync_processes():
+					sim.add_sync_process(sync_process, domain=domain)
 
 				def wait_until_finished():
 					yield Active()
@@ -914,10 +927,10 @@ if __name__ == "__main__":
 							timeout_count = -1
 				sim.add_sync_process(wait_until_finished)
 
-				def wait_for_200us():
-					yield Active()
-					yield Delay(200e-6)
-				sim.add_process(wait_for_200us)
+				# def wait_for_200us():
+				# 	yield Active()
+				# 	yield Delay(200e-6)
+				# sim.add_process(wait_for_200us)
 
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):

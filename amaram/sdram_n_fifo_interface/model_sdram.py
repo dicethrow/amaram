@@ -371,7 +371,7 @@ class model_sdram(sdram_sim_utils):
 							auto_precharge = False
 						column = (yield io.a) & 0x1FF
 						# yield from toggle_debug_flag(1)
-						bank_memory[activated_row][column] = (yield io.dq)
+						bank_memory[activated_row][column] = (yield io.dq_copi)
 						writes_remaining = self.config_params.burstlen - 1
 						if writes_remaining > 0: # this deals with the case of a burst length of 1
 							bank_state = bank_states.WRITE
@@ -474,7 +474,7 @@ class model_sdram(sdram_sim_utils):
 							if writes_remaining > 0:
 								writes_remaining -= 1
 								column += 1
-								bank_memory[activated_row][column] = (yield io.dq)
+								bank_memory[activated_row][column] = (yield io.dq_copi)
 							
 							if writes_remaining == 0:
 								writes_remaining = None
@@ -636,7 +636,7 @@ class model_sdram_as_module(Elaboratable):
 		)))
 
 		def set_state(new_state):
-			m.d.comb += self.io.decoded_cmd.eq(new_state)
+			m.d.comb += self.io.decoded_cmd.eq(new_state) # or clki?
 		
 		# I'm trying out a few ways to approach how to represent this, this is closet
 		# to what is specified on p.9 of the datasheet. The meaning of the matches() string is:

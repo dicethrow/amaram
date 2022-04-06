@@ -31,11 +31,13 @@ from amtest.boards.ulx3s.common.upload import platform, UploadBase
 from amtest.boards.ulx3s.common.clks import add_clock
 from amtest.utils import FHDLTestCase, Params
 
-# from controller_pin import controller_pin
-import controller_pin
+from controller_pin import controller_pin
 from Delayer import Delayer
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
+
+from controller_refresh import controller_refresh
+from _module_interfaces import controller_pin_interfaces
 
 """ 
 Read/write controller
@@ -161,7 +163,8 @@ class controller_readwrite(Elaboratable):
 		self.utest = utest
 
 		self.ui = Record(get_ui_layout(self.config_params))
-		self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
+		self.controller_pin_ui = Record(controller_pin_interfaces.get_sub_ui_layout(config_params))
+		# self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
 
 		# add some default parameters. Could this be done better?
 		if not hasattr(self.config_params, "burstlen"): 	self.config_params.burstlen = 8
@@ -177,43 +180,21 @@ class controller_readwrite(Elaboratable):
 
 		# make inter-module interfaces
 		_ui = Record.like(self.ui)
-		_pin_ui = Record.like(self.pin_ui)
-		myui = Record.like(self.pin_ui)
+		_controller_pin_ui = Record.like(self.controller_pin_ui)
 
 		# default io values
 		m.d.sync += [
-			_pin_ui.cmd.eq(sdram_cmds.CMD_NOP),
-			_pin_ui.clk_en.eq(1), # best done here or elsewhere?
-			# _pin_ui.dqm.eq(1), 
-			# _pin_ui.rw_copi.dq.eq(0),
-			# _pin_ui.rw_cipo.dq.eq(0),
-			_pin_ui.rw_copi.a.eq(0),
-			_pin_ui.rw_copi.ba.eq(0),
-
-			_pin_ui.rw_copi.read_active.eq(0)
+			_controller_pin_ui.cmd.eq(sdram_cmds.CMD_NOP),
+			_controller_pin_ui.clk_en.eq(1)
 		]
 
 		# connect the write signals to the package pins,
 		# excluding the readback pipeline
 		m.d.sync += [
 			self.ui.connect(_ui),
-			_pin_ui.connect(self.pin_ui, exclude=["rw_cipo"]),
+			_controller_pin_ui.connect(self.controller_pin_ui)
 		]
 
-		# now connect the readback pipeline
-		m.d.sync += [
-			# connect the readback pipeline
-			_pin_ui.rw_cipo.dq.eq(self.pin_ui.rw_cipo.dq), # cipo!
-
-			_pin_ui.rw_cipo.addr.eq(Past(self.pin_ui.rw_cipo.addr, clocks=self.config_params.latency)),
-			_pin_ui.rw_cipo.read_active.eq(self.pin_ui.rw_cipo.read_active),	
-
-			# and connect it back to the module interface
-			_ui.r_cipo.read_active.eq(_pin_ui.rw_cipo.read_active),
-			_ui.r_cipo.addr.eq(_pin_ui.rw_cipo.addr),
-			_ui.r_cipo.r_data.eq(_pin_ui.rw_cipo.dq),
-					
-		]
 
 		# make_row_column_and_bank_from_address
 		row = Signal(rw_params.ROW_BITS.value)
@@ -256,7 +237,7 @@ class controller_readwrite(Elaboratable):
 		adding_to_readback_bus = Signal()
 		m.d.comb += [
 			adding_to_readback_bus.eq(Cat([_bank_using.readback_bus for _bank_using in bank_using_array]).any()),
-			_pin_ui.dqm.eq(Cat([_bank_using.dqm for _bank_using in bank_using_array]).all()),
+			_controller_pin_ui.dqm.eq(Cat([_bank_using.dqm for _bank_using in bank_using_array]).all()),
 			_ui.in_progress.eq(Cat([_bank_using.in_progress for _bank_using in bank_using_array]).any())
 		]
 
@@ -283,9 +264,9 @@ class controller_readwrite(Elaboratable):
 					with m.If((bank == bank_id) & (burst_index == 0) & (Past(_ui.rw_copi.task) != rw_cmds.RW_IDLE)):
 						m.d.sync += [
 							bank_using.cmd_and_addr_bus.eq(1),
-							_pin_ui.cmd.eq(sdram_cmds.CMD_ACT),
-							_pin_ui.rw_copi.ba.eq(bank_id),#Past(bank_id)),	 # past of a const doesn't make sense
-							_pin_ui.rw_copi.a.eq(row),#Past(row)),
+							_controller_pin_ui.cmd.eq(sdram_cmds.CMD_ACT),
+							_controller_pin_ui.rw_copi.ba.eq(bank_id),#Past(bank_id)),	 # past of a const doesn't make sense
+							_controller_pin_ui.rw_copi.a.eq(row),#Past(row)),
 						]
 						m.next = "WAS_ACTIVE_NOP1"
 
@@ -308,13 +289,13 @@ class controller_readwrite(Elaboratable):
 					m.d.sync += [
 						bank_using.cmd_and_addr_bus.eq(1),
 						bank_using.data_bus.eq(1),
-						_pin_ui.cmd.eq(sdram_cmds.CMD_WRITE_AP),
-						_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
+						_controller_pin_ui.cmd.eq(sdram_cmds.CMD_WRITE_AP),
+						_controller_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
 
 						# 13mar2022 note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
 						# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
-						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
-						_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
+						_controller_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
+						_controller_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
 
 						bank_using.dqm.eq(0),  # dqm low synchronous with write data
 					]
@@ -325,7 +306,7 @@ class controller_readwrite(Elaboratable):
 					with m.State(f"WRITE_{byte_id}"):
 						m.d.sync += [
 							bank_using.data_bus.eq(1),
-							_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
+							_controller_pin_ui.rw_copi.dq.eq(Past(data, clocks=t_ra_clks)),
 							bank_using.dqm.eq(0),  # dqm low synchronous with write data
 						]
 
@@ -339,19 +320,20 @@ class controller_readwrite(Elaboratable):
 				with m.State("READ_-3"):
 					# do a check to see if the dqm condition was met. Should this be in simulation
 					# rather than in rtl?
-					# with m.If(Cat([Past(_pin_ui.dqm, clocks=1+j) for j in range(3)]) != 0b111):
+					# with m.If(Cat([Past(_controller_pin_ui.dqm, clocks=1+j) for j in range(3)]) != 0b111):
 					# 	m.next = "ERROR"
 
 					m.d.sync += [
 						bank_using.cmd_and_addr_bus.eq(1),
-						_pin_ui.cmd.eq(sdram_cmds.CMD_READ_AP),
-						_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
-						_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
+						_controller_pin_ui.cmd.eq(sdram_cmds.CMD_READ_AP),
+						_controller_pin_ui.rw_copi.ba.eq(bank_id), # constant for this bank
+						_controller_pin_ui.rw_copi.a.eq(Past(col, clocks=t_ra_clks)),
 						bank_using.dqm.eq(0),
 
 						# this records the global address that the read occurred at,
 						# so it can more easily identify read data in the read pipeline
-						_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks+1)),
+						_controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks+1)),
+						# _controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks)),
 					]
 					m.next = "READ_-2"
 				
@@ -361,13 +343,14 @@ class controller_readwrite(Elaboratable):
 						if byte_id in [b-2 for b in range(self.config_params.burstlen-1)]:
 							m.d.sync += [
 								bank_using.dqm.eq(0), # assuming this is 2 clks before a read
-								_pin_ui.rw_copi.addr.eq(_pin_ui.rw_copi.addr + 1),
+								_controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks+1)),
+								# _controller_pin_ui.rw_copi.addr.eq(_controller_pin_ui.rw_copi.addr + 1),
 							]
 						
 						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
 							m.d.sync += [
 								# bank_using.dqm.eq(0),  # dqm low synchronous with write data
-								_pin_ui.rw_copi.read_active.eq(1),
+								_controller_pin_ui.rw_copi.read_active.eq(1),
 							]
 
 						if byte_id < (self.config_params.burstlen)-1:
@@ -415,6 +398,103 @@ if __name__ == "__main__":
 
 	parser = main_parser()
 	args = parser.parse_args()
+
+	class Testbench(Elaboratable):
+		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
+			super().__init__()
+
+			self.config_params = config_params
+			self.utest_params = utest_params
+			self.utest = utest
+
+			# put in constructor so we can access in simulation processes
+			self.readwriter = controller_readwrite(self.config_params)
+			self.refresher = controller_refresh(self.config_params)
+			self.pin_ctrl = controller_pin(self.config_params, self.utest_params)
+
+		def get_sim_sync_processes(self):
+			for process, domain in self.pin_ctrl.get_sim_sync_processes():
+				yield process, domain
+
+			test_id = self.utest.get_test_id()
+			if test_id == "readwriteCtrl_sim_thatWritingThenReadingBack_readsCorrectValues":
+				def use_ui_and_see_if_correct_rw_behaviour():
+					num_full_bursts = 8 # e.g.
+
+					# note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
+					# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
+					addr_offset = 0x0000
+
+					for action in [rw_cmds.RW_WRITE, rw_cmds.RW_READ]:
+						for i in range(self.config_params.burstlen * num_full_bursts):
+							i += addr_offset
+
+							if action == rw_cmds.RW_WRITE:
+								yield self.readwriter.ui.rw_copi.w_data.eq(i)
+							elif action == rw_cmds.RW_READ:
+								# assert (yield self.readwriter.pin_ui.rw_cipo.dq) == i # is this right? reading data from the chip?
+								... # no: use the chip model for this
+
+							yield self.readwriter.ui.rw_copi.addr.eq(i)
+
+							if ((i % self.config_params.burstlen) == 0):
+								yield self.readwriter.ui.rw_copi.task.eq(action)
+							else:
+								yield self.readwriter.ui.rw_copi.task.eq(rw_cmds.RW_IDLE)
+								...
+
+							yield
+						
+						# a few extra clocks at the end
+						for _ in range(10):
+							yield
+					
+					# a few extra clocks at the end
+					for _ in range(20):
+						yield
+				yield use_ui_and_see_if_correct_rw_behaviour, "sync"
+
+
+				def print_readback_data():
+					yield Passive()
+					while True:
+						if (yield self.readwriter.ui.r_cipo.read_active):
+							data = (yield self.readwriter.ui.r_cipo.r_data)
+							addr = (yield self.readwriter.ui.r_cipo.addr)
+							print(f"Read at address={hex(addr)}, data={hex(data)}")
+						yield
+				yield print_readback_data, "sync"
+
+
+		def elaborate(self, platform = None):
+			m = Module()
+
+			m.submodules.readwriter = self.readwriter
+			m.submodules.refresher = self.refresher
+			m.submodules.pin_ctrl = self.pin_ctrl
+
+			# connect the bus-selection mechanism
+			placeholder_record = Record.like(self.refresher.controller_pin_ui)
+			m.d.sync += [
+				self.pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(self.refresher.ui.enable_refresh | self.refresher.ui.refresh_in_progress),
+				self.refresher.controller_pin_ui.connect(self.pin_ctrl.ui.refresh),
+				self.readwriter.controller_pin_ui.connect(self.pin_ctrl.ui.readwrite)
+			]
+
+			if isinstance(self.utest, FHDLTestCase):
+				add_clock(m, "sync")
+				# add_clock(m, "sync_1e6")
+				test_id = self.utest.get_test_id()
+				
+				# if test_id == "RefreshTestbench_sim_withSdramModelAndBlockingTask_modelStaysRefreshed":
+				# 	...
+
+
+			# elif isinstance(platform, ULX3S_85F_Platform): 
+			# 	...
+			
+
+			return m
 
 	if args.action == "generate": # formal testing
 		...
@@ -529,101 +609,22 @@ if __name__ == "__main__":
 
 				utest_params = Params()
 				utest_params.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
-
+				utest_params.use_sdram_model = True
+				utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
 
 				tb = Testbench(config_params, utest_params, utest=self)
 
 				sim = Simulator(tb)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 				for process, domain in tb.get_sim_sync_processes():
+					print(process, domain)
 					sim.add_sync_process(process, domain=domain)
 
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
 					sim.run()
 
-				################## old below
-
-				dut = controller_readwrite(config_params, utest_params, utest=self)
-
-
-
-				sim = Simulator(dut)
-				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-				# and a negedge clock for the 'propagate_i_dq_reads' simulation process
-
-				# clki_n = ClockDomain("clki_n", clk_edge="pos")#, local=True)
-				# # clki_n = ClockDomain("clki_n", clk_edge="neg")
-				# self.m.domains += clki_n
-				# self.m.d.comb += clki_n.clk.eq(~self.dut.o_clk) # 
 				
-
-				sdram_model = model_sdram(config_params, utest_params)
-				for i in range(4): # num of banks
-					sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, pin_ui=dut.pin_ui))
-				sim.add_sync_process(sdram_model.propagate_i_dq_reads(pin_ui=dut.pin_ui))
-
-				def use_ui_and_see_if_correct_rw_behaviour():
-					num_full_bursts = 8 # e.g.
-
-					# note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
-					# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
-					addr_offset = 0x0000
-
-					for action in [rw_cmds.RW_WRITE, rw_cmds.RW_READ]:
-						for i in range(config_params.burstlen * num_full_bursts):
-							i += addr_offset
-
-							if action == rw_cmds.RW_WRITE:
-								yield dut.ui.rw_copi.w_data.eq(i)
-							elif action == rw_cmds.RW_READ:
-								# assert (yield dut.pin_ui.rw_cipo.dq) == i # is this right? reading data from the chip?
-								... # no: use the chip model for this
-
-							yield dut.ui.rw_copi.addr.eq(i)
-
-							if ((i % config_params.burstlen) == 0):
-								yield dut.ui.rw_copi.task.eq(action)
-							else:
-								yield dut.ui.rw_copi.task.eq(rw_cmds.RW_IDLE)
-								...
-
-							yield
-						
-						# a few extra clocks at the end
-						for _ in range(10):
-							yield
-					
-					# a few extra clocks at the end
-					for _ in range(20):
-						yield
-
-				def print_readback_data():
-					yield Passive()
-					while True:
-						if (yield dut.ui.r_cipo.read_active):
-							data = (yield dut.ui.r_cipo.r_data)
-							addr = (yield dut.ui.r_cipo.addr)
-							print(f"Read at address={hex(addr)}, data={hex(data)}")
-						yield
-
-				def start_readback_pipeline():
-					# this should be done close to where the copi_dq and cipo_dq split
-					yield Passive()
-					while True:
-						yield dut.pin_ui.rw_cipo.addr.eq((dut.pin_ui.rw_copi.addr))
-						yield dut.pin_ui.rw_cipo.read_active.eq((dut.pin_ui.rw_copi.read_active))
-						yield Settle()
-						yield
-						yield Settle()
-
-				sim.add_sync_process(use_ui_and_see_if_correct_rw_behaviour)
-				sim.add_sync_process(print_readback_data)
-				sim.add_sync_process(start_readback_pipeline)
-
-				with sim.write_vcd(
-					f"{current_filename}_{self.get_test_id()}.vcd"):
-					sim.run()
 
 	if args.action in ["generate", "simulate"]:
 		# now run each FHDLTestCase above 

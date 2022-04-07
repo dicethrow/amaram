@@ -37,7 +37,7 @@ from Delayer import Delayer
 from parameters_standard_sdram import sdram_cmds, rw_cmds
 
 from controller_refresh import controller_refresh
-from _module_interfaces import controller_pin_interfaces
+from _module_interfaces import controller_pin_interfaces, controller_readwrite_interfaces
 
 """ 
 Read/write controller
@@ -129,28 +129,6 @@ note that there is a bit of 'wasted' clock cycles when transitioning from read t
 def min_num_of_clk_cycles(freq_hz, period_sec):
 	return int(np.ceil(period_sec * freq_hz))
 
-def get_ui_layout(config_params):
-	ui_layout = [
-		("rw_copi", [
-			# This is to either do a write with this w_data, 
-			# or to trigger a pipelined read on the address
-			("task",	rw_cmds,	DIR_FANOUT),
-			("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANOUT),
-			("w_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANOUT),
-		]),
-		("r_cipo", [
-			# this is to recieve the pipelined read that is
-			# scheduled using the above pipeline
-			("read_active",	1,	DIR_FANIN),
-			("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANIN),
-			("r_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANIN),
-		]),
-		("in_progress",		1,		DIR_FANIN)
-	]
-
-	return ui_layout
-
-
 class controller_readwrite(Elaboratable):
 	
 
@@ -162,7 +140,7 @@ class controller_readwrite(Elaboratable):
 		self.utest_params = utest_params
 		self.utest = utest
 
-		self.ui = Record(get_ui_layout(self.config_params))
+		self.ui = Record(controller_readwrite_interfaces.get_ui_layout(self.config_params))
 		self.controller_pin_ui = Record(controller_pin_interfaces.get_sub_ui_layout(config_params))
 		# self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
 

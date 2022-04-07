@@ -33,6 +33,46 @@ from amtest.utils import FHDLTestCase, Params
 
 from parameters_standard_sdram import sdram_cmds, rw_cmds
 
+class sdram_fifo_interfaces:
+	@staticmethod 
+	def get_ui_fifo_layout(config_params):
+		# todo: add the ability to make the fifo io not always 16bits wide
+		fifo_layout = [
+			("w_data", 	16,							DIR_FANOUT),
+			("w_rdy", 	1,							DIR_FANIN), # ugh, this was the wrong way around
+			("w_en", 	1,							DIR_FANOUT),
+			("w_level",	bits_for(50 + 1),			DIR_FANIN), 
+
+			("r_data",	16,							DIR_FANIN),
+			("r_rdy",	1,							DIR_FANIN),
+			("r_en",	1,							DIR_FANOUT),
+			("r_level",	bits_for(50 + 1),			DIR_FANIN),
+		]
+		return fifo_layout
+
+class controller_readwrite_interfaces:
+	@staticmethod 
+	def get_ui_layout(config_params):
+		ui_layout = [
+			("rw_copi", [
+				# This is to either do a write with this w_data, 
+				# or to trigger a pipelined read on the address
+				("task",	rw_cmds,	DIR_FANOUT),
+				("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANOUT),
+				("w_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANOUT),
+			]),
+			("r_cipo", [
+				# this is to recieve the pipelined read that is
+				# scheduled using the above pipeline
+				("read_active",	1,	DIR_FANIN),
+				("addr",	config_params.rw_params.get_ADDR_BITS(),	DIR_FANIN),
+				("r_data",	config_params.rw_params.DATA_BITS.value,	DIR_FANIN),
+			]),
+			("in_progress",		1,		DIR_FANIN)
+		]
+
+		return ui_layout
+
 class controller_pin_interfaces:
 	@staticmethod
 	def _get_rw_pipeline_layout(config_params, _dir):
@@ -94,6 +134,7 @@ class controller_refresh_interfaces:
 	def get_ui_layout(config_params):
 		ui_layout = [
 				("initialised",	1,				DIR_FANIN),	# high until set low later on
+				# ("startup_complete",	1,		DIR_FANIN),
 				("request_to_refresh_soon",	1,	DIR_FANIN),	# 
 				("enable_refresh",	1,			DIR_FANOUT),
 				("refresh_in_progress",	1,		DIR_FANIN),

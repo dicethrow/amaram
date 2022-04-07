@@ -178,14 +178,15 @@ class controller_refresh(Elaboratable):
 					
 					return _ui.initialised
 				with m.If(initialise_and_load_mode_register()):
-					# m.d.sync += refreshes_to_do.eq(ic_refresh_timing.NUM_REF.value) # to go into ERROR_REFRESH_LAPSED immediately?
-					m.next = "REQUEST_REFRESH_SOON"
+					m.d.sync += refreshes_to_do.eq(0) 
+					m.next = "READY_FOR_NORMAL_OPERATION"
 
 
 			with m.State("READY_FOR_NORMAL_OPERATION"):
 				# at this point, the sdram chip is available for normal read/write operation
 				# with m.If(delayer.delay_for_clks(self.increment_per_refresh - (self.clks_per_period-refresh_level))):
-				with m.If(refreshes_to_do > 0):
+				# with m.If(refreshes_to_do > int(0.5 * ic_refresh_timing.NUM_REF.value)): # if we're at 50% refresh level,
+				with m.If(refreshes_to_do > 10): # let's arbitarily set 10 as our threshold
 					# m.d.sync += refreshes_to_do.eq(1)
 					m.next = "REQUEST_REFRESH_SOON"
 
@@ -208,7 +209,6 @@ class controller_refresh(Elaboratable):
 				with m.If(_ui.enable_refresh):
 					m.d.sync += [
 						refresh_level.eq(refresh_level.reset),
-						_ui.refresh_in_progress.eq(1),
 					]
 					m.next = "DO_ANOTHER_REFRESH?"
 
@@ -221,6 +221,11 @@ class controller_refresh(Elaboratable):
 				with m.Else():
 					# finish up here
 					m.d.sync += _ui.refresh_in_progress.eq(0)
+					with m.If(~_ui.initialised):
+						m.d.sync += [
+							refresh_level.eq(refresh_level.reset),
+							 _ui.initialised.eq(1)
+						]
 					m.next = "READY_FOR_NORMAL_OPERATION"
 			
 			with m.State("AUTO_REFRESH"):

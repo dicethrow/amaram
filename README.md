@@ -6,6 +6,8 @@ Currently, only a n-async-FIFO interface for SDRAM is implemented.
 
 ## status
 
+- As of 7 April 2022, the single-fifo interface tests good in simulations! Next, try it on the ulx3s board. What sort of tests could be done? This is the interface that would be great as the backend for the LUNA ILA mentioned back in Feb. After this is done, finish debugging/implementing the n-fifo interface.
+
 - As of 21 Mar 2022, separately there are implementations of realistic refreshes, the top-level fifo interface, and read/writes (including a very nice pipelined readback mechanism) looks good in simulations. Next is to put it all together.
 
 - As of 13 Mar 2022, can now write and read data to the sdram model, now need to 1) use a more realistic interface for the model, 2) double check the model is valid

@@ -32,9 +32,9 @@ from amtest.utils import FHDLTestCase, Params
 
 from parameters_standard_sdram import rw_cmds, sdram_cmds
 
-import controller_pin
-import controller_readwrite
-import controller_refresh
+from controller_pin import controller_pin
+from controller_readwrite import controller_readwrite
+from controller_refresh import controller_refresh
 
 
 """ 
@@ -74,8 +74,13 @@ class sdram_n_fifo(Elaboratable):
 		self.utest = utest
 
 		self.ui = Record(get_ui_layout(self.config_params))
-		self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
+		# self.pin_ui = Record(controller_pin.get_ui_layout(self.config_params))
 		self.ui_fifos = Array(Record(get_ui_fifo_layout(self.config_params)) for _ in range(self.config_params.num_fifos))
+
+		# put in constructor so we can access in simulation processes
+		self.readwriter = controller_readwrite(self.config_params)
+		self.refresher = controller_refresh(self.config_params)
+		self.pin_ctrl = controller_pin(self.config_params, self.utest_params)
 
 		# calculate some relations
 		rw_params = self.config_params.rw_params
@@ -87,6 +92,11 @@ class sdram_n_fifo(Elaboratable):
 
 		self.config_params.read_pipeline_clk_delay = 10 # todo - change the logic to get rid of this? or is this needed to avoid overreading?
 		self.config_params.num_adjacent_words = self.config_params.burstlen*self.config_params.numbursts
+
+	def get_sim_sync_processes(self):
+		for process, domain in self.pin_ctrl.get_sim_sync_processes():
+			yield process, domain
+
 
 	def elaborate(self, platform = None):
 		def get_and_set_up_buffer_fifos():
@@ -209,13 +219,13 @@ class sdram_n_fifo(Elaboratable):
 
 		
 		def get_interface_and_set_up_readwrite_module():
-			m.submodules.rw_ctrl = rw_ctrl = controller_readwrite.controller_readwrite(self.config_params)
-			rw_ui = Record.like(rw_ctrl.ui)
+			# m.submodules.rw_ctrl = self.readwriter
+			rw_ui = Record.like(self.readwriter.ui)
 			# rw_pin_ui = Record.like(rw_ctrl.pin_ui)
 
 			m.d.sync += [
-				rw_ui.connect(rw_ctrl.ui),	# rw_ctrl.ui.connect(rw_ui),
-				rw_ctrl.pin_ui.connect(self.pin_ui),
+				rw_ui.connect(self.readwriter.ui),	# rw_ctrl.ui.connect(rw_ui),
+				# rw_ctrl.pin_ui.connect(self.pin_ui),
 				# _pin_ui.connect(self.pin_ui
 			]
 
@@ -309,19 +319,30 @@ class sdram_n_fifo(Elaboratable):
 
 			return fifo_index, next_srcfifo_index, next_srcfifo_readable_to_sdram, next_dstfifo_index, next_dstfifo_writeable_from_sdram
 
-		def get_and_set_up_refresh_module():
-			m.submodules.refresh_ctrl = refresh_ctrl = controller_refresh.controller_refresh(self.config_params)
+		# def get_and_set_up_refresh_module():
+		# 	# m.submodules.refresh_ctrl = self.refresher
 
-			refresh_ui = Record.like(refresh_ctrl.ui)
+		# 	self.refresher.ui = Record.like(self.refresher.ui)
 
+		# 	m.d.sync += [
+		# 		# self.refresher.ui.connect(self.refresher.ui)
+		# 		self.refresher.ui.connect(self.refresher.ui)
+		# 	]
+
+		# 	return self.refresher.ui
+
+		def connect_to_sdram_ic():
 			m.d.sync += [
-				# refresh_ctrl.ui.connect(refresh_ui)
-				refresh_ui.connect(refresh_ctrl.ui)
+				self.pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(self.refresher.ui.enable_refresh | self.refresher.ui.refresh_in_progress),
+				self.refresher.controller_pin_ui.connect(self.pin_ctrl.ui.refresh),
+				self.readwriter.controller_pin_ui.connect(self.pin_ctrl.ui.readwrite)
 			]
 
-			return refresh_ui
-
 		m = Module()
+
+		m.submodules.readwriter = self.readwriter
+		m.submodules.refresher = self.refresher
+		m.submodules.pin_ctrl = self.pin_ctrl
 
 		ic_timing = self.config_params.ic_timing
 		ic_refresh_timing = self.config_params.ic_refresh_timing
@@ -333,9 +354,11 @@ class sdram_n_fifo(Elaboratable):
 		rw_ui = get_interface_and_set_up_readwrite_module()
 		route_readback_pipeline_to_dstfifos()
 
+		connect_to_sdram_ic()
+
 		fifo_index, next_srcfifo_index, next_srcfifo_readable_to_sdram, next_dstfifo_index, next_dstfifo_writeable_from_sdram = determine_what_to_do_next()
 
-		refresh_ui = get_and_set_up_refresh_module()
+		# self.refresher.ui = get_and_set_up_refresh_module()
 
 		with m.FSM(name="fifo_controller_fsm") as fsm:
 			
@@ -343,7 +366,7 @@ class sdram_n_fifo(Elaboratable):
 			numburst_index = Signal(shape=bits_for(self.config_params.numbursts-1))
 
 			with m.State("WAITING_FOR_INITIALISE"):
-				with m.If(refresh_ui.initialised):
+				with m.If(self.refresher.ui.initialised):
 					m.d.sync += [ # comb?
 						rw_ui.rw_copi.task.eq(rw_cmds.RW_IDLE)
 					]
@@ -361,13 +384,13 @@ class sdram_n_fifo(Elaboratable):
 
 				Note that this needs to be an.. even number of clock cycles (or equal to the burstlen cycles?), if doing a memory access at the moment? so trying REFRESH_OR_IDLE_2 state to see if that fixes a bug
 				"""
-				with m.If(refresh_ui.request_to_refresh_soon):
+				with m.If(self.refresher.ui.request_to_refresh_soon):
 					with m.If(~rw_ui.in_progress): # wait for sany reads/writes to finish / banks to go idle, is this needed?
-						m.d.sync += refresh_ui.enable_refresh.eq(1) # sync?
+						m.d.sync += self.refresher.ui.enable_refresh.eq(1) # sync?
 
-				with m.Elif(refresh_ui.refresh_in_progress):
+				with m.Elif(self.refresher.ui.refresh_in_progress):
 					pass # wait for it to finish, 
-					m.d.sync += refresh_ui.enable_refresh.eq(0)
+					m.d.sync += self.refresher.ui.enable_refresh.eq(0)
 
 				with m.Else():
 					# m.next = "REFRESH_OR_IDLE_2"
@@ -445,7 +468,7 @@ class sdram_n_fifo(Elaboratable):
 
 							m.d.sync += fifo_index.eq(next_srcfifo_index) # prepare to do the next fifo
 
-							with m.If(refresh_ui.request_to_refresh_soon):# | all_dstfifos_written):
+							with m.If(self.refresher.ui.request_to_refresh_soon):# | all_dstfifos_written):
 								m.next = "REFRESH_OR_IDLE"
 
 							with m.Else():
@@ -511,7 +534,7 @@ class sdram_n_fifo(Elaboratable):
 
 										m.d.sync += fifo_index.eq(next_dstfifo_index) # prepare to do the next fifo
 
-										with m.If(refresh_ui.request_to_refresh_soon):
+										with m.If(self.refresher.ui.request_to_refresh_soon):
 											m.next = "REFRESH_OR_IDLE"
 											
 										with m.Else():
@@ -547,20 +570,20 @@ class sdram_n_fifo(Elaboratable):
 			# add negedge (sync_n), which is used for the model, and preventing debug flags from being optimised out
 
 			# and for negedge - because clk_edge=neg doesn't work? according to something I read? 
-			# I lost the link, but this workaround was recommended
-			sync_n = ClockDomain("sync_n", clk_edge="pos")#, local=True)
-			# clki_n = ClockDomain("clki_n", clk_edge="neg")
-			m.domains += sync_n
-			m.d.comb += sync_n.clk.eq(~ClockDomain("sync").clk) # 
+			# # I lost the link, but this workaround was recommended
+			# sync_n = ClockDomain("sync_n", clk_edge="pos")#, local=True)
+			# # clki_n = ClockDomain("clki_n", clk_edge="neg")
+			# m.domains += sync_n
+			# m.d.comb += sync_n.clk.eq(~ClockDomain("sync").clk) # 
 
 			test_id = self.utest.get_test_id()
 
-			if test_id == "fifoInterface_sim_thatWrittenFifos_canBeReadBack":
+			if test_id == "fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack":
 				assert platform == None, f"This is a time simulation, requiring a platform of None. Unexpected platform status of {platform}"
 				
 				# if we want to control the flags from sync domain
 				for flag in self.utest_params.debug_flags:
-					m.d.sync_n += flag.eq(flag) # needed to prevent it being optimised out?
+					m.d.nsync += flag.eq(flag) # needed to prevent it being optimised out?
 
 				# if we want to control the flags from sync_n domain
 				# for flag in self.utest_params.debug_flags:
@@ -583,169 +606,79 @@ if __name__ == "__main__":
 	parser = main_parser()
 	args = parser.parse_args()
 
-	def get_tb_ui_layout(config_params):
-		ui_layout = [
-			("sdram_pin_ui", controller_pin.get_ui_layout(config_params))
-		]
-		return ui_layout
+	# def get_tb_ui_layout(config_params):
+	# 	ui_layout = [
+	# 		("sdram_pin_ui", controller_pin.get_ui_layout(config_params))
+	# 	]
+	# 	return ui_layout
 
 	class Testbench(Elaboratable):
 
 		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 			super().__init__()
-			self.ui = Record(get_tb_ui_layout(config_params))
+			# self.ui = Record(get_tb_ui_layout(config_params))
 
 			self.config_params = config_params
 			self.utest_params = utest_params
 			self.utest = utest
 
-		def elaborate(self, platform = None):
-			m = Module()
+			# put in constructor so we can access in simulation processes
+			self.sdram_n_fifo = sdram_n_fifo(self.config_params, self.utest_params)
 
-			m.submodules.sdram_dut = sdram_dut = DomainRenamer({"sync":"sdram"})(sdram_n_fifo(self.config_params, self.utest_params, utest=self))
-			m.d.sdram += [
-				self.ui.sdram_pin_ui.connect(sdram_dut.pin_ui) # right way around?
-			]
-			
-			
-			m.submodules.model_sdram_rtl = model_sdram_rtl = self.utest_params.model_sdram_rtl(self.config_params, self.utest_params)
+		def get_sim_sync_processes(self):
+			for process, domain in self.sdram_n_fifo.get_sim_sync_processes():
+				yield process, domain
 
+			test_id = self.utest.get_test_id()
+			if test_id == "fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack":
+				def read_counter_values_from_fifo(fifo, num_reads, fifo_id):
+					# todo - add asserts that this reads the expected values (i.e. incrementing)
+					def func():
+						yield Active()
+						yield Delay(150e-6) # approx when chip init done
+						yield Delay(30e-6) # aprox when when writes done
+						last_read = None
+						i = 0
+						timeout_period = self.utest_params.timeout_period
+						timeout_clks = int(timeout_period * self.utest_params.read_clk_freqs[fifo_id])
+						timeout = True
 
+						while timeout_clks > 0:
+							yield fifo.r_en.eq((yield fifo.r_rdy))
 
+							yield
+							timeout_clks -= 1
 
-			with m.FSM(name="testbench_fsm") as fsm:
-				with m.State("INITIAL"):
-					write_counter = Signal(shape=bits_for(utest_params.num_fifo_writes))
-					m.next = "FILL_FIFOS"
-				
-				with m.State("FILL_FIFOS"):
-					m.d.sync += write_counter.eq(write_counter + 1)
-					with m.If(write_counter == utest_params.num_fifo_writes):
-						m.next = "READ_BACK_FIFOS"
-
-					for i, each_fifo in enumerate(sdram_dut.ui_fifos):
-						m.d.sdram += [
-							each_fifo.w_en.eq(each_fifo.w_rdy),
-							each_fifo.w_data.eq((i << 4*3)|(each_fifo.w_data & 0xFFF)),
-						]
+							if i == (num_reads-1): # right?
+								timeout = False
+								timeout_clks = -1 # end
 							
-
-					...
-
-				# with m.State("WAIT"): # to confirm that refresh can preserve the data
-					# ...
-
-				with m.State("READ_BACK_FIFOS"):
-					m.d.sync += write_counter.eq(write_counter - 1)
-					with m.If(write_counter == 0):
-						m.next = "DONE"
-
-					for i, each_fifo in enumerate(sdram_dut.ui_fifos):
-						last_read = Signal(name = f"last_read_{i}")
-						m.d.sync += [
-							each_fifo.r_en.eq(each_fifo.r_rdy),
+							# check if still ready? this fixed a bug where the same value was read twice
+							if (yield fifo.r_rdy):
+								data = (yield fifo.r_data)
+								colors = ["red", "green", "yellow", "blue"]
+								status = f"fifo={hex(fifo_id)}, read={hex(i)}: {hex(data)}"
+								status += f" delta={data-last_read}" if (last_read != None) else ""
+								cprint(status, colors[fifo_id])
+								last_read = data
+								i += 1
 							
-						]
-						with m.If(each_fifo.r_en):
-							m.d.sync += last_read.eq(each_fifo.r_data) # not used yet
 						
-					...
+						if timeout:
+							print("Read timeout!")
+						
+						yield
+						yield
 
-				with m.State("ERROR"): # not used yet
-					...
+					return func
 				
-				with m.State("DONE"):
-					...
-
-			if isinstance(self.utest, FHDLTestCase):
-				add_clock(m, "sync")
-				# add_clock(m, "sync_1e6")
-				test_id = self.utest.get_test_id()
-				
-				if test_id == "fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack":
-					...
-
-
-			elif isinstance(platform, ULX3S_85F_Platform): 
-				# then this is the test that is run when uploaded
-				...
-
-			else:
-				assert 0
-
-			return m
-
-	if args.action == "generate": # formal testing
-		...
-
-	elif args.action == "simulate": # time-domain testing
-
-		class fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack(FHDLTestCase):
-			def test_sim(self):
-				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-				from model_sdram import model_sdram, model_sdram_rtl
-
-				config_params = Params()
-				config_params.clk_freq = 143e6
-				config_params.burstlen = 8
-				config_params.latency = 3
-				config_params.numbursts = 2
-				config_params.ic_timing = ic_timing
-				config_params.ic_refresh_timing = ic_refresh_timing
-				config_params.rw_params = rw_params
-				config_params.num_fifos = 4
-				config_params.fifo_read_domains = ["sync"] * config_params.num_fifos  #[f"read_{i}" for i in range(config_params.num_fifos)]
-				config_params.fifo_write_domains =  ["sync"] * config_params.num_fifos  #[[f"write_{i}" for i in range(config_params.num_fifos)]
-				config_params.fifo_width = 16
-				config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 4 # 64
-				config_params.readback_fifo_depth = 50
-
-				utest_params = Params()
-				utest_params.model_sdram_rtl = model_sdram_rtl
-				utest_params.timeout_period = 20e-6 # seconds
-				# utest_params.read_clk_freqs = config_params.num_fifos * [40e6]#[60e6] 
-				# utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
-				utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 10 # =160 #30 # 50 # 200
-				utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
-				utest_params.enable_detailed_model_printing = True
-
-
-				tb = Testbench(config_params, utest_params, utest=self)
-
-				sim = Simulator(dut)
-
-				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-
-				sdram_model = model_sdram(config_params, utest_params)
-
-				####
-
-				dut = sdram_n_fifo(config_params, utest_params, utest=self)
-
-				sim = Simulator(dut)
-
-				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-				# now add the read/write domains
-				for i, (r_domain, w_domain) in enumerate(zip(config_params.fifo_read_domains, config_params.fifo_write_domains)):
-					sim.add_clock(period=1/utest_params.read_clk_freqs[i], domain=r_domain) # represents faster reads
-					sim.add_clock(period=1/utest_params.write_clk_freqs[i], domain=w_domain) # represents slower reads
-				
-
-
-				sdram_model = model_sdram(config_params, utest_params)
-				for i in range(4): # num of banks
-					sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, pin_ui=dut.pin_ui))#, domain="sync_n")
-				sim.add_sync_process(sdram_model.propagate_i_dq_reads(pin_ui=dut.pin_ui))#, domain="sync_n")
-
-				# all_writes_done = Signal(shape=range(config_params.num_fifos+1), reset=config_params.num_fifos)
-
 				def write_counter_values_to_fifo(fifo, num_writes, fifo_id = 0, write_domain="sync"):
 					# todo - add some random waits, to make this more realistic?
 					def func():
 						yield Active()
 						yield Delay(150e-6) # approx when chip init done
-						timeout_period = utest_params.timeout_period
-						timeout_clks = int(timeout_period * utest_params.write_clk_freqs[fifo_id])
+						timeout_period = self.utest_params.timeout_period
+						timeout_clks = int(timeout_period * self.utest_params.write_clk_freqs[fifo_id])
 						# yield Passive()
 						i = 0
 						# for i in range(num_writes):
@@ -780,277 +713,143 @@ if __name__ == "__main__":
 						yield
 
 					return func
+
+				for i in range(self.config_params.num_fifos):
+					process =  write_counter_values_to_fifo(self.sdram_n_fifo.ui_fifos[i], self.utest_params.num_fifo_writes, i)
+					domain = self.config_params.fifo_write_domains[i]
+					yield process, domain
+					
+					process = read_counter_values_from_fifo(self.sdram_n_fifo.ui_fifos[i], self.utest_params.num_fifo_writes, i)
+					domain = self.config_params.fifo_read_domains[i]
+					yield process, domain
+
+		def elaborate(self, platform = None):
+			m = Module()
+
+			m.submodules.sdram_n_fifo = self.sdram_n_fifo
+
+
+			with m.FSM(name="testbench_fsm") as fsm:
+				with m.State("INITIAL"):
+					write_counter = Signal(shape=bits_for(self.utest_params.num_fifo_writes))
+					m.next = "FILL_FIFOS"
 				
-				def read_counter_values_from_fifo(fifo, num_reads, fifo_id):
-					# todo - add asserts that this reads the expected values (i.e. incrementing)
-					def func():
-						yield Active()
-						yield Delay(150e-6) # approx when chip init done
-						yield Delay(30e-6) # aprox when when writes done
-						last_read = None
-						i = 0
-						timeout_period = utest_params.timeout_period
-						timeout_clks = int(timeout_period * utest_params.read_clk_freqs[fifo_id])
-						timeout = True
+				with m.State("FILL_FIFOS"):
+					m.d.sync += write_counter.eq(write_counter + 1)
+					with m.If(write_counter == self.utest_params.num_fifo_writes):
+						m.next = "READ_BACK_FIFOS"
 
-						while timeout_clks > 0:
-							yield fifo.r_en.eq((yield fifo.r_rdy))
-
-							yield
-							timeout_clks -= 1
-
-							if i == (num_reads-1): # right?
-								timeout = False
-								timeout_clks = -1 # end
+					for i, each_fifo in enumerate(self.sdram_n_fifo.ui_fifos):
+						m.d.sync += [
+							each_fifo.w_en.eq(each_fifo.w_rdy),
+							each_fifo.w_data.eq((i << 4*3)|(each_fifo.w_data & 0xFFF)),
+						]
 							
-							# check if still ready? this fixed a bug where the same value was read twice
-							if (yield fifo.r_rdy):
-								data = (yield fifo.r_data)
-								colors = ["red", "green", "yellow", "blue"]
-								status = f"fifo={hex(fifo_id)}, read={hex(i)}: {hex(data)}"
-								status += f" delta={data-last_read}" if (last_read != None) else ""
-								cprint(status, colors[fifo_id])
-								last_read = data
-								i += 1
+
+					...
+
+				# with m.State("WAIT"): # to confirm that refresh can preserve the data
+					# ...
+
+				with m.State("READ_BACK_FIFOS"):
+					m.d.sync += write_counter.eq(write_counter - 1)
+					with m.If(write_counter == 0):
+						m.next = "DONE"
+
+					for i, each_fifo in enumerate(self.sdram_n_fifo.ui_fifos):
+						last_read = Signal(name = f"last_read_{i}")
+						m.d.sync += [
+							each_fifo.r_en.eq(each_fifo.r_rdy),
 							
+						]
+						with m.If(each_fifo.r_en):
+							m.d.sync += last_read.eq(each_fifo.r_data) # not used yet
 						
-						if timeout:
-							print("Read timeout!")
-						
-						yield
-						yield
+					...
 
-					return func
-					
+				with m.State("ERROR"): # not used yet
+					...
+				
+				with m.State("DONE"):
+					...
 
-				for i in range(config_params.num_fifos):
-					sim.add_sync_process(write_counter_values_to_fifo(
-						dut.ui_fifos[i], utest_params.num_fifo_writes, i), 
-						domain=config_params.fifo_write_domains[i])
-					
-					sim.add_sync_process(read_counter_values_from_fifo(
-						dut.ui_fifos[i], utest_params.num_fifo_writes, i), 
-						domain=config_params.fifo_read_domains[i])
+			# if isinstance(self.utest, FHDLTestCase):
+			# 	add_clock(m, "sync")
+			# 	# add_clock(m, "sync_1e6")
+			# 	test_id = self.utest.get_test_id()
+				
+			# 	if test_id == "fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack":
+			# 		...
 
-				def start_readback_pipeline():
-					# this should be done close to where the copi_dq and cipo_dq split
-					yield Passive()
-					while True:
-						yield dut.pin_ui.rw_cipo.addr.eq((dut.pin_ui.rw_copi.addr))
-						yield dut.pin_ui.rw_cipo.read_active.eq((dut.pin_ui.rw_copi.read_active))
-						yield Settle()
-						yield
-						yield Settle()
-				sim.add_sync_process(start_readback_pipeline)
 
-				def run_for_longer():
-					yield Active()
-					yield Delay(300e-6)
-				sim.add_process(run_for_longer)
+			# elif isinstance(platform, ULX3S_85F_Platform): 
+			# 	# then this is the test that is run when uploaded
+			# 	...
+
+			# else:
+			# 	assert 0
+
+			return m
+
+	if args.action == "generate": # formal testing
+		...
+
+	elif args.action == "simulate": # time-domain testing
+
+		class fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack(FHDLTestCase):
+			def test_sim(self):
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
+				# from model_sdram import model_sdram, model_sdram_rtl
+
+				config_params = Params()
+				config_params.clk_freq = 143e6
+				config_params.burstlen = 8
+				config_params.latency = 3
+				config_params.numbursts = 2
+				config_params.ic_timing = ic_timing
+				config_params.ic_refresh_timing = ic_refresh_timing
+				config_params.rw_params = rw_params
+				config_params.num_fifos = 4
+				config_params.fifo_read_domains = [f"read_{i}" for i in range(config_params.num_fifos)]
+				config_params.fifo_write_domains =  [f"write_{i}" for i in range(config_params.num_fifos)]
+				config_params.fifo_width = 16
+				config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 4 # 64
+				config_params.readback_fifo_depth = 50
+
+				utest_params = Params()
+				# utest_params.model_sdram_rtl = model_sdram_rtl
+				utest_params.timeout_period = 20e-6 # seconds
+				utest_params.read_clk_freqs = config_params.num_fifos * [16e6]#[60e6] 
+				utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
+				utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 2 #10 # =160 #30 # 50 # 200
+				utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
+				utest_params.enable_detailed_model_printing = True
+				utest_params.use_sdram_model = True
+
+
+				tb = Testbench(config_params, utest_params, utest=self)
+
+				sim = Simulator(tb)
+				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
+
+				# now add the read/write domains
+				for i, (r_domain, w_domain) in enumerate(zip(config_params.fifo_read_domains, config_params.fifo_write_domains)):
+					sim.add_clock(period=1/utest_params.read_clk_freqs[i], domain=r_domain) # represents faster reads
+					sim.add_clock(period=1/utest_params.write_clk_freqs[i], domain=w_domain) # represents slower reads
+				
+				for process, domain in tb.get_sim_sync_processes():
+					print(process, domain)
+					sim.add_sync_process(process, domain=domain)
+
+				# def run_for_longer():
+				# 	yield Active()
+				# 	yield Delay(300e-6)
+				# sim.add_process(run_for_longer)
 				
 				with sim.write_vcd(
 					f"{current_filename}_{self.get_test_id()}.vcd"):
 					sim.run()
 
-		# class fifoInterfaceTb_sim_thatWrittenFifos_canBeReadBack(FHDLTestCase):
-		# 	def test_sim(self):
-		# 		from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-		# 		from model_sdram import model_sdram, model_sdram_rtl
-
-		# 		config_params = Params()
-		# 		config_params.clk_freq = 143e6
-		# 		config_params.burstlen = 8
-		# 		config_params.latency = 3
-		# 		config_params.numbursts = 2
-		# 		config_params.ic_timing = ic_timing
-		# 		config_params.ic_refresh_timing = ic_refresh_timing
-		# 		config_params.rw_params = rw_params
-		# 		config_params.num_fifos = 4
-		# 		config_params.fifo_read_domains = [f"read_{i}" for i in range(config_params.num_fifos)]
-		# 		config_params.fifo_write_domains = [f"write_{i}" for i in range(config_params.num_fifos)]
-		# 		config_params.fifo_width = 16
-		# 		config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 4 # 64
-		# 		config_params.readback_fifo_depth = 50
-
-		# 		utest_params = Params()
-		# 		utest_params.model_sdram_rtl = model_sdram_rtl
-		# 		utest_params.timeout_period = 20e-6 # seconds
-		# 		utest_params.read_clk_freqs = config_params.num_fifos * [40e6]#[60e6] 
-		# 		utest_params.write_clk_freqs = config_params.num_fifos * [40e6]#[40e6]
-		# 		utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 10 # =160 #30 # 50 # 200
-		# 		utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
-		# 		utest_params.enable_detailed_model_printing = True
-
-		# 		dut = sdram_n_fifo(config_params, utest_params, utest=self)
-
-		# 		sim = Simulator(dut)
-
-		# 		sim.add_clock(period=1/config_params.clk_freq, domain="sync")
-		# 		# now add the read/write domains
-		# 		for i, (r_domain, w_domain) in enumerate(zip(config_params.fifo_read_domains, config_params.fifo_write_domains)):
-		# 			sim.add_clock(period=1/utest_params.read_clk_freqs[i], domain=r_domain) # represents faster reads
-		# 			sim.add_clock(period=1/utest_params.write_clk_freqs[i], domain=w_domain) # represents slower reads
-				
-
-
-		# 		sdram_model = model_sdram(config_params, utest_params)
-		# 		for i in range(4): # num of banks
-		# 			sim.add_sync_process(sdram_model.get_readwrite_process_for_bank(bank_id = i, pin_ui=dut.pin_ui))#, domain="sync_n")
-		# 		sim.add_sync_process(sdram_model.propagate_i_dq_reads(pin_ui=dut.pin_ui))#, domain="sync_n")
-
-		# 		# all_writes_done = Signal(shape=range(config_params.num_fifos+1), reset=config_params.num_fifos)
-
-		# 		def write_counter_values_to_fifo(fifo, num_writes, fifo_id = 0, write_domain="sync"):
-		# 			# todo - add some random waits, to make this more realistic?
-		# 			def func():
-		# 				yield Active()
-		# 				yield Delay(150e-6) # approx when chip init done
-		# 				timeout_period = utest_params.timeout_period
-		# 				timeout_clks = int(timeout_period * utest_params.write_clk_freqs[fifo_id])
-		# 				# yield Passive()
-		# 				i = 0
-		# 				# for i in range(num_writes):
-		# 				timeout = True
-		# 				while timeout_clks > 0:
-		# 					...
-		# 					if (yield fifo.w_rdy):
-		# 						data = ((fifo_id << 4*3)|(i & 0xFFF))
-		# 						yield fifo.w_data.eq(data)
-		# 						yield fifo.w_en.eq(1)
-
-		# 						if i == (num_writes-1):
-		# 							timeout = False
-		# 							timeout_clks = -1 # to break?
-		# 							continue
-
-		# 						print(f"on write {i} ({hex(i)}) out of {num_writes}, {(yield fifo.w_level)}")
-
-		# 						i += 1
-
-		# 					yield Settle()
-		# 					yield
-		# 					yield Settle()
-		# 					timeout_clks -= 1
-
-		# 				if timeout:
-		# 					print("Write timeout!")
-
-		# 				yield fifo.w_en.eq(0)
-
-		# 				yield
-		# 				yield
-
-		# 			return func
-				
-		# 		def read_counter_values_from_fifo(fifo, num_reads, fifo_id):
-		# 			# todo - add asserts that this reads the expected values (i.e. incrementing)
-		# 			def func():
-		# 				yield Active()
-		# 				yield Delay(150e-6) # approx when chip init done
-		# 				yield Delay(30e-6) # aprox when when writes done
-		# 				last_read = None
-		# 				i = 0
-		# 				timeout_period = utest_params.timeout_period
-		# 				timeout_clks = int(timeout_period * utest_params.read_clk_freqs[fifo_id])
-		# 				timeout = True
-
-		# 				while timeout_clks > 0:
-		# 					yield fifo.r_en.eq((yield fifo.r_rdy))
-
-		# 					yield
-		# 					timeout_clks -= 1
-
-		# 					if i == (num_reads-1): # right?
-		# 						timeout = False
-		# 						timeout_clks = -1 # end
-							
-		# 					# check if still ready? this fixed a bug where the same value was read twice
-		# 					if (yield fifo.r_rdy):
-		# 						data = (yield fifo.r_data)
-		# 						colors = ["red", "green", "yellow", "blue"]
-		# 						status = f"fifo={hex(fifo_id)}, read={hex(i)}: {hex(data)}"
-		# 						status += f" delta={data-last_read}" if (last_read != None) else ""
-		# 						cprint(status, colors[fifo_id])
-		# 						last_read = data
-		# 						i += 1
-							
-						
-		# 				if timeout:
-		# 					print("Read timeout!")
-						
-		# 				yield
-		# 				yield
-
-		# 				# #########
-		# 				# stop = False
-		# 				# while True:
-		# 				# 	if timeout_clks == 0:
-		# 				# 		print("Read timeout!")
-		# 				# 		break
-							
-
-		# 				# 	if (yield fifo.r_rdy):# and ((yield all_writes_done)==0):
-		# 				# 		yield fifo.r_en.eq(1)
-
-		# 				# 		yield
-		# 				# 		timeout_clks -= 1
-								
-		# 				# 		if i == (num_reads-1): # right?
-		# 				# 			stop = True
-							
-		# 				# 		# check if still ready? this fixed a bug where the same value was read twice
-		# 				# 		if (yield fifo.r_rdy):
-		# 				# 			data = (yield fifo.r_data)
-		# 				# 			colors = ["red", "green", "yellow", "blue"]
-		# 				# 			status = f"fifo={hex(fifo_id)}, read={hex(i)}: {hex(data)}"
-		# 				# 			status += f" delta={data-last_read}" if (last_read != None) else ""
-		# 				# 			cprint(status, colors[fifo_id])
-		# 				# 			last_read = data
-		# 				# 			i += 1
-							
-		# 				# 	else:
-		# 				# 		yield fifo.r_en.eq(0)
-		# 				# 		yield
-		# 				# 		timeout_clks -= 1
-							
-		# 				# 	if stop:
-		# 				# 		break
-						
-		# 				# # some end clocks
-		# 				# for _ in range(10):
-		# 				# 	yield
-
-		# 			return func
-					
-
-		# 		for i in range(config_params.num_fifos):
-		# 			sim.add_sync_process(write_counter_values_to_fifo(
-		# 				dut.ui_fifos[i], utest_params.num_fifo_writes, i), 
-		# 				domain=config_params.fifo_write_domains[i])
-					
-		# 			sim.add_sync_process(read_counter_values_from_fifo(
-		# 				dut.ui_fifos[i], utest_params.num_fifo_writes, i), 
-		# 				domain=config_params.fifo_read_domains[i])
-
-		# 		def start_readback_pipeline():
-		# 			# this should be done close to where the copi_dq and cipo_dq split
-		# 			yield Passive()
-		# 			while True:
-		# 				yield dut.pin_ui.rw_cipo.addr.eq((dut.pin_ui.rw_copi.addr))
-		# 				yield dut.pin_ui.rw_cipo.read_active.eq((dut.pin_ui.rw_copi.read_active))
-		# 				yield Settle()
-		# 				yield
-		# 				yield Settle()
-		# 		sim.add_sync_process(start_readback_pipeline)
-
-		# 		def run_for_longer():
-		# 			yield Active()
-		# 			yield Delay(300e-6)
-		# 		sim.add_process(run_for_longer)
-				
-		# 		with sim.write_vcd(
-		# 			f"{current_filename}_{self.get_test_id()}.vcd"):
-		# 			sim.run()
 
 	if args.action in ["generate", "simulate"]:
 		# now run each FHDLTestCase above 

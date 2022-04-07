@@ -72,7 +72,7 @@ class sdram_sim_utils:
 		initial_state = yield from self.get_cmd(io)
 		clks = 0
 		while True:
-			# # yield Settle() # trying using clki negedge clock # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
+			yield Settle() # trying using clki negedge clock # does this fix the simulations being a bit non-deterministic? (commant from pre-march 2022)
 			cmd = yield from self.get_cmd(io)
 			if (cmd not in valid_idle_states) and ((cmd != initial_state) | (clks > 0)) and (True if (focus_bank == None) else ((yield io.ba) == focus_bank)):# (cmd == end_state):
 				if not (clks >= self.num_clk_cycles(min_duration)):
@@ -89,7 +89,7 @@ class sdram_sim_utils:
 			# print(clks)
 
 
-class model_sdram(sdram_sim_utils):
+class model_sdram_sims(sdram_sim_utils):
 	def __init__(self, config_params, utest_params):
 
 		if not hasattr(utest_params, "enable_detailed_model_printing"): utest_params.enable_detailed_model_printing = True
@@ -552,15 +552,8 @@ class model_sdram(sdram_sim_utils):
 					else:
 						yield io.dq_cipo.eq(0xBEAD) # this indicates that the error is with reading
 						yield from self.toggle_debug_flag(5)
-					# else:
-						# yield self.nflagA.eq(0)
-
-				# else:
-					# yield self.nflagA.eq(0)
-				# yield Settle() # trying using clki negedge clock # this should deal with not using a negedge sim clock
 				yield
-				# yield Settle() # trying using clki negedge clock # this should deal with not using a negedge sim clock
-		return func, "clki"
+		return func, "sync" #"clki" # 7apr22 - this is important! need to use a different clk domain as this is giving it back to the fpga
 
 
 	def get_sim_sync_processes(self, io):
@@ -571,7 +564,7 @@ class model_sdram(sdram_sim_utils):
 		yield self.propagate_i_dq_reads(io)
 
 
-def get_model_sdram_as_module_io_layout(config_params):
+def get_model_sdram_io_layout(config_params):
 	io_layout = [
 		("clk_en",		1,		DIR_FANOUT),
 		("clk",			1,		DIR_FANOUT),
@@ -592,19 +585,19 @@ def get_model_sdram_as_module_io_layout(config_params):
 	return io_layout
 
 
-class model_sdram_as_module(Elaboratable):
+class model_sdram(Elaboratable):
 	def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 		super().__init__()
 		self.io = Record([
 			("decoded_cmd",	sdram_cmds, 	DIR_FANOUT)
-		] + get_model_sdram_as_module_io_layout(config_params))
+		] + get_model_sdram_io_layout(config_params))
 
 		self.config_params = config_params
 		self.utest_params = utest_params
 		self.utest = utest
 
 
-		self.model = model_sdram(self.config_params, self.utest_params)
+		self.model = model_sdram_sims(self.config_params, self.utest_params)
 
 	def get_sim_sync_processes(self):
 		for process, domain in self.model.get_sim_sync_processes(io = self.io):
@@ -658,6 +651,7 @@ class model_sdram_as_module(Elaboratable):
 
 
 		# now sort out the clock
+		# according to the sdram datasheet, the pins are sampled on the rising edge of the clock pin.
 		# we want this model to be clocked by the clock input pin
 		m.domains.clki = clki = ClockDomain("clki", clk_edge="pos")# local=True)
 		m.d.comb += clki.clk.eq(self.io.clk & self.io.clk_en)
@@ -691,7 +685,6 @@ if __name__ == "__main__":
 
 	def get_tb_ui_layout(config_params):
 		ui_layout = [
-			# ("sdram_io", controller_pin.get_ui_layout(config_params))
 			("finished",		1,		DIR_FANIN)
 		]
 		return ui_layout
@@ -705,13 +698,11 @@ if __name__ == "__main__":
 			self.utest_params = utest_params
 			self.utest = utest
 
-			self.sdram_model_io = Record(get_model_sdram_as_module_io_layout(config_params))
+			self.sdram_model_io = Record(get_model_sdram_io_layout(config_params))
 
 			# put in the constructor so we can access the simulation processes
-			self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
-			...
-			# have a .comb passthrough for the sdram io pins
-			# have a series of fsm's that turn the cmd enum into the desired value
+			self.sdram_model = model_sdram(self.config_params, self.utest_params)
+
 			# also - maybe we could actually use the formal verification thing here?
 			# although I feel it would be faster for now to just test by inspection
 	
@@ -722,12 +713,13 @@ if __name__ == "__main__":
 			test_id = self.utest.get_test_id()
 			if test_id == "modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync":
 				# now add some more sim processes? fifo stuff etc?
-				print("whoop!")
+				# print("whoop!")
+				...
 		
 		def elaborate(self, platform = None):
 			m = Module()
 
-			m.submodules.sdram_model = sdram_model = self.sdram_model #model_sdram_as_module(self.config_params, self.utest_params)
+			m.submodules.sdram_model = sdram_model = self.sdram_model #model_sdram(self.config_params, self.utest_params)
 
 			m.d.comb += self.sdram_model_io.connect(sdram_model.io) # right way around?
 
@@ -901,7 +893,6 @@ if __name__ == "__main__":
 		class modelSdramAsModule_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync(FHDLTestCase):
 			def test_sim(self):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-				from model_sdram import model_sdram
 
 				config_params = Params()
 				config_params.clk_freq = 143e6
@@ -916,9 +907,8 @@ if __name__ == "__main__":
 				sim = Simulator(tb)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")
 
-				# for sync_process in tb.dut.model.get_sim_sync_processes():
 				for process, domain in tb.get_sim_sync_processes():
-					sim.add_sync_process(sync_process, domain=domain)
+					sim.add_sync_process(process, domain=domain)
 
 				def wait_until_finished():
 					yield Active()

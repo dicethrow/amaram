@@ -228,6 +228,7 @@ class controller_readwrite(Elaboratable):
 		# main logic, per bank
 		bank_using_array = Array(Record([
 			("in_progress",			1),
+			("read_active",			1),
 			("cmd_and_addr_bus",	1),
 			("data_bus",			1),
 			("readback_bus",		1),
@@ -238,6 +239,7 @@ class controller_readwrite(Elaboratable):
 		m.d.comb += [
 			adding_to_readback_bus.eq(Cat([_bank_using.readback_bus for _bank_using in bank_using_array]).any()),
 			_controller_pin_ui.dqm.eq(Cat([_bank_using.dqm for _bank_using in bank_using_array]).all()),
+			_controller_pin_ui.rw_copi.read_active.eq(Cat([_bank_using.read_active for _bank_using in bank_using_array]).any()),
 			_ui.in_progress.eq(Cat([_bank_using.in_progress for _bank_using in bank_using_array]).any())
 		]
 
@@ -347,16 +349,28 @@ class controller_readwrite(Elaboratable):
 								# _controller_pin_ui.rw_copi.addr.eq(_controller_pin_ui.rw_copi.addr + 1),
 							]
 						
-						if byte_id in [b for b in range(self.config_params.burstlen+1)]:
+						if byte_id in [b+1 for b in range(self.config_params.burstlen)]:
 							m.d.sync += [
 								# bank_using.dqm.eq(0),  # dqm low synchronous with write data
-								_controller_pin_ui.rw_copi.read_active.eq(1),
+								bank_using.read_active.eq(1)
 							]
 
 						if byte_id < (self.config_params.burstlen)-1:
 							m.next = f"READ_{byte_id+1}"
 						else:
-							m.next = "IDLE" #"IDLE_END"
+							# m.d.sync += bank_using.read_active.eq(0)
+							# m.next = "IDLE" #"IDLE_END"
+							m.next = f"IDLE_{-t_ra_clks}"
+					
+				for i in range(-t_ra_clks, 0):
+					with m.State(f"IDLE_{i}"):
+						if i == -2:
+							m.d.sync += bank_using.read_active.eq(0)
+
+						if i < -1:
+							m.next = f"IDLE_{i+1}"
+						else:
+							m.next = "IDLE"
 
 				with m.State("ERROR"):
 					...
@@ -424,6 +438,10 @@ if __name__ == "__main__":
 					# note: bug if this does not start from zero. It seems that the use of past(<clks>) here is used before <clks> has elapsed, 
 					# resulting in a zero-value, that can be bypassed if we start from zero. And potentially this goes away if we refresh first... let's start from zero for now.
 					addr_offset = 0x0000
+
+					while not (yield self.refresher.ui.initialised):
+						yield self.readwriter.ui.rw_copi.task.eq(rw_cmds.RW_IDLE)
+						yield
 
 					for action in [rw_cmds.RW_WRITE, rw_cmds.RW_READ]:
 						for i in range(self.config_params.burstlen * num_full_bursts):
@@ -596,7 +614,7 @@ if __name__ == "__main__":
 		class readwriteCtrl_sim_thatWritingThenReadingBack_readsCorrectValues(FHDLTestCase):
 			def test_sim(self):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-				from model_sdram import model_sdram
+				from model_sdram import model_sdram_sims
 
 				config_params = Params()
 				config_params.ic_timing = ic_timing
@@ -641,7 +659,7 @@ if __name__ == "__main__":
 				m, platform = super().elaborate(platform) 
 
 				# from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing
-				# from model_sdram import model_sdram
+				# from model_sdram import model_sdram_sims
 
 				# config_params = Params()
 				# config_params.clk_freq = 143e6

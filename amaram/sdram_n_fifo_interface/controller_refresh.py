@@ -178,7 +178,9 @@ class controller_refresh(Elaboratable):
 					
 					return _ui.initialised
 				with m.If(initialise_and_load_mode_register()):
+					# m.d.sync += refreshes_to_do.eq(ic_refresh_timing.NUM_REF.value) # to go into ERROR_REFRESH_LAPSED immediately?
 					m.next = "REQUEST_REFRESH_SOON"
+
 
 			with m.State("READY_FOR_NORMAL_OPERATION"):
 				# at this point, the sdram chip is available for normal read/write operation
@@ -344,7 +346,6 @@ if __name__ == "__main__":
 		class RefreshCtrl_sim_withModelAndBlockingTask_modelStaysRefreshed(FHDLTestCase):
 			def test_sim(self):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-				from model_sdram import model_sdram
 
 				config_params = Params()
 				config_params.clk_freq = 143e6
@@ -357,12 +358,6 @@ if __name__ == "__main__":
 				utest_params.use_sdram_model = True
 
 				tb = Testbench(config_params, utest_params, utest=self)
-
-				# todo - how to properly deal with clocks? e.g. do we need to generate a opposite phase clock
-				# for the sdram chip to our sdram logic?
-				#	according to the sdram datasheet, the pins are sampled on the rising edge of the clock pin.
-				#	That sounds like we do just want to use the same clock signal for it - as the rising edge
-				#	is the same edge that the rest of the logic uses.
 
 				sim = Simulator(tb)
 				sim.add_clock(period=1/config_params.clk_freq, domain="sync")

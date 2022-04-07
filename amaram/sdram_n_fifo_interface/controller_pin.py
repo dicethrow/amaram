@@ -54,9 +54,9 @@ class controller_pin(Elaboratable):
 
 		# if isinstance(self.utest, FHDLTestCase):
 		if (self.utest_params.use_sdram_model if hasattr(self.utest_params, "use_sdram_model") else False):
-			from model_sdram import model_sdram, model_sdram_as_module
+			from model_sdram import model_sdram_sims, model_sdram
 			# put in the constructor so we can access the simulation processes
-			self.sdram_model = model_sdram_as_module(self.config_params, self.utest_params)
+			self.sdram_model = model_sdram(self.config_params, self.utest_params)
 	
 	def get_sim_sync_processes(self):
 		for process, domain in self.sdram_model.get_sim_sync_processes():
@@ -75,9 +75,9 @@ class controller_pin(Elaboratable):
 		# allow either the readwrite controller, or the refresh controller, to have access to the chip
 		_ui = Record.like(self.ui.refresh) # or .readwrite
 		with m.If(self.ui.bus_is_refresh_not_readwrite):
-			m.d.sync += self.ui.refresh.connect(_ui)
+			m.d.comb += self.ui.refresh.connect(_ui)
 		with m.Else():
-			m.d.sync += self.ui.readwrite.connect(_ui)
+			m.d.comb += self.ui.readwrite.connect(_ui)
 
 		# If the controlling bus changed, then make sure that we indicate it on any readback signal...? 
 		# with m.If(~Stable(self.ui.bus_is_refresh_not_RW)):
@@ -212,11 +212,16 @@ class controller_pin(Elaboratable):
 				]
 
 
+
+		# now set up domains for interaction with the sdram/model
+		m.domains.nsync = nsync = ClockDomain("nsync")
+		m.d.comb += nsync.clk.eq(~ClockSignal("sync"))
+
 		if (self.utest_params.use_sdram_model if hasattr(self.utest_params, "use_sdram_model") else False):
 			# now connect up the sdram model
 			m.submodules.sdram_model = self.sdram_model
-			m.d.comb += self.sdram_model.io.clk.eq(~ClockSignal("sync"))
-			m.d.comb += [ # comb or sync? sync would be more correct, for time buffering? or comb here, due to .sync above?
+			m.d.comb += self.sdram_model.io.clk.eq(ClockSignal("nsync"))
+			m.d.sync += [ # comb or sync? sync would be more correct, for time buffering? or comb here, due to .sync above?
 				self.sdram_model.io.clk_en.eq(_io.clk_en),
 				self.sdram_model.io.dqm.eq(_io.dqm),
 
@@ -229,14 +234,26 @@ class controller_pin(Elaboratable):
 				self.sdram_model.io.ba.eq(_io.rw_copi.ba),
 				self.sdram_model.io.dq_copi.eq(_io.rw_copi.dq),
 				self.sdram_model.io.dq_copi_en.eq(_io.rw_copi.dq_oen), # not yet in use
-
-				# these are the readback signals. Do these line up as expected?
-				_io.rw_cipo.dq.eq(self.sdram_model.io.dq_cipo),
-				_io.rw_cipo.dq_oen.eq(_io.rw_copi.dq_oen),
-				_io.rw_cipo.ba.eq(_io.rw_copi.ba),
-				_io.rw_cipo.a.eq(_io.rw_copi.a),
-				_io.rw_cipo.read_active.eq(_io.rw_copi.read_active)
 			]
+
+			# these are the readback signals. Do these line up as expected?
+			with_ffsync = False
+			if with_ffsync:
+				m.d.sync += [
+					_io.rw_cipo.dq_oen.eq(Past(_io.rw_copi.dq_oen, clocks=1)),
+					_io.rw_cipo.ba.eq(Past(_io.rw_copi.ba, clocks=1)),
+					_io.rw_cipo.a.eq(Past(_io.rw_copi.a, clocks=1)),
+					_io.rw_cipo.read_active.eq(Past(_io.rw_copi.read_active, clocks=1))
+				]
+				m.submodules += FFSynchronizer(o=_io.rw_cipo.dq, i=self.sdram_model.io.dq_cipo)
+			else:
+				m.d.sync += [
+					_io.rw_cipo.dq.eq(self.sdram_model.io.dq_cipo),
+					_io.rw_cipo.dq_oen.eq(_io.rw_copi.dq_oen),
+					_io.rw_cipo.ba.eq(_io.rw_copi.ba),
+					_io.rw_cipo.a.eq(_io.rw_copi.a),
+					_io.rw_cipo.read_active.eq(_io.rw_copi.read_active)
+				]
 
 
 		if isinstance(self.utest, FHDLTestCase):
@@ -392,7 +409,7 @@ if __name__ == "__main__":
 		class pinCtrl_sim_thatEachCommandAndSignal_IsDecodedCorrectlyAndInSync(FHDLTestCase):
 			def test_sim(self):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-				from model_sdram import model_sdram
+				from model_sdram import model_sdram_sims
 
 				config_params = Params()
 				config_params.clk_freq = 143e6

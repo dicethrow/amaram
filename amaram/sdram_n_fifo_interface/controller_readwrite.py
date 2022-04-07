@@ -178,6 +178,10 @@ class controller_readwrite(Elaboratable):
 		ic_timing = self.config_params.ic_timing
 		rw_params = self.config_params.rw_params
 
+		# assume this for now, but later generate the values from these from the given timing settings
+		t_ra_clks = 3
+		t_cas_clks = 3
+
 		# make inter-module interfaces
 		_ui = Record.like(self.ui)
 		_controller_pin_ui = Record.like(self.controller_pin_ui)
@@ -189,11 +193,23 @@ class controller_readwrite(Elaboratable):
 		]
 
 		# connect the write signals to the package pins,
-		# excluding the readback pipeline
+		# and the readback pipeline
 		m.d.sync += [
 			self.ui.connect(_ui),
-			_controller_pin_ui.connect(self.controller_pin_ui)
+			_controller_pin_ui.connect(self.controller_pin_ui),
 		]
+
+		# connect the readback pipeline internally
+		m.d.sync += [
+			_ui.r_cipo.read_active.eq(_controller_pin_ui.rw_cipo.read_active), 
+			_ui.r_cipo.addr.eq(Past(_controller_pin_ui.rw_cipo.addr, clocks=t_cas_clks + t_ra_clks - 1)), 
+			_ui.r_cipo.r_data.eq(_controller_pin_ui.rw_cipo.dq)
+		]
+
+		# _controller_pin_ui.connect(self.controller_pin_ui, exclude=["rw_cipo"]),
+		# # now for the readback pipeline, add some delay to the addresses, to account for the cas delay
+		# _controller_pin_ui.rw_cipo.connect(self.controller_pin_ui.rw_cipo, exclude=["addr"]),
+		# _controller_pin_ui.rw_cipo.addr.eq(Past(self.controller_pin_ui.rw_cipo.addr, clocks=t_cas_clks))
 
 
 		# make_row_column_and_bank_from_address
@@ -214,9 +230,7 @@ class controller_readwrite(Elaboratable):
 			burst_index.eq(_ui.rw_copi.addr[:burst_bits])
 		]
 
-		# assume this for now, but later generate the values from these from the given timing settings
-		t_ra_clks = 3
-		t_cas_clks = 3
+		
 
 		# # set default values
 		# m.d.sync += [
@@ -334,7 +348,7 @@ class controller_readwrite(Elaboratable):
 
 						# this records the global address that the read occurred at,
 						# so it can more easily identify read data in the read pipeline
-						_controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks+1)),
+						_controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks)),
 						# _controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks)),
 					]
 					m.next = "READ_-2"
@@ -345,7 +359,7 @@ class controller_readwrite(Elaboratable):
 						if byte_id in [b-2 for b in range(self.config_params.burstlen-1)]:
 							m.d.sync += [
 								bank_using.dqm.eq(0), # assuming this is 2 clks before a read
-								_controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks+1)),
+								_controller_pin_ui.rw_copi.addr.eq(Past(_ui.rw_copi.addr, clocks=t_ra_clks)),
 								# _controller_pin_ui.rw_copi.addr.eq(_controller_pin_ui.rw_copi.addr + 1),
 							]
 						
@@ -476,6 +490,9 @@ if __name__ == "__main__":
 				def print_readback_data():
 					yield Passive()
 					while True:
+						# if (yield self.readwriter.controller_pin_ui.rw_cipo.read_active):
+						# 	data = (yield self.readwriter.controller_pin_ui.rw_cipo.dq)
+						# 	addr = (yield self.readwriter.controller_pin_ui.rw_cipo.addr)
 						if (yield self.readwriter.ui.r_cipo.read_active):
 							data = (yield self.readwriter.ui.r_cipo.r_data)
 							addr = (yield self.readwriter.ui.r_cipo.addr)

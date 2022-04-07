@@ -243,6 +243,7 @@ class controller_pin(Elaboratable):
 					_io.rw_cipo.dq_oen.eq(Past(_io.rw_copi.dq_oen, clocks=1)),
 					_io.rw_cipo.ba.eq(Past(_io.rw_copi.ba, clocks=1)),
 					_io.rw_cipo.a.eq(Past(_io.rw_copi.a, clocks=1)),
+					# _io.rw_cipo.addr.eq(_io.rw_copi.addr),
 					_io.rw_cipo.read_active.eq(Past(_io.rw_copi.read_active, clocks=1))
 				]
 				m.submodules += FFSynchronizer(o=_io.rw_cipo.dq, i=self.sdram_model.io.dq_cipo)
@@ -252,6 +253,7 @@ class controller_pin(Elaboratable):
 					_io.rw_cipo.dq_oen.eq(_io.rw_copi.dq_oen),
 					_io.rw_cipo.ba.eq(_io.rw_copi.ba),
 					_io.rw_cipo.a.eq(_io.rw_copi.a),
+					_io.rw_cipo.addr.eq(_io.rw_copi.addr),
 					_io.rw_cipo.read_active.eq(_io.rw_copi.read_active)
 				]
 

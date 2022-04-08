@@ -14,7 +14,7 @@ from amaranth.hdl.xfrm import DomainRenamer
 from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active, Settle
 from amaranth.asserts import Assert, Assume, Cover, Past
-from amaranth.lib.fifo import AsyncFIFOBuffered
+from amaranth.lib.fifo import AsyncFIFOBuffered, SyncFIFOBuffered
 #from amaranth.lib.cdc import AsyncFFSynchronizer
 from amaranth.lib.cdc import FFSynchronizer
 from amaranth.build import Platform
@@ -151,9 +151,9 @@ class interface_fifo(Elaboratable):
 		# check how much storage space is currently stored in ram for this fifo. 
 		# note that we use it as if it's a circular buffer
 		with m.If(fifo_control.r_next_addr <= fifo_control.w_next_addr):
-			m.d.comb += fifo_control.words_stored_in_ram.eq(fifo_control.w_next_addr - fifo_control.r_next_addr)
+			m.d.sync += fifo_control.words_stored_in_ram.eq(fifo_control.w_next_addr - fifo_control.r_next_addr)
 		with m.Else():
-			m.d.comb += fifo_control.words_stored_in_ram.eq(fifo_control.w_next_addr + (self.config_params.buf_words_available - fifo_control.r_next_addr))
+			m.d.sync += fifo_control.words_stored_in_ram.eq(fifo_control.w_next_addr + (self.config_params.buf_words_available - fifo_control.r_next_addr))
 		
 		##### route src_fifo data to fill dst_fifo until it's full, then store overflow in sdram ###############################
 		
@@ -237,18 +237,21 @@ class interface_fifo(Elaboratable):
 		ram_wont_overread = Signal()
 		dstfifo_w_space_enough = Signal()
 
-		m.d.comb += [
+		m.d.sync += [
 			srcfifo_r_level_high_enough_to_burstread.eq(src_fifo.r_level > (self.config_params.num_adjacent_words)),
 			ram_wont_overfill.eq(fifo_control.words_stored_in_ram < (self.config_params.buf_words_available - self.config_params.num_adjacent_words)),
 			using_ram.eq(fifo_control.request_to_store_data_in_ram | (fifo_control.words_stored_in_ram != 0)),
 		
+		# ]
+		# m.d.comb += [
 			next_srcfifo_readable_to_sdram.eq(srcfifo_r_level_high_enough_to_burstread & ram_wont_overfill & using_ram)
 		]
 
-		m.d.comb += [
+		m.d.sync += [
 			ram_wont_overread.eq(fifo_control.words_stored_in_ram >= self.config_params.num_adjacent_words),
 			dstfifo_w_space_enough.eq((dst_fifo.depth - dst_fifo.r_level) >= ((2*self.config_params.num_adjacent_words + self.config_params.read_pipeline_clk_delay))),
-		
+		# ]
+		# m.d.comb += [
 			next_dstfifo_writeable_from_sdram.eq(ram_wont_overread & dstfifo_w_space_enough)
 		]
 
@@ -585,8 +588,9 @@ if __name__ == "__main__":
 			# 	self.readwriter.controller_pin_ui.connect(self.pin_ctrl.ui.readwrite)
 			# ]
 
-			test_id = self.utest.get_test_id()
-			if test_id == "fifoInterfaceTb_sim_thatWrittenFifosUsingFSM_canBeReadBack":
+			# test_id = self.utest.get_test_id()
+			# if (test_id == "fifoInterfaceTb_sim_thatWrittenFifosUsingFSM_canBeReadBack"):
+			if True:
 
 				fifo_domain = self.config_params.fifo_write_domain
 
@@ -753,4 +757,42 @@ if __name__ == "__main__":
 	
 	else: # upload
 		...
-		
+		class Upload(UploadBase):
+			def elaborate(self, platform = None):
+				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
+
+				config_params = Params()
+				config_params.ic_timing = ic_timing
+				config_params.ic_refresh_timing = ic_refresh_timing
+				config_params.rw_params = rw_params
+				config_params.clk_freq = 143e6
+				config_params.burstlen = 8
+				config_params.latency = 3
+				config_params.numbursts = 2 
+				# config_params.num_fifos = 4
+				config_params.fifo_read_domain = "sync"
+				config_params.fifo_write_domain = config_params.fifo_read_domain
+				config_params.fifo_width = 16
+				config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 2#4 # 64
+				config_params.read_pipeline_clk_delay = 10 # ??
+				config_params.sync_mode = "sync_and_143e6_sdram_from_pll"
+				self.config_params = config_params
+
+				utest_params = Params()
+				utest_params.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
+				utest_params.use_sdram_model = False
+				utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
+				utest_params.timeout_period = 20e-6 # seconds
+				utest_params.read_clk_freq = 16e6 #[60e6] 
+				utest_params.write_clk_freq = 40e6 #[40e6]
+				utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 10 # =160 #30 # 50 # 200
+				utest_params.enable_detailed_model_printing = True
+
+				m = super().elaborate(platform) 
+
+				m.submodules.tb = tb = DomainRenamer("sdram")(Testbench(config_params, utest_params))
+				# m.submodules.tb = tb = Testbench(config_params, utest_params)
+
+				return m
+
+		platform.build(Upload(), do_program=False, build_dir=f"{current_filename}_build")

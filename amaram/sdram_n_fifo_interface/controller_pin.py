@@ -89,17 +89,17 @@ class controller_pin(Elaboratable):
 		# route the common signals from _ui to _io, except .cmd. 
 		# unless overwritten below (e.g. .a and .ba sometimes)
 		# Add the unique signals in _io below
-		m.d.comb += _ui.connect(_io, exclude=["cmd"])
+		m.d.sync += _ui.connect(_io, exclude=["cmd"])
 
 		# decode the _ui cmd into the _io signals
 		with m.Switch(_ui.cmd):
 			with m.Case(sdram_cmds.CMD_DESL):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(0)
 				]
 			
 			with m.Case(sdram_cmds.CMD_NOP):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(0),
 					_io.cas.eq(0),
@@ -107,7 +107,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_BST):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(0),
 					_io.cas.eq(0),
@@ -115,7 +115,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_READ):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(0),
 					_io.cas.eq(1),
@@ -125,7 +125,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_READ_AP):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(0),
 					_io.cas.eq(1),
@@ -135,7 +135,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_WRITE):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(0),
 					_io.cas.eq(1),
@@ -145,7 +145,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_WRITE_AP):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(0),
 					_io.cas.eq(1),
@@ -155,7 +155,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_ACT):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(1),
 					_io.cas.eq(0),
@@ -164,7 +164,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_PRE):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(1),
 					_io.cas.eq(0),
@@ -174,7 +174,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_PALL):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(1),
 					_io.cas.eq(0),
@@ -183,7 +183,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_REF):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(1),
 					_io.cas.eq(1),
@@ -192,7 +192,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_SELF):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(1),
 					_io.cas.eq(1),
@@ -201,7 +201,7 @@ class controller_pin(Elaboratable):
 				]
 				
 			with m.Case(sdram_cmds.CMD_MRS):
-				m.d.comb += [
+				m.d.sync += [
 					_io.cs.eq(1),
 					_io.ras.eq(1),
 					_io.cas.eq(1),
@@ -221,7 +221,7 @@ class controller_pin(Elaboratable):
 			# now connect up the sdram model
 			m.submodules.sdram_model = self.sdram_model
 			m.d.comb += self.sdram_model.io.clk.eq(ClockSignal("nsync"))
-			m.d.sync += [ # comb or sync? sync would be more correct, for time buffering? or comb here, due to .sync above?
+			m.d.comb += [ # comb or sync? sync would be more correct, for time buffering? or comb here, due to .sync above?
 				self.sdram_model.io.clk_en.eq(_io.clk_en),
 				self.sdram_model.io.dqm.eq(_io.dqm),
 
@@ -271,7 +271,7 @@ class controller_pin(Elaboratable):
 			sdram = platform.request("sdram")
 
 			m.d.comb += sdram.clk.eq(~ClockSignal("sync"))
-			m.d.comb += [ # or comb?
+			m.d.sync += [ # or comb?
 				# Set the chip output pins
 				sdram.clk_en.eq(1),
 				sdram.dqm.eq(Cat(_io.dqm, _io.dqm)),

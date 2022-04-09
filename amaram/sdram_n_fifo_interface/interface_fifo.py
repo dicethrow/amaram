@@ -14,7 +14,7 @@ from amaranth.hdl.xfrm import DomainRenamer
 from amaranth.cli import main_parser, main_runner
 from amaranth.sim import Simulator, Delay, Tick, Passive, Active, Settle
 from amaranth.asserts import Assert, Assume, Cover, Past
-from amaranth.lib.fifo import AsyncFIFOBuffered, SyncFIFOBuffered
+from amaranth.lib.fifo import SyncFIFO, AsyncFIFO#, AsyncFIFOBuffered, SyncFIFOBuffered
 #from amaranth.lib.cdc import AsyncFFSynchronizer
 from amaranth.lib.cdc import FFSynchronizer
 from amaranth.build import Platform
@@ -49,6 +49,10 @@ from _module_interfaces import controller_pin_interfaces, sdram_fifo_interfaces,
 interface_fifo
 
 This is meant as a smaller/simpler single-fifo version of the n-fifo interface.
+
+
+assumptions:
+- that the ui fifos are not used with a clock domain faster than the sdram clock freq
 
 """
 
@@ -93,35 +97,8 @@ class interface_fifo(Elaboratable):
 
 		##### get and set up buffer fifos ############################################333
 		# src_fifo is a temporary buffer between data for data going from fpga->sdram
-		src_fifo = AsyncFIFOBuffered(
-			width=self.config_params.fifo_width, 
-			depth=self.config_params.fifo_depth, 
-			r_domain="sync", # this is the clock domain used by the sdram 
-			w_domain=self.config_params.fifo_write_domain # this is the clock domain used by the user fpga 
-			)
-
-		# dst_fifo is a temporary buffer between data for data going from sdram->fpga
-		dst_fifo = AsyncFIFOBuffered(
-			width=self.config_params.fifo_width, 
-			depth=self.config_params.fifo_depth, 
-			r_domain=self.config_params.fifo_read_domain,  # this is the clock domain used by the user fpga 
-			w_domain="sync" # this is the clock domain used by the sdram 
-			)
-
-		# add them as submodules
-		m.submodules["fifo_src"] = src_fifo
-		m.submodules["fifo_dst"] = dst_fifo
-
-		# and make some control signals 
-		fifo_control = Record([
-			("words_stored_in_ram", 			self.config_params.fifo_buf_word_addr_bits),
-			("fully_read",						1),
-			("request_to_store_data_in_ram", 	1),
-			("w_next_addr", 					self.config_params.fifo_buf_word_addr_bits),
-			("r_next_addr", 					self.config_params.fifo_buf_word_addr_bits),
-		])
-
-		# now make a 'virtual' fifo, made by tying the inputs and outputs together
+		# link a small (and slow) async fifo to a larger (and faster) sync fifo, for 
+		# an effectively faster and larger fifo
 		""" ____________________________________________________
 			|self.ui_fifos                                      |
 			|                                                   |
@@ -134,19 +111,74 @@ class interface_fifo(Elaboratable):
 		|_________|        |_______________________|        |___________|
 		  <write>                  sync                         <read>
 		"""
+
+		async_src_fifo = AsyncFIFO(
+			width=self.config_params.fifo_width, 
+			depth=4, 
+			r_domain="sync", # this is the clock domain used by the sdram 
+			w_domain=self.config_params.fifo_write_domain) # this is the clock domain used by the user fpga 
+		src_fifo = SyncFIFO(
+			width=self.config_params.fifo_width, 
+			depth=self.config_params.fifo_depth)
+
+		# dst_fifo is a temporary buffer between data for data going from sdram->fpga
+		dst_fifo = SyncFIFO(
+			width=self.config_params.fifo_width, 
+			depth=self.config_params.fifo_depth)
+		async_dst_fifo = AsyncFIFO(
+			width=self.config_params.fifo_width, 
+			depth=4, 
+			r_domain=self.config_params.fifo_read_domain,  # this is the clock domain used by the user fpga 
+			w_domain="sync")  # this is the clock domain used by the sdram 
+
+		# add them as submodules
+		m.submodules["fifo_src"] = src_fifo
+		m.submodules["fifo_dst"] = dst_fifo
+		m.submodules["fifo_src_async"] = async_src_fifo
+		m.submodules["fifo_dst_async"] = async_dst_fifo
+
+
+		def connect_fifo_interface(outer_ui, inner_src, inner_dst):
+			# directly link the user interface to the outer async fifos
+			A = outer_ui
+			B = inner_src
+			C = inner_dst
+
+			statements = [
+				B.w_data.eq(A.w_data),
+				A.w_rdy.eq(B.w_rdy & self.refresher.ui.initialised), # add this so it doesn't start unitl ram ready
+				B.w_en.eq(A.w_en),
+				
+				A.r_data.eq(C.r_data),
+				A.r_rdy.eq(C.r_rdy),
+				C.r_en.eq(A.r_en),
+				# A.r_level.eq(C.r_level),
+				
+			]
+			return statements
+	
+		def chain_two_fifos_together(src, dst):
+			statements = [
+				dst.w_data.eq(src.r_data),
+				src.r_en.eq(src.r_rdy & dst.w_rdy),
+				dst.w_en.eq(src.r_en)
+			]
+			return statements
+
+		m.d.comb += connect_fifo_interface(outer_ui = self.ui_fifo, inner_src = async_src_fifo, inner_dst = async_dst_fifo)
+		m.d.comb += chain_two_fifos_together(src = async_src_fifo, dst = src_fifo)
+		m.d.comb += chain_two_fifos_together(src = dst_fifo, dst = async_dst_fifo)
+
+
+		# and make some control signals 
+		fifo_control = Record([
+			("words_stored_in_ram", 			self.config_params.fifo_buf_word_addr_bits),
+			("fully_read",						1),
+			("request_to_store_data_in_ram", 	1),
+			("w_next_addr", 					self.config_params.fifo_buf_word_addr_bits),
+			("r_next_addr", 					self.config_params.fifo_buf_word_addr_bits),
+		])		
 		
-
-		m.d.comb += [ # should it be comb? I think yes, so the rw strobes line up 17mar2022
-			src_fifo.w_data.eq(self.ui_fifo.w_data),
-			self.ui_fifo.w_rdy.eq(src_fifo.w_rdy & self.refresher.ui.initialised),
-			src_fifo.w_en.eq(self.ui_fifo.w_en),
-			self.ui_fifo.w_level.eq(src_fifo.w_level),
-
-			self.ui_fifo.r_data.eq(dst_fifo.r_data),
-			self.ui_fifo.r_rdy.eq(dst_fifo.r_rdy),
-			dst_fifo.r_en.eq(self.ui_fifo.r_en),# & dst_fifo.r_rdy), # new - needed/
-			self.ui_fifo.r_level.eq(dst_fifo.r_level),
-		]
 
 		# check how much storage space is currently stored in ram for this fifo. 
 		# note that we use it as if it's a circular buffer
@@ -579,14 +611,6 @@ if __name__ == "__main__":
 			m = Module()
 
 			m.submodules.interface_fifo = self.interface_fifo
-
-			# # connect the bus-selection mechanism
-			# placeholder_record = Record.like(self.refresher.controller_pin_ui)
-			# m.d.sync += [
-			# 	self.pin_ctrl.ui.bus_is_refresh_not_readwrite.eq(self.refresher.ui.enable_refresh | self.refresher.ui.refresh_in_progress),
-			# 	self.refresher.controller_pin_ui.connect(self.pin_ctrl.ui.refresh),
-			# 	self.readwriter.controller_pin_ui.connect(self.pin_ctrl.ui.readwrite)
-			# ]
 
 			# test_id = self.utest.get_test_id()
 			# if (test_id == "fifoInterfaceTb_sim_thatWrittenFifosUsingFSM_canBeReadBack"):

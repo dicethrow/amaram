@@ -341,7 +341,7 @@ class controller_readwrite(Elaboratable):
 								# _controller_pin_ui.rw_copi.addr.eq(_controller_pin_ui.rw_copi.addr + 1),
 							]
 						
-						if byte_id in [b+1 for b in range(self.config_params.burstlen)]:
+						if byte_id in [b for b in range(self.config_params.burstlen)]:
 							m.d.sync += [
 								# bank_using.dqm.eq(0),  # dqm low synchronous with write data
 								bank_using.read_active.eq(1)
@@ -356,7 +356,7 @@ class controller_readwrite(Elaboratable):
 					
 				for i in range(-t_ra_clks, 0):
 					with m.State(f"IDLE_{i}"):
-						if i == -2:
+						if i == -3:
 							m.d.sync += bank_using.read_active.eq(0)
 
 						if i < -1:

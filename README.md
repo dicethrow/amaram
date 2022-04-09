@@ -6,6 +6,9 @@ Currently, only a n-async-FIFO interface for SDRAM is implemented.
 
 ## status
 
+- As of 9 April 2022, tried building a minimal (incomplete) test. Initially the sdram clock freq limit was 50 MHz ish, but as of now it reports around 136-143 MHz - this is great! Way past what is needed to use the ram for what I want to use it for, and now pressing up againt the upper limit of speed for the ram that I have to hand (143 MHz). This speedup was achieved by some fifo structure changes, making async fifos be as small (and hence as fast) as possible. 
+Next: Implement a hardware test. Perhaps I could try to read the value of a counter into the input of this DUT, and then read it back from the output of the DUT using a fifo-to-spi-read interface.
+
 - As of 7 April 2022, the single-fifo interface tests good in simulations! Next, try it on the ulx3s board. What sort of tests could be done? This is the interface that would be great as the backend for the LUNA ILA mentioned back in Feb. After this is done, finish debugging/implementing the n-fifo interface.
 
 - As of 21 Mar 2022, separately there are implementations of realistic refreshes, the top-level fifo interface, and read/writes (including a very nice pipelined readback mechanism) looks good in simulations. Next is to put it all together.

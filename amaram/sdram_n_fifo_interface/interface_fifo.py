@@ -492,6 +492,19 @@ if __name__ == "__main__":
 	parser = main_parser()
 	args = parser.parse_args()
 
+	def get_tb_ui_layout(config_params):
+		ui_layout = [
+				("tb_fanin_flags", 	[
+					("fsm_state",		4,		DIR_FANIN),
+				]),
+				("tb_fanout_flags",[
+					("trigger",			1,		DIR_FANOUT)
+				])
+			] #+ get_ui_layout(config_params)
+		return ui_layout
+	
+	
+
 	class Testbench(Elaboratable):
 		def __init__(self, config_params, utest_params = None, utest: FHDLTestCase = None):
 			super().__init__()
@@ -499,6 +512,9 @@ if __name__ == "__main__":
 			self.config_params = config_params
 			self.utest_params = utest_params
 			self.utest = utest
+
+			self.ui = Record(get_tb_ui_layout(self.config_params))
+			self.spi = SPIDeviceBus()
 
 			# put in constructor so we can access in simulation processes
 			self.interface_fifo = interface_fifo(self.config_params, self.utest_params)
@@ -610,60 +626,127 @@ if __name__ == "__main__":
 		def elaborate(self, platform = None):
 			m = Module()
 
+			fifo_domain = self.config_params.fifo_write_domain
+
 			m.submodules.interface_fifo = self.interface_fifo
 
-			# test_id = self.utest.get_test_id()
-			# if (test_id == "fifoInterfaceTb_sim_thatWrittenFifosUsingFSM_canBeReadBack"):
-			if True:
+			if isinstance(self.utest, FHDLTestCase):
+				test_id = self.utest.get_test_id()
+				if (test_id == "fifoInterfaceTb_sim_thatWrittenFifosUsingFSM_canBeReadBack"):
+					with m.FSM(name="testbench_fsm", domain=fifo_domain) as fsm:
 
-				fifo_domain = self.config_params.fifo_write_domain
+						write_counter = Signal.like(self.interface_fifo.ui_fifo.w_data)
+						read_value = Signal.like(write_counter)
 
+						with m.State("INITIAL"):
+							
+							with m.If(self.interface_fifo.ui_fifo.w_rdy):
+								m.next = "WRITE_TO_FIFO"
+						
+						with m.State("WRITE_TO_FIFO"):
+							
+							with m.If(write_counter == self.utest_params.num_fifo_writes):
+								m.d[fifo_domain] += self.interface_fifo.ui_fifo.w_en.eq(0)
+								m.next = "READ_FROM_FIFO"
+
+							with m.Else():
+								m.d[fifo_domain] += self.interface_fifo.ui_fifo.w_en.eq(self.interface_fifo.ui_fifo.w_rdy)
+								m.d[fifo_domain] += write_counter.eq(write_counter + 1)
+								with m.If(self.interface_fifo.ui_fifo.w_rdy):
+									m.d[fifo_domain] += self.interface_fifo.ui_fifo.w_data.eq(write_counter)
+
+							...
+
+						# with m.State("WAIT"): # to confirm that refresh can preserve the data
+							# ...
+
+						with m.State("READ_FROM_FIFO"):
+							m.d[fifo_domain] += write_counter.eq(write_counter - 1)
+
+							with m.If(write_counter == 0):
+								m.d.comb += self.interface_fifo.ui_fifo.r_en.eq(0),
+								m.next = "DONE"
+
+							with m.Else():
+								m.d.comb += self.interface_fifo.ui_fifo.r_en.eq(self.interface_fifo.ui_fifo.r_rdy),# & (self.interface_fifo.ui_fifo.r_level != 1)),
+								with m.If(self.interface_fifo.ui_fifo.r_rdy):
+									read_value.eq(self.interface_fifo.ui_fifo.r_data)
+
+							...
+
+						# with m.State("ERROR"): # not used yet
+						# 	...
+						
+						with m.State("DONE"):
+							...
+
+
+			elif isinstance(platform, ULX3S_85F_Platform): 
+				# Fill a fifo with sequential values from a counter
+				# Store the data in sdram
+				# Read it back using a spi fifo-reader thing (on the esp32)
+				# Are the read back values correct? How robust is the performance?
+
+				transaction_start = Rose(self.spi.cs)
+				transaction_end = Fell(self.spi.cs)
+
+				# Connect up our SPI transciever to our public interface.
+				self.m.submodules.spi_interface = spi_interface = SPIDeviceInterface(
+					word_size=self.interface_fifo.ui_fifo.w_data.width, # 16bits
+					clock_polarity=self.clock_polarity,
+					clock_phase=self.clock_phase
+				)
+				self.m.d.comb += [
+					spi_interface.spi.connect(self.spi),
+					spi_interface.word_out.eq(self.interface_fifo.ui_fifo.r_data)
+					# spi_interface.word_out.eq(0xF0FF)
+				]
+				
 				with m.FSM(name="testbench_fsm", domain=fifo_domain) as fsm:
 
 					write_counter = Signal.like(self.interface_fifo.ui_fifo.w_data)
-					read_value = Signal.like(write_counter)
 
-					with m.State("INITIAL"):
-						
-						with m.If(self.interface_fifo.ui_fifo.w_rdy):
-							m.next = "FILL_FIFOS"
+					m.d.comb += self.ui.tb_fanin_flags.fsm_state.eq(Cat(fsm.ongoing("IDLE"), fsm.ongoing("WRITE_TO_FIFO"),
+						fsm.ongoing("READ_FROM_FIFO"), fsm.ongoing("DONE")))
 					
-					with m.State("FILL_FIFOS"):
-						
+					with m.State("IDLE"):
+						with m.If(self.ui.tb_fanout_flags.trigger):
+							m.next = "WRITE_TO_FIFO"
+					
+					with m.State("WRITE_TO_FIFO"):
 						with m.If(write_counter == self.utest_params.num_fifo_writes):
 							m.d[fifo_domain] += self.interface_fifo.ui_fifo.w_en.eq(0)
-							m.next = "READ_BACK_FIFOS"
-
+							m.next = "READ_FROM_FIFO"
+						
 						with m.Else():
 							m.d[fifo_domain] += self.interface_fifo.ui_fifo.w_en.eq(self.interface_fifo.ui_fifo.w_rdy)
 							m.d[fifo_domain] += write_counter.eq(write_counter + 1)
 							with m.If(self.interface_fifo.ui_fifo.w_rdy):
 								m.d[fifo_domain] += self.interface_fifo.ui_fifo.w_data.eq(write_counter)
 
-						...
-
-					# with m.State("WAIT"): # to confirm that refresh can preserve the data
-						# ...
-
-					with m.State("READ_BACK_FIFOS"):
-						m.d[fifo_domain] += write_counter.eq(write_counter - 1)
-
-						with m.If(write_counter == 0):
-							m.d.comb += self.interface_fifo.ui_fifo.r_en.eq(0),
-							m.next = "DONE"
-
-						with m.Else():
-							m.d.comb += self.interface_fifo.ui_fifo.r_en.eq(self.interface_fifo.ui_fifo.r_rdy),# & (self.interface_fifo.ui_fifo.r_level != 1)),
-							with m.If(self.interface_fifo.ui_fifo.r_rdy):
-								read_value.eq(self.interface_fifo.ui_fifo.r_data)
-
-						...
-
-					with m.State("ERROR"): # not used yet
-						...
 					
+					with m.State("READ_FROM_FIFO"):
+						with m.If(Rose(spi_interface.word_accepted)):
+							with m.If(self.interface_fifo.ui_fifo.r_rdy):
+								m.d[fifo_domain] += self.interface_fifo.ui_fifo.r_en.eq(1)
+							with self.m.Else():
+								m.d[fifo_domain] += self.interface_fifo.ui_fifo.r_en.eq(0)
+								# self.m.next = "DONE"#"ERROR"
+						with m.Else():
+							m.d[fifo_domain] += self.interface_fifo.ui_fifo.r_en.eq(0)
+
+						with m.If(transaction_end):
+							m.next = "DONE"				
+
 					with m.State("DONE"):
-						...
+						# ensure the fifo is empty, then go back to idle
+						with m.If(self.camread_fifo.fifo_r_rdy):
+							m.d[fifo_domain] += self.interface_fifo.ui_fifo.r_en.eq(1)
+						with m.Else():
+							m.d[fifo_domain] += self.interface_fifo.ui_fifo.r_en.eq(0)
+							m.next = "IDLE"
+
+				...
 
 			return m
 
@@ -780,7 +863,15 @@ if __name__ == "__main__":
 		unittest.main()
 	
 	else: # upload
-		...
+		
+		# One test idea:
+		# Fill a fifo with sequential values from a counter
+		# Store the data in sdram
+		# Read it back using a spi fifo-reader thing 
+		# Are the read back values correct? How robust is the performance?
+
+
+
 		class Upload(UploadBase):
 			def elaborate(self, platform = None):
 				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
@@ -817,6 +908,37 @@ if __name__ == "__main__":
 				m.submodules.tb = tb = DomainRenamer("sdram")(Testbench(config_params, utest_params))
 				# m.submodules.tb = tb = Testbench(config_params, utest_params)
 
+				ui = Record.like(tb.ui)
+				m.d.sync += ui.connect(tb.ui)
+
+				def start_on_left_button():
+					start = Signal.like(self.i_buttons.left)
+					m.d.sync += [
+						start.eq(self.i_buttons.left),
+						ui.tb_fanout_flags.trigger.eq(Rose(start))
+					]
+
+				def reset_on_right_button():
+					# don't manually route the reset - do this, 
+					# otherwise, if Records are used, they will oscillate, as can't be reset_less
+					for domain in ["sync", config_params.fifo_write_domain, config_params.fifo_read_domain]:
+						m.d.sync += ResetSignal(domain).eq(self.i_buttons.right)
+
+
+				def display_on_leds():
+					m.d.comb += self.leds.eq(Cat([
+						ui.tb_fanin_flags.in_normal_operation,
+						ui.tb_fanin_flags.in_requesting_refresh,
+						ui.tb_fanin_flags.in_performing_refresh,
+						self.i_buttons.right,  		# led indicates that the start button was pressed
+						self.i_buttons.left			# led indicates that the reset button was pressed
+					]))
+
+				start_on_left_button()
+				reset_on_right_button()
+				display_on_leds()
+
 				return m
 
 		platform.build(Upload(), do_program=False, build_dir=f"{current_filename}_build")
+

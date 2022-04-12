@@ -492,16 +492,7 @@ if __name__ == "__main__":
 	parser = main_parser()
 	args = parser.parse_args()
 
-	def get_tb_ui_layout(config_params):
-		ui_layout = [
-				("tb_fanin_flags", 	[
-					("fsm_state",		4,		DIR_FANIN),
-				]),
-				("tb_fanout_flags",[
-					("trigger",			1,		DIR_FANOUT)
-				])
-			] #+ get_ui_layout(config_params)
-		return ui_layout
+	
 	
 	
 
@@ -870,75 +861,6 @@ if __name__ == "__main__":
 		# Read it back using a spi fifo-reader thing 
 		# Are the read back values correct? How robust is the performance?
 
-
-
-		class Upload(UploadBase):
-			def elaborate(self, platform = None):
-				from parameters_IS42S16160G_ic import ic_timing, ic_refresh_timing, rw_params
-
-				config_params = Params()
-				config_params.ic_timing = ic_timing
-				config_params.ic_refresh_timing = ic_refresh_timing
-				config_params.rw_params = rw_params
-				config_params.clk_freq = 143e6
-				config_params.burstlen = 8
-				config_params.latency = 3
-				config_params.numbursts = 2 
-				# config_params.num_fifos = 4
-				config_params.fifo_read_domain = "sync"
-				config_params.fifo_write_domain = config_params.fifo_read_domain
-				config_params.fifo_width = 16
-				config_params.fifo_depth = config_params.burstlen * config_params.numbursts * 2#4 # 64
-				config_params.read_pipeline_clk_delay = 10 # ??
-				config_params.sync_mode = "sync_and_143e6_sdram_from_pll"
-				self.config_params = config_params
-
-				utest_params = Params()
-				utest_params.timeout_runtime = 1e-3 # arbitarily chosen, so the simulation won't run forever if it breaks
-				utest_params.use_sdram_model = False
-				utest_params.debug_flags = Array(Signal(name=f"debug_flag_{i}") for i in range(6))
-				utest_params.timeout_period = 20e-6 # seconds
-				utest_params.read_clk_freq = 16e6 #[60e6] 
-				utest_params.write_clk_freq = 40e6 #[40e6]
-				utest_params.num_fifo_writes = config_params.burstlen * config_params.numbursts * 10 # =160 #30 # 50 # 200
-				utest_params.enable_detailed_model_printing = True
-
-				m = super().elaborate(platform) 
-
-				m.submodules.tb = tb = DomainRenamer("sdram")(Testbench(config_params, utest_params))
-				# m.submodules.tb = tb = Testbench(config_params, utest_params)
-
-				ui = Record.like(tb.ui)
-				m.d.sync += ui.connect(tb.ui)
-
-				def start_on_left_button():
-					start = Signal.like(self.i_buttons.left)
-					m.d.sync += [
-						start.eq(self.i_buttons.left),
-						ui.tb_fanout_flags.trigger.eq(Rose(start))
-					]
-
-				def reset_on_right_button():
-					# don't manually route the reset - do this, 
-					# otherwise, if Records are used, they will oscillate, as can't be reset_less
-					for domain in ["sync", config_params.fifo_write_domain, config_params.fifo_read_domain]:
-						m.d.sync += ResetSignal(domain).eq(self.i_buttons.right)
-
-
-				def display_on_leds():
-					m.d.comb += self.leds.eq(Cat([
-						ui.tb_fanin_flags.in_normal_operation,
-						ui.tb_fanin_flags.in_requesting_refresh,
-						ui.tb_fanin_flags.in_performing_refresh,
-						self.i_buttons.right,  		# led indicates that the start button was pressed
-						self.i_buttons.left			# led indicates that the reset button was pressed
-					]))
-
-				start_on_left_button()
-				reset_on_right_button()
-				display_on_leds()
-
-				return m
-
-		platform.build(Upload(), do_program=False, build_dir=f"{current_filename}_build")
-
+		# do in another file, so this file doesn't get too large
+		...
+		

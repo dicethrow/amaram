@@ -1,0 +1,509 @@
+Info: constraining clock net 'clk' to 25.00 MHz
+Info: constraining clock net 'sdram_clk' to 135.00 MHz
+
+Info: Logic utilisation before packing:
+Info:     Total LUT4s:      1682/83640     2%
+Info:         logic LUTs:   1098/83640     1%
+Info:         carry LUTs:    440/83640     0%
+Info:           RAM LUTs:     96/41820     0%
+Info:          RAMW LUTs:     48/20910     0%
+
+Info:      Total DFFs:      2138/83640     2%
+
+Info: Packing IOs..
+Info: sdram_0__dq__io[15] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_15, removing $nextpnr_iobuf sdram_0__dq__io[15].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_15' constrained to Bel 'X126/Y20/PIOC'.
+Info: sdram_0__dq__io[14] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_14, removing $nextpnr_iobuf sdram_0__dq__io[14].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_14' constrained to Bel 'X126/Y41/PIOC'.
+Info: sdram_0__dq__io[13] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_13, removing $nextpnr_iobuf sdram_0__dq__io[13].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_13' constrained to Bel 'X126/Y14/PIOD'.
+Info: sdram_0__dq__io[12] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_12, removing $nextpnr_iobuf sdram_0__dq__io[12].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_12' constrained to Bel 'X126/Y14/PIOC'.
+Info: sdram_0__dq__io[11] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_11, removing $nextpnr_iobuf sdram_0__dq__io[11].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_11' constrained to Bel 'X126/Y35/PIOA'.
+Info: sdram_0__dq__io[10] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_10, removing $nextpnr_iobuf sdram_0__dq__io[10].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_10' constrained to Bel 'X126/Y35/PIOB'.
+Info: sdram_0__dq__io[9] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_9, removing $nextpnr_iobuf sdram_0__dq__io[9].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_9' constrained to Bel 'X126/Y35/PIOC'.
+Info: sdram_0__dq__io[8] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_8, removing $nextpnr_iobuf sdram_0__dq__io[8].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_8' constrained to Bel 'X126/Y35/PIOD'.
+Info: sdram_0__dq__io[7] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_7, removing $nextpnr_iobuf sdram_0__dq__io[7].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_7' constrained to Bel 'X126/Y86/PIOD'.
+Info: sdram_0__dq__io[6] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_6, removing $nextpnr_iobuf sdram_0__dq__io[6].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_6' constrained to Bel 'X126/Y92/PIOD'.
+Info: sdram_0__dq__io[5] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_5, removing $nextpnr_iobuf sdram_0__dq__io[5].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_5' constrained to Bel 'X126/Y89/PIOD'.
+Info: sdram_0__dq__io[4] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_4, removing $nextpnr_iobuf sdram_0__dq__io[4].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_4' constrained to Bel 'X126/Y83/PIOD'.
+Info: sdram_0__dq__io[3] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_3, removing $nextpnr_iobuf sdram_0__dq__io[3].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_3' constrained to Bel 'X126/Y53/PIOC'.
+Info: sdram_0__dq__io[2] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_2, removing $nextpnr_iobuf sdram_0__dq__io[2].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_2' constrained to Bel 'X126/Y50/PIOD'.
+Info: sdram_0__dq__io[1] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_1, removing $nextpnr_iobuf sdram_0__dq__io[1].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_1' constrained to Bel 'X126/Y50/PIOC'.
+Info: sdram_0__dq__io[0] feeds TRELLIS_IO pin_sdram_0__dq.sdram_0__dq_0, removing $nextpnr_iobuf sdram_0__dq__io[0].
+Info: pin 'pin_sdram_0__dq.sdram_0__dq_0' constrained to Bel 'X126/Y20/PIOD'.
+Info: esp32_spi_0__gpio0__io feeds TRELLIS_IO pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0_0, removing $nextpnr_iobuf esp32_spi_0__gpio0__io.
+Info: pin 'pin_esp32_spi_0__gpio0.esp32_spi_0__gpio0_0' constrained to Bel 'X0/Y86/PIOD'.
+Info: uart_0__tx__io feeds TRELLIS_IO pin_uart_0__tx.uart_0__tx_0, removing $nextpnr_obuf uart_0__tx__io.
+Info: pin 'pin_uart_0__tx.uart_0__tx_0' constrained to Bel 'X0/Y56/PIOC'.
+Info: uart_0__rx__io feeds TRELLIS_IO pin_uart_0__rx.uart_0__rx_0, removing $nextpnr_ibuf uart_0__rx__io.
+Info: pin 'pin_uart_0__rx.uart_0__rx_0' constrained to Bel 'X0/Y89/PIOB'.
+Info: uart_0__rts__io feeds TRELLIS_IO pin_uart_0__rts.uart_0__rts_0, removing $nextpnr_ibuf uart_0__rts__io.
+Info: pin 'pin_uart_0__rts.uart_0__rts_0' constrained to Bel 'X0/Y86/PIOB'.
+Info: uart_0__dtr__io feeds TRELLIS_IO pin_uart_0__dtr.uart_0__dtr_0, removing $nextpnr_ibuf uart_0__dtr__io.
+Info: pin 'pin_uart_0__dtr.uart_0__dtr_0' constrained to Bel 'X0/Y89/PIOD'.
+Info: sdram_0__we__io feeds TRELLIS_IO pin_sdram_0__we.sdram_0__we_0, removing $nextpnr_obuf sdram_0__we__io.
+Info: pin 'pin_sdram_0__we.sdram_0__we_0' constrained to Bel 'X126/Y86/PIOC'.
+Info: sdram_0__ras__io feeds TRELLIS_IO pin_sdram_0__ras.sdram_0__ras_0, removing $nextpnr_obuf sdram_0__ras__io.
+Info: pin 'pin_sdram_0__ras.sdram_0__ras_0' constrained to Bel 'X126/Y86/PIOB'.
+Info: sdram_0__dqm__io[1] feeds TRELLIS_IO pin_sdram_0__dqm.sdram_0__dqm_1, removing $nextpnr_obuf sdram_0__dqm__io[1].
+Info: pin 'pin_sdram_0__dqm.sdram_0__dqm_1' constrained to Bel 'X126/Y38/PIOA'.
+Info: sdram_0__dqm__io[0] feeds TRELLIS_IO pin_sdram_0__dqm.sdram_0__dqm_0, removing $nextpnr_obuf sdram_0__dqm__io[0].
+Info: pin 'pin_sdram_0__dqm.sdram_0__dqm_0' constrained to Bel 'X126/Y89/PIOC'.
+Info: sdram_0__cs__io feeds TRELLIS_IO pin_sdram_0__cs.sdram_0__cs_0, removing $nextpnr_obuf sdram_0__cs__io.
+Info: pin 'pin_sdram_0__cs.sdram_0__cs_0' constrained to Bel 'X126/Y86/PIOA'.
+Info: sdram_0__clk_en__io feeds TRELLIS_IO pin_sdram_0__clk_en.sdram_0__clk_en_0, removing $nextpnr_obuf sdram_0__clk_en__io.
+Info: pin 'pin_sdram_0__clk_en.sdram_0__clk_en_0' constrained to Bel 'X126/Y38/PIOC'.
+Info: sdram_0__clk__io feeds TRELLIS_IO pin_sdram_0__clk.sdram_0__clk_0, removing $nextpnr_obuf sdram_0__clk__io.
+Info: pin 'pin_sdram_0__clk.sdram_0__clk_0' constrained to Bel 'X126/Y38/PIOB'.
+Info: sdram_0__cas__io feeds TRELLIS_IO pin_sdram_0__cas.sdram_0__cas_0, removing $nextpnr_obuf sdram_0__cas__io.
+Info: pin 'pin_sdram_0__cas.sdram_0__cas_0' constrained to Bel 'X126/Y89/PIOA'.
+Info: sdram_0__ba__io[1] feeds TRELLIS_IO pin_sdram_0__ba.sdram_0__ba_1, removing $nextpnr_obuf sdram_0__ba__io[1].
+Info: pin 'pin_sdram_0__ba.sdram_0__ba_1' constrained to Bel 'X126/Y83/PIOB'.
+Info: sdram_0__ba__io[0] feeds TRELLIS_IO pin_sdram_0__ba.sdram_0__ba_0, removing $nextpnr_obuf sdram_0__ba__io[0].
+Info: pin 'pin_sdram_0__ba.sdram_0__ba_0' constrained to Bel 'X126/Y83/PIOC'.
+Info: sdram_0__a__io[12] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_12, removing $nextpnr_obuf sdram_0__a__io[12].
+Info: pin 'pin_sdram_0__a.sdram_0__a_12' constrained to Bel 'X126/Y41/PIOA'.
+Info: sdram_0__a__io[11] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_11, removing $nextpnr_obuf sdram_0__a__io[11].
+Info: pin 'pin_sdram_0__a.sdram_0__a_11' constrained to Bel 'X126/Y38/PIOD'.
+Info: sdram_0__a__io[10] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_10, removing $nextpnr_obuf sdram_0__a__io[10].
+Info: pin 'pin_sdram_0__a.sdram_0__a_10' constrained to Bel 'X126/Y83/PIOA'.
+Info: sdram_0__a__io[9] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_9, removing $nextpnr_obuf sdram_0__a__io[9].
+Info: pin 'pin_sdram_0__a.sdram_0__a_9' constrained to Bel 'X126/Y41/PIOB'.
+Info: sdram_0__a__io[8] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_8, removing $nextpnr_obuf sdram_0__a__io[8].
+Info: pin 'pin_sdram_0__a.sdram_0__a_8' constrained to Bel 'X126/Y44/PIOA'.
+Info: sdram_0__a__io[7] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_7, removing $nextpnr_obuf sdram_0__a__io[7].
+Info: pin 'pin_sdram_0__a.sdram_0__a_7' constrained to Bel 'X126/Y44/PIOC'.
+Info: sdram_0__a__io[6] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_6, removing $nextpnr_obuf sdram_0__a__io[6].
+Info: pin 'pin_sdram_0__a.sdram_0__a_6' constrained to Bel 'X126/Y41/PIOD'.
+Info: sdram_0__a__io[5] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_5, removing $nextpnr_obuf sdram_0__a__io[5].
+Info: pin 'pin_sdram_0__a.sdram_0__a_5' constrained to Bel 'X126/Y44/PIOB'.
+Info: sdram_0__a__io[4] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_4, removing $nextpnr_obuf sdram_0__a__io[4].
+Info: pin 'pin_sdram_0__a.sdram_0__a_4' constrained to Bel 'X126/Y44/PIOD'.
+Info: sdram_0__a__io[3] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_3, removing $nextpnr_obuf sdram_0__a__io[3].
+Info: pin 'pin_sdram_0__a.sdram_0__a_3' constrained to Bel 'X126/Y47/PIOC'.
+Info: sdram_0__a__io[2] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_2, removing $nextpnr_obuf sdram_0__a__io[2].
+Info: pin 'pin_sdram_0__a.sdram_0__a_2' constrained to Bel 'X126/Y47/PIOA'.
+Info: sdram_0__a__io[1] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_1, removing $nextpnr_obuf sdram_0__a__io[1].
+Info: pin 'pin_sdram_0__a.sdram_0__a_1' constrained to Bel 'X126/Y47/PIOD'.
+Info: sdram_0__a__io[0] feeds TRELLIS_IO pin_sdram_0__a.sdram_0__a_0, removing $nextpnr_obuf sdram_0__a__io[0].
+Info: pin 'pin_sdram_0__a.sdram_0__a_0' constrained to Bel 'X126/Y47/PIOB'.
+Info: led_7__io feeds TRELLIS_IO pin_led_7.led_7_0, removing $nextpnr_obuf led_7__io.
+Info: pin 'pin_led_7.led_7_0' constrained to Bel 'X0/Y41/PIOD'.
+Info: led_6__io feeds TRELLIS_IO pin_led_6.led_6_0, removing $nextpnr_obuf led_6__io.
+Info: pin 'pin_led_6.led_6_0' constrained to Bel 'X0/Y38/PIOD'.
+Info: led_5__io feeds TRELLIS_IO pin_led_5.led_5_0, removing $nextpnr_obuf led_5__io.
+Info: pin 'pin_led_5.led_5_0' constrained to Bel 'X0/Y44/PIOD'.
+Info: led_4__io feeds TRELLIS_IO pin_led_4.led_4_0, removing $nextpnr_obuf led_4__io.
+Info: pin 'pin_led_4.led_4_0' constrained to Bel 'X0/Y38/PIOB'.
+Info: led_3__io feeds TRELLIS_IO pin_led_3.led_3_0, removing $nextpnr_obuf led_3__io.
+Info: pin 'pin_led_3.led_3_0' constrained to Bel 'X0/Y38/PIOC'.
+Info: led_2__io feeds TRELLIS_IO pin_led_2.led_2_0, removing $nextpnr_obuf led_2__io.
+Info: pin 'pin_led_2.led_2_0' constrained to Bel 'X0/Y38/PIOA'.
+Info: led_1__io feeds TRELLIS_IO pin_led_1.led_1_0, removing $nextpnr_obuf led_1__io.
+Info: pin 'pin_led_1.led_1_0' constrained to Bel 'X0/Y35/PIOD'.
+Info: led_0__io feeds TRELLIS_IO pin_led_0.led_0_0, removing $nextpnr_obuf led_0__io.
+Info: pin 'pin_led_0.led_0_0' constrained to Bel 'X0/Y35/PIOC'.
+Info: esp32_spi_0__tx__io feeds TRELLIS_IO pin_esp32_spi_0__tx.esp32_spi_0__tx_0, removing $nextpnr_obuf esp32_spi_0__tx__io.
+Info: pin 'pin_esp32_spi_0__tx.esp32_spi_0__tx_0' constrained to Bel 'X0/Y50/PIOD'.
+Info: esp32_spi_0__rx__io feeds TRELLIS_IO pin_esp32_spi_0__rx.esp32_spi_0__rx_0, removing $nextpnr_ibuf esp32_spi_0__rx__io.
+Info: pin 'pin_esp32_spi_0__rx.esp32_spi_0__rx_0' constrained to Bel 'X0/Y56/PIOA'.
+Info: esp32_spi_0__gpio5_cs__io feeds TRELLIS_IO pin_esp32_spi_0__gpio5_cs.esp32_spi_0__gpio5_cs_0, removing $nextpnr_ibuf esp32_spi_0__gpio5_cs__io.
+Info: pin 'pin_esp32_spi_0__gpio5_cs.esp32_spi_0__gpio5_cs_0' constrained to Bel 'X0/Y83/PIOC'.
+Info: esp32_spi_0__gpio4_copi__io feeds TRELLIS_IO pin_esp32_spi_0__gpio4_copi.esp32_spi_0__gpio4_copi_0, removing $nextpnr_ibuf esp32_spi_0__gpio4_copi__io.
+Info: pin 'pin_esp32_spi_0__gpio4_copi.esp32_spi_0__gpio4_copi_0' constrained to Bel 'X0/Y53/PIOC'.
+Info: esp32_spi_0__gpio16_sclk__io feeds TRELLIS_IO pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0, removing $nextpnr_ibuf esp32_spi_0__gpio16_sclk__io.
+Info: pin 'pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0' constrained to Bel 'X0/Y89/PIOC'.
+Info: esp32_spi_0__gpio12_cipo__io feeds TRELLIS_IO pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0, removing $nextpnr_obuf esp32_spi_0__gpio12_cipo__io.
+Info: pin 'pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0' constrained to Bel 'X0/Y53/PIOD'.
+Info: esp32_spi_0__en__io feeds TRELLIS_IO pin_esp32_spi_0__en.esp32_spi_0__en_0, removing $nextpnr_obuf esp32_spi_0__en__io.
+Info: pin 'pin_esp32_spi_0__en.esp32_spi_0__en_0' constrained to Bel 'X0/Y47/PIOB'.
+Info: pin 'clk25_0__io$tr_io' constrained to Bel 'X0/Y47/PIOA'.
+Info: pin 'button_up_0__io$tr_io' constrained to Bel 'X126/Y89/PIOB'.
+Info: button_right_0__io feeds TRELLIS_IO pin_button_right_0.button_right_0_0, removing $nextpnr_ibuf button_right_0__io.
+Info: pin 'pin_button_right_0.button_right_0_0' constrained to Bel 'X126/Y17/PIOD'.
+Info: button_pwr_0__io feeds TRELLIS_IO pin_button_pwr_0.button_pwr_0_0, removing $nextpnr_ibuf button_pwr_0__io.
+Info: pin 'pin_button_pwr_0.button_pwr_0_0' constrained to Bel 'X6/Y0/PIOB'.
+Info: pin 'button_left_0__io$tr_io' constrained to Bel 'X6/Y95/PIOA'.
+Info: pin 'button_fire_1__io$tr_io' constrained to Bel 'X4/Y95/PIOB'.
+Info: pin 'button_fire_0__io$tr_io' constrained to Bel 'X4/Y95/PIOA'.
+Info: pin 'button_down_0__io$tr_io' constrained to Bel 'X6/Y95/PIOB'.
+Info: Packing constants..
+Info: Packing carries...
+Info: Finding LUTFF pairs...
+Info: Packing LUT5-7s...
+Info: Finding LUT-LUT pairs...
+Info: Packing paired LUTs into a SLICE...
+Info: Packing unpaired LUTs into a SLICE...
+Info: Packing unpaired FFs into a SLICE...
+Info: Generating derived timing constraints...
+Info: Promoting globals...
+Info:     promoting clock net sdram_clk to global network
+Info:     promoting clock net clk to global network
+Info: Checksum: 0x7802824c
+
+Info: Annotating ports with timing budgets for target frequency 12.00 MHz
+Info: Checksum: 0x69f0f249
+
+Info: Device utilisation:
+Info: 	       TRELLIS_SLICE:  1595/41820     3%
+Info: 	          TRELLIS_IO:    67/  365    18%
+Info: 	                DCCA:     2/   56     3%
+Info: 	              DP16KD:     0/  208     0%
+Info: 	          MULT18X18D:     0/  156     0%
+Info: 	              ALU54B:     0/   78     0%
+Info: 	             EHXPLLL:     1/    4    25%
+Info: 	             EXTREFB:     0/    2     0%
+Info: 	                DCUA:     0/    2     0%
+Info: 	           PCSCLKDIV:     0/    2     0%
+Info: 	             IOLOGIC:     0/  224     0%
+Info: 	            SIOLOGIC:     0/  141     0%
+Info: 	                 GSR:     0/    1     0%
+Info: 	               JTAGG:     0/    1     0%
+Info: 	                OSCG:     0/    1     0%
+Info: 	               SEDGA:     0/    1     0%
+Info: 	                 DTR:     0/    1     0%
+Info: 	             USRMCLK:     0/    1     0%
+Info: 	             CLKDIVF:     0/    4     0%
+Info: 	           ECLKSYNCB:     0/   10     0%
+Info: 	             DLLDELD:     0/    8     0%
+Info: 	              DDRDLL:     0/    4     0%
+Info: 	             DQSBUFM:     0/   14     0%
+Info: 	     TRELLIS_ECLKBUF:     0/    8     0%
+Info: 	        ECLKBRIDGECS:     0/    2     0%
+Info: 	                DCSC:     0/    2     0%
+
+Info: Placed 68 cells based on constraints.
+Info: Creating initial analytic placement for 1207 cells, random placement wirelen = 159303.
+Info:     at initial placer iter 0, wirelen = 5106
+Info:     at initial placer iter 1, wirelen = 4145
+Info:     at initial placer iter 2, wirelen = 4056
+Info:     at initial placer iter 3, wirelen = 4037
+Info: Running main analytical placer.
+Info:     at iteration #1, type TRELLIS_SLICE: wirelen solved = 4047, spread = 15513, legal = 16239; time = 0.07s
+Info:     at iteration #2, type TRELLIS_SLICE: wirelen solved = 4904, spread = 12305, legal = 13405; time = 0.05s
+Info:     at iteration #3, type TRELLIS_SLICE: wirelen solved = 5263, spread = 11802, legal = 12333; time = 0.07s
+Info:     at iteration #4, type TRELLIS_SLICE: wirelen solved = 5584, spread = 11481, legal = 11954; time = 0.07s
+Info:     at iteration #5, type TRELLIS_SLICE: wirelen solved = 5897, spread = 10194, legal = 10754; time = 0.07s
+Info:     at iteration #6, type TRELLIS_SLICE: wirelen solved = 6066, spread = 9217, legal = 9972; time = 0.07s
+Info:     at iteration #7, type TRELLIS_SLICE: wirelen solved = 6146, spread = 9318, legal = 9824; time = 0.06s
+Info:     at iteration #8, type TRELLIS_SLICE: wirelen solved = 6270, spread = 9467, legal = 9977; time = 0.07s
+Info:     at iteration #9, type TRELLIS_SLICE: wirelen solved = 6417, spread = 9548, legal = 10018; time = 0.07s
+Info:     at iteration #10, type TRELLIS_SLICE: wirelen solved = 6678, spread = 9362, legal = 9989; time = 0.06s
+Info:     at iteration #11, type TRELLIS_SLICE: wirelen solved = 6772, spread = 9315, legal = 9922; time = 0.04s
+Info:     at iteration #12, type TRELLIS_SLICE: wirelen solved = 6703, spread = 10230, legal = 10573; time = 0.07s
+Info: HeAP Placer Time: 1.33s
+Info:   of which solving equations: 0.78s
+Info:   of which spreading cells: 0.10s
+Info:   of which strict legalisation: 0.04s
+
+Info: Running simulated annealing placer for refinement.
+Info:   at iteration #1: temp = 0.000000, timing cost = 811, wirelen = 9824
+Info:   at iteration #5: temp = 0.000000, timing cost = 444, wirelen = 8764
+Info:   at iteration #10: temp = 0.000000, timing cost = 511, wirelen = 8421
+Info:   at iteration #15: temp = 0.000000, timing cost = 442, wirelen = 8281
+Info:   at iteration #15: temp = 0.000000, timing cost = 433, wirelen = 8288 
+Info: SA placement time 2.81s
+
+Info: Max frequency for clock '$glbnet$sdram_clk': 95.15 MHz (FAIL at 135.01 MHz)
+Info: Max frequency for clock       '$glbnet$clk': 61.32 MHz (PASS at 25.00 MHz)
+Info: Clock 'sync_1e6_clk' has no interior paths
+
+Info: Max delay <async>                   -> posedge $glbnet$clk      : 16.80 ns
+Info: Max delay <async>                   -> posedge $glbnet$sdram_clk: 7.08 ns
+Info: Max delay <async>                   -> posedge sync_1e6_clk     : 3.96 ns
+Info: Max delay posedge $glbnet$clk       -> <async>                  : 17.68 ns
+Info: Max delay posedge $glbnet$clk       -> posedge $glbnet$sdram_clk: 8.99 ns
+Info: Max delay posedge $glbnet$sdram_clk -> <async>                  : 9.76 ns
+Info: Max delay posedge $glbnet$sdram_clk -> posedge $glbnet$clk      : 7.40 ns
+Info: Max delay posedge sync_1e6_clk      -> posedge $glbnet$clk      : 1.49 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 19 endpoint(s)
+Info:          + represents [1,19) endpoint(s)
+Info: [ -3103,   1157) |********************+
+Info: [  1157,   5417) |************************************************************ 
+Info: [  5417,   9677) |****************+
+Info: [  9677,  13937) | 
+Info: [ 13937,  18197) | 
+Info: [ 18197,  22457) | 
+Info: [ 22457,  26717) |+
+Info: [ 26717,  30977) |+
+Info: [ 30977,  35237) |*********+
+Info: [ 35237,  39497) |*******************+
+Info: [ 39497,  43757) | 
+Info: [ 43757,  48017) | 
+Info: [ 48017,  52277) | 
+Info: [ 52277,  56537) | 
+Info: [ 56537,  60797) | 
+Info: [ 60797,  65057) | 
+Info: [ 65057,  69317) |+
+Info: [ 69317,  73577) |+
+Info: [ 73577,  77837) |******+
+Info: [ 77837,  82097) |******+
+Info: Checksum: 0x28a7a569
+Info: Routing globals...
+Info:     routing clock net $glbnet$clk using global 0
+Info:     routing clock net $glbnet$sdram_clk using global 1
+
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 7370 arcs.
+Info:            |   (re-)routed arcs  |   delta    | remaining|       time spent     |
+Info:    IterCnt |  w/ripup   wo/ripup |  w/r  wo/r |      arcs| batch(sec) total(sec)|
+Info:       1000 |       89        910 |   89   910 |      6474|       0.33       0.33|
+Info:       2000 |      261       1738 |  172   828 |      5697|       0.14       0.46|
+Info:       3000 |      536       2463 |  275   725 |      5039|       0.15       0.62|
+Info:       4000 |      817       3182 |  281   719 |      4382|       0.15       0.76|
+Info:       5000 |     1101       3898 |  284   716 |      3720|       0.13       0.89|
+Info:       6000 |     1345       4654 |  244   756 |      3004|       0.14       1.03|
+Info:       7000 |     1537       5462 |  192   808 |      2213|       0.12       1.15|
+Info:       8000 |     1736       6263 |  199   801 |      1428|       0.16       1.31|
+Info:       9000 |     1795       7204 |   59   941 |       510|       0.17       1.48|
+Info:       9536 |     1821       7715 |   26   511 |         0|       0.10       1.58|
+Info: Routing complete.
+Info: Router1 time 1.58s
+Info: Checksum: 0xbd2df152
+
+Info: Critical path report for clock '$glbnet$sdram_clk' (posedge -> posedge):
+Info: curr total
+Info:  0.5  0.5  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_18_DI_L6MUX21_Z_D1_L6MUX21_Z_D0_PFUMX_Z_SLICE.Q1
+Info:  1.5  2.0    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram[3] budget 1.050000 ns (111,28) -> (112,32)
+Info:                Sink tb.fifo_test.interface_fifo.ram_wont_overread_TRELLIS_FF_Q_DI_PFUMX_Z_C0_LUT4_Z_1_A_LUT4_Z_2_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amaram/amaram/interface_fifo.py:175
+Info:  0.2  2.2  Source tb.fifo_test.interface_fifo.ram_wont_overread_TRELLIS_FF_Q_DI_PFUMX_Z_C0_LUT4_Z_1_A_LUT4_Z_2_SLICE.F1
+Info:  0.6  2.8    Net tb.fifo_test.interface_fifo.ram_wont_overread_TRELLIS_FF_Q_DI_PFUMX_Z_C0_LUT4_Z_1_A[1] budget 1.050000 ns (112,32) -> (112,32)
+Info:                Sink tb.fifo_test.interface_fifo.ram_wont_overread_TRELLIS_FF_Q_DI_PFUMX_Z_C0_LUT4_Z_1_A_LUT4_Z_3_SLICE.A1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  3.1  Source tb.fifo_test.interface_fifo.ram_wont_overread_TRELLIS_FF_Q_DI_PFUMX_Z_C0_LUT4_Z_1_A_LUT4_Z_3_SLICE.F1
+Info:  1.4  4.4    Net tb.fifo_test.interface_fifo.ram_wont_overread_TRELLIS_FF_Q_DI_PFUMX_Z_C0[2] budget 1.050000 ns (112,32) -> (108,36)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_dst.level_TRELLIS_FF_Q_CE_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  4.7  Source tb.fifo_test.interface_fifo.fifo_dst.level_TRELLIS_FF_Q_CE_LUT4_Z_SLICE.F1
+Info:  0.9  5.5    Net tb.fifo_test.interface_fifo.fifo_router_fsm_state_TRELLIS_FF_Q_DI_LUT4_Z_B[3] budget 1.077000 ns (108,36) -> (104,36)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_dst.storage.0.1.0_WRE_LUT4_Z_SLICE.D0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  5.8  Source tb.fifo_test.interface_fifo.fifo_dst.storage.0.1.0_WRE_LUT4_Z_SLICE.F0
+Info:  0.6  6.4    Net tb.fifo_test.interface_fifo.fifo_dst.storage.0.1.0_WRE budget 1.076000 ns (104,36) -> (104,35)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_dst.storage.3.1.0$DPRAM0_SLICE.WRE
+Info:  0.4  6.8  Setup tb.fifo_test.interface_fifo.fifo_dst.storage.3.1.0$DPRAM0_SLICE.WRE
+Info: 1.9 ns logic, 4.9 ns routing
+
+Info: Critical path report for clock '$glbnet$clk' (posedge -> posedge):
+Info: curr total
+Info:  0.5  0.5  Source rst_TRELLIS_FF_Q_SLICE.Q0
+Info:  6.1  6.7    Net rst budget 39.050999 ns (103,37) -> (2,47)
+Info:                Sink pin_uart_0__dtr.uart_0__dtr__i_LUT4_C_SLICE.LSR
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amtest/amtest/boards/ulx3s/common/clks.py:58
+Info:  0.4  7.1  Setup pin_uart_0__dtr.uart_0__dtr__i_LUT4_C_SLICE.LSR
+Info: 0.9 ns logic, 6.1 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$clk':
+Info: curr total
+Info:  0.0  0.0  Source pin_esp32_spi_0__gpio16_sclk.esp32_spi_0__gpio16_sclk_0.O
+Info:  6.5  6.5    Net tb_esp32_spi_0__gpio16_sclk__i budget 40.000000 ns (0,89) -> (68,43)
+Info:                Sink tb.U$$5.stage0_TRELLIS_FF_Q_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info:  0.0  6.5  Setup tb.U$$5.stage0_TRELLIS_FF_Q_SLICE.M0
+Info: 0.0 ns logic, 6.5 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge $glbnet$sdram_clk':
+Info: curr total
+Info:  0.0  0.0  Source pin_sdram_0__dq.sdram_0__dq_5.O
+Info:  3.6  3.6    Net tb_sdram_0__dq__i[5] budget 7.407000 ns (126,89) -> (121,51)
+Info:                Sink tb.fifo_test.interface_fifo.pin_ctrl._io__rw_cipo__dq_TRELLIS_FF_Q_10_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info:  0.0  3.6  Setup tb.fifo_test.interface_fifo.pin_ctrl._io__rw_cipo__dq_TRELLIS_FF_Q_10_SLICE.M0
+Info: 0.0 ns logic, 3.6 ns routing
+
+Info: Critical path report for cross-domain path '<async>' -> 'posedge sync_1e6_clk':
+Info: curr total
+Info:  0.0  0.0  Source pin_button_pwr_0.button_pwr_0_0.O
+Info:  1.7  1.7    Net pin_button_pwr_0.button_pwr_0__i_n budget 41.549000 ns (6,0) -> (6,14)
+Info:                Sink i_button_ffsync_i_unsync_buttons__pwr$next_LUT4_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/vendor/lattice_ecp5.py:464
+Info:  0.2  1.9  Source i_button_ffsync_i_unsync_buttons__pwr$next_LUT4_Z_SLICE.F1
+Info:  0.0  2.0    Net pin_button_pwr_0_button_pwr_0__i budget 41.548000 ns (6,14) -> (6,14)
+Info:                Sink i_button_ffsync_i_unsync_buttons__pwr$next_LUT4_Z_SLICE.DI1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info:  0.0  2.0  Setup i_button_ffsync_i_unsync_buttons__pwr$next_LUT4_Z_SLICE.DI1
+Info: 0.2 ns logic, 1.7 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$clk' -> '<async>':
+Info: curr total
+Info:  0.5  0.5  Source tb.fifo_test.spi_interface.spi_device__sdo_TRELLIS_FF_Q_SLICE.Q0
+Info:  1.2  1.7    Net tb.fifo_test_spi_device__sdo budget 41.285999 ns (104,43) -> (100,44)
+Info:                Sink pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo__o_LUT4_Z_SLICE.C1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/forks/gateware/examples/amlib/amlib/io/spi.py:23
+Info:  0.2  2.0  Source pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo__o_LUT4_Z_SLICE.F1
+Info:  6.4  8.3    Net tb_esp32_spi_0__gpio12_cipo__o budget 41.285999 ns (100,44) -> (0,53)
+Info:                Sink pin_esp32_spi_0__gpio12_cipo.esp32_spi_0__gpio12_cipo_0.I
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/build/res.py:143
+Info: 0.8 ns logic, 7.6 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$clk' -> 'posedge $glbnet$sdram_clk':
+Info: curr total
+Info:  0.5  0.5  Source tb.fifo_test.interface_fifo.readwriter._ui__rw_copi__task_TRELLIS_FF_DI_1_SLICE.Q0
+Info:  1.0  1.5    Net tb.fifo_test.interface_fifo.readwriter._ui__rw_copi__task_TRELLIS_FF_DI_Q[0] budget 1.074000 ns (116,39) -> (119,39)
+Info:                Sink tb.fifo_test.interface_fifo.readwriter.bank_LUT4_D_1_SLICE.C0
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amaram/amaram/controller_readwrite.py:263
+Info:  0.2  1.7  Source tb.fifo_test.interface_fifo.readwriter.bank_LUT4_D_1_SLICE.F0
+Info:  1.1  2.8    Net tb.fifo_test.interface_fifo.readwriter.bank_LUT4_A_Z[2] budget 1.040000 ns (119,39) -> (120,38)
+Info:                Sink tb.fifo_test.interface_fifo.readwriter.bank_LUT4_D_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  3.1  Source tb.fifo_test.interface_fifo.readwriter.bank_LUT4_D_SLICE.F1
+Info:  0.8  3.9    Net tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B[2] budget 1.040000 ns (120,38) -> (121,38)
+Info:                Sink tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_B_PFUMX_Z_SLICE.B1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  4.3  Source tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_B_PFUMX_Z_SLICE.OFX0
+Info:  1.1  5.4    Net tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_B[2] budget 1.040000 ns (121,38) -> (121,37)
+Info:                Sink tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_SLICE.B1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  5.6  Source tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_SLICE.F1
+Info:  0.0  5.6    Net tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z[8] budget 1.040000 ns (121,37) -> (121,37)
+Info:                Sink tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_SLICE.DI1
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amaram/amaram/controller_readwrite.py:319
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amaram/amaram/controller_readwrite.py:245
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/techmap.v:575.21-575.22
+Info:  0.0  5.6  Setup tb.fifo_test.interface_fifo.readwriter._controller_pin_ui__cmd_TRELLIS_FF_Q_DI_LUT4_Z_B_LUT4_A_Z_LUT4_Z_2_SLICE.DI1
+Info: 1.6 ns logic, 4.0 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$sdram_clk' -> '<async>':
+Info: curr total
+Info:  0.5  0.5  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S1_B0_LUT4_Z_19_SLICE.Q1
+Info:  0.9  1.5    Net tb.fifo_test.interface_fifo.fifo_control__r_next_addr[12] budget 27.004999 ns (117,31) -> (117,31)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S1_B0_LUT4_Z_19_SLICE.D0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  1.7  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S1_B0_LUT4_Z_19_SLICE.F0
+Info:  1.3  3.0    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S1_B0[12] budget 27.004999 ns (117,31) -> (116,30)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_9_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.B0
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amaram/amaram/interface_fifo.py:187
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:59.22-59.24
+Info:  0.4  3.5  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_9_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCO
+Info:  0.0  3.5    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_9_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0_COUT[14] budget 0.000000 ns (116,30) -> (117,30)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_7_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:38.23-38.25
+Info:  0.1  3.5  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_7_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCO
+Info:  0.0  3.5    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_9_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0_COUT[16] budget 0.000000 ns (117,30) -> (117,30)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_5_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:38.23-38.25
+Info:  0.1  3.6  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_5_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCO
+Info:  0.0  3.6    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_9_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0_COUT[18] budget 0.000000 ns (117,30) -> (117,30)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:38.23-38.25
+Info:  0.1  3.7  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_3_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0$CCU2_SLICE.FCO
+Info:  0.0  3.7    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_9_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S0_COUT[20] budget 0.000000 ns (117,30) -> (117,30)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S1$CCU2_SLICE.FCI
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/arith_map.v:38.23-38.25
+Info:  0.4  4.1  Source tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_DI_L6MUX21_Z_D0_L6MUX21_Z_SD_CCU2C_S1$CCU2_SLICE.F0
+Info:  1.5  5.6    Net tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_1_DI_L6MUX21_Z_D0_L6MUX21_Z_SD[5] budget 27.014999 ns (117,30) -> (114,27)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_1_DI_L6MUX21_Z_D0_L6MUX21_Z_D1_PFUMX_Z_SLICE.M1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.0  5.6  Setup tb.fifo_test.interface_fifo.fifo_control__words_stored_in_ram_TRELLIS_FF_Q_1_DI_L6MUX21_Z_D0_L6MUX21_Z_D1_PFUMX_Z_SLICE.M1
+Info: 1.9 ns logic, 3.7 ns routing
+
+Info: Critical path report for cross-domain path 'posedge $glbnet$sdram_clk' -> 'posedge $glbnet$clk':
+Info: curr total
+Info:  0.5  0.5  Source tb.fifo_test.interface_fifo.fifo_dst_async.produce_cdc.stage1_TRELLIS_FF_Q_2_SLICE.Q0
+Info:  0.9  1.4    Net tb.fifo_test.interface_fifo.fifo_dst_async.produce_cdc_produce_r_gry[0] budget 1.122000 ns (101,40) -> (101,40)
+Info:                Sink tb.fifo_test.interface_fifo.fifo_dst_async.consume_cdc_consume_r_gry$next_LUT4_Z_1_SLICE.A1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/venv_fpga/lib/python3.8/site-packages/amaranth/lib/coding.py:176
+Info:  0.2  1.6  Source tb.fifo_test.interface_fifo.fifo_dst_async.consume_cdc_consume_r_gry$next_LUT4_Z_1_SLICE.F1
+Info:  0.8  2.5    Net tb.ui__tb_fanout_flags__trigger_LUT4_A_Z_LUT4_Z_1_A[0] budget 1.122000 ns (101,40) -> (102,40)
+Info:                Sink tb.ui__tb_fanout_flags__trigger_LUT4_A_Z_LUT4_Z_1_SLICE.C0
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.2  2.7  Source tb.ui__tb_fanout_flags__trigger_LUT4_A_Z_LUT4_Z_1_SLICE.F0
+Info:  0.8  3.5    Net tb.ui__tb_fanout_flags__trigger_LUT4_A_Z[0] budget 9.650000 ns (102,40) -> (102,37)
+Info:                Sink tb.fifo_test.testbench_fsm_state_TRELLIS_FF_Q_CE_PFUMX_Z_SLICE.D1
+Info:                Defined in:
+Info:                  /home/ubuntu/Documents/oss-cad-suite/lib/../share/yosys/ecp5/cells_map.v:108.23-108.24
+Info:  0.4  3.9  Source tb.fifo_test.testbench_fsm_state_TRELLIS_FF_Q_CE_PFUMX_Z_SLICE.OFX0
+Info:  0.7  4.6    Net tb.fifo_test.testbench_fsm_state_TRELLIS_FF_Q_CE budget 7.673000 ns (102,37) -> (102,36)
+Info:                Sink tb.ui__tb_fanout_flags__trigger_LUT4_A_SLICE.CE
+Info:  0.0  4.6  Setup tb.ui__tb_fanout_flags__trigger_LUT4_A_SLICE.CE
+Info: 1.4 ns logic, 3.2 ns routing
+
+Info: Critical path report for cross-domain path 'posedge sync_1e6_clk' -> 'posedge $glbnet$clk':
+Info: curr total
+Info:  0.5  0.5  Source i_button_ffsync_i_unsync_buttons__right_TRELLIS_FF_Q_SLICE.Q0
+Info:  0.7  1.2    Net i_button_ffsync_i_unsync_buttons__right budget 39.474998 ns (111,16) -> (111,17)
+Info:                Sink i_button_ffsync.stage0_TRELLIS_FF_Q_SLICE.M0
+Info:                Defined in:
+Info:                  /home/ubuntu/from_host/x/Documents/git_repos/gateware/amtest/amtest/boards/ulx3s/common/upload.py:67
+Info:  0.0  1.2  Setup i_button_ffsync.stage0_TRELLIS_FF_Q_SLICE.M0
+Info: 0.5 ns logic, 0.7 ns routing
+
+Info: Max frequency for clock '$glbnet$sdram_clk': 147.60 MHz (PASS at 135.01 MHz)
+Info: Max frequency for clock       '$glbnet$clk': 140.96 MHz (PASS at 25.00 MHz)
+Info: Clock 'sync_1e6_clk' has no interior paths
+
+Info: Max delay <async>                   -> posedge $glbnet$clk      : 6.47 ns
+Info: Max delay <async>                   -> posedge $glbnet$sdram_clk: 3.59 ns
+Info: Max delay <async>                   -> posedge sync_1e6_clk     : 1.95 ns
+Info: Max delay posedge $glbnet$clk       -> <async>                  : 8.32 ns
+Info: Max delay posedge $glbnet$clk       -> posedge $glbnet$sdram_clk: 5.65 ns
+Info: Max delay posedge $glbnet$sdram_clk -> <async>                  : 5.59 ns
+Info: Max delay posedge $glbnet$sdram_clk -> posedge $glbnet$clk      : 4.61 ns
+Info: Max delay posedge sync_1e6_clk      -> posedge $glbnet$clk      : 1.21 ns
+
+Info: Slack histogram:
+Info:  legend: * represents 16 endpoint(s)
+Info:          + represents [1,16) endpoint(s)
+Info: [   632,   4720) |************************************************************ 
+Info: [  4720,   8808) |***************************************************+
+Info: [  8808,  12896) | 
+Info: [ 12896,  16984) | 
+Info: [ 16984,  21072) | 
+Info: [ 21072,  25160) | 
+Info: [ 25160,  29248) | 
+Info: [ 29248,  33336) |+
+Info: [ 33336,  37424) |************+
+Info: [ 37424,  41512) |*********************+
+Info: [ 41512,  45600) | 
+Info: [ 45600,  49688) | 
+Info: [ 49688,  53776) | 
+Info: [ 53776,  57864) | 
+Info: [ 57864,  61952) | 
+Info: [ 61952,  66040) | 
+Info: [ 66040,  70128) | 
+Info: [ 70128,  74216) | 
+Info: [ 74216,  78304) |*+
+Info: [ 78304,  82392) |**************+
+
+Info: Program finished normally.

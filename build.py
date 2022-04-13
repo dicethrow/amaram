@@ -392,8 +392,8 @@ class mcu_interface(lxdev.RemoteClient):
 		elif task == "update-firmware":
 			self.select_serial_port()
 			self.rsync_to_container()
-			self.rsync_micropython_files_between(from_dir = "amtest/boards/ulx3s/gui_ui/mcu_firmware/source/", to_dir = "/pyboard/")
-			self.rsync_micropython_files_between(from_dir = "amtest/boards/ulx3s/gui_ui/common/test_common/", to_dir = "/pyboard/test_common/") # new!
+			self.rsync_micropython_files_between(from_dir = "tests/ulx3s_counter/mcu_firmware/src/", to_dir = "/pyboard/")
+			self.rsync_micropython_files_between(from_dir = "tests/ulx3s_counter/common/", to_dir = "/pyboard/common/") # new!
 			self.connect_over_rshell_repl()
 
 		elif task == "enter-repl":
